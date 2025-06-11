@@ -9,7 +9,7 @@ The next generation of AI-powered search that combines **Knowledge Graphs + Conc
 [![PyPI version](https://badge.fury.io/py/kse-memory-sdk.svg)](https://badge.fury.io/py/kse-memory-sdk)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/kse-memory-sdk)](https://pypi.org/project/kse-memory-sdk/)
 [![PyPI - Status](https://img.shields.io/pypi/status/kse-memory-sdk)](https://pypi.org/project/kse-memory-sdk/)
-[![GitHub Actions](https://github.com/daleparr/kse-memory-sdk/workflows/CI/badge.svg)](https://github.com/daleparr/kse-memory-sdk/actions)
+[![Tests](https://github.com/daleparr/kse-memory-sdk/actions/workflows/tests.yml/badge.svg)](https://github.com/daleparr/kse-memory-sdk/actions)
 [![arXiv](https://img.shields.io/badge/arXiv-2025.XXXXX-b31b1b.svg)](https://arxiv.org/abs/2025.XXXXX)
 
 ## 🚀 Quickstart - Experience Hybrid AI in 30 Seconds
