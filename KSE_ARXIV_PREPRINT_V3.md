@@ -1,8 +1,8 @@
 # Knowledge Space Embeddings: A Hybrid AI Architecture for Scalable Knowledge Retrieval with Incremental Learning and Comprehensive Reproducibility
 
-**Authors:** [To be filled]  
+**Authors:** [Dale Parr]  
 **Affiliation:** [To be filled]  
-**Date:** December 2025  
+**Date:** June 2025  
 **Version:** 3.0  
 **arXiv ID:** [To be assigned]  
 **DOI:** [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXX)
