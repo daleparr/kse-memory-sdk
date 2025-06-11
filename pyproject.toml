@@ -95,6 +95,10 @@ dev = [
     "pre-commit>=3.0.0",
     "sphinx>=7.0.0",
     "sphinx-rtd-theme>=1.3.0",
+    "torch>=2.0.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
+    "hypothesis>=6.0.0",
 ]
 
 # All optional dependencies
@@ -118,13 +122,9 @@ packages = ["kse_memory"]
 [tool.hatch.build.targets.sdist]
 include = [
     "/kse_memory",
-    "/tests",
-    "/docs",
-    "/examples",
     "/README.md",
     "/LICENSE",
     "/CHANGELOG.md",
-    "/CONTRIBUTING.md",
 ]
 
 [tool.black]
