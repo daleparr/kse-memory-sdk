@@ -5,7 +5,7 @@ A hybrid AI memory system combining Knowledge Graphs, Conceptual Spaces,
 and Neural Embeddings for intelligent product understanding and discovery.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "KSE System"
 __email__ = "dev@kse-system.com"
 
