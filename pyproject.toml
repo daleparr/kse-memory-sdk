@@ -1,0 +1,241 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kse-memory-sdk"
+version = "1.0.0"
+description = "Hybrid Knowledge Retrieval for Intelligent Applications"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    {name = "KSE Memory Team", email = "team@kse-memory.com"},
+]
+keywords = [
+    "ai", "search", "retrieval", "knowledge-graph", "embeddings", 
+    "conceptual-spaces", "hybrid-ai", "product-intelligence", "rag"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Indexing",
+]
+
+dependencies = [
+    "numpy>=1.21.0",
+    "pydantic>=2.0.0",
+    "asyncio-mqtt>=0.11.0",
+    "aiofiles>=23.0.0",
+    "httpx>=0.24.0",
+    "rich>=13.0.0",
+    "click>=8.0.0",
+    "pyyaml>=6.0.0",
+    "sentence-transformers>=2.2.0",
+    "scikit-learn>=1.3.0",
+    "networkx>=3.0.0",
+    "redis>=4.5.0",
+    "psycopg2-binary>=2.9.0",
+]
+
+[project.optional-dependencies]
+# Framework integrations
+langchain = [
+    "langchain>=0.1.0",
+    "langchain-core>=0.1.0",
+]
+llamaindex = [
+    "llama-index>=0.9.0",
+    "llama-index-core>=0.9.0",
+]
+
+# Vector stores
+pinecone = ["pinecone-client>=3.0.0"]
+weaviate = ["weaviate-client>=3.25.0"]
+qdrant = ["qdrant-client>=1.6.0"]
+chroma = ["chromadb>=0.4.0"]
+milvus = ["pymilvus>=2.3.0"]
+
+# Graph databases
+neo4j = ["neo4j>=5.0.0"]
+arangodb = ["python-arango>=7.5.0"]
+
+# Document/Concept stores
+mongodb = ["motor>=3.3.0"]
+
+# Visual tooling
+visual = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "websockets>=11.0.0",
+    "jinja2>=3.1.0",
+]
+
+# E-commerce platforms
+shopify = ["shopifyapi>=12.0.0"]
+woocommerce = ["woocommerce>=3.0.0"]
+
+# Development dependencies
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.5.0",
+    "pre-commit>=3.0.0",
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=1.3.0",
+]
+
+# All optional dependencies
+all = [
+    "kse-memory-sdk[langchain,llamaindex,pinecone,weaviate,qdrant,chroma,milvus,neo4j,arangodb,mongodb,visual,shopify,woocommerce]"
+]
+
+[project.urls]
+Homepage = "https://github.com/kse-memory/kse-memory-sdk"
+Documentation = "https://kse-memory-sdk.readthedocs.io"
+Repository = "https://github.com/kse-memory/kse-memory-sdk"
+"Bug Tracker" = "https://github.com/kse-memory/kse-memory-sdk/issues"
+Changelog = "https://github.com/kse-memory/kse-memory-sdk/blob/main/CHANGELOG.md"
+
+[project.scripts]
+kse = "kse_memory.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kse_memory"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/kse_memory",
+    "/tests",
+    "/docs",
+    "/examples",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/CONTRIBUTING.md",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "sentence_transformers.*",
+    "pinecone.*",
+    "weaviate.*",
+    "neo4j.*",
+    "chromadb.*",
+    "shopifyapi.*",
+    "woocommerce.*",
+    "networkx.*",
+    "sklearn.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--asyncio-mode=auto",
+]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "e2e: End-to-end tests",
+    "slow: Slow tests",
+    "performance: Performance tests",
+    "requires_api: Tests requiring external API access",
+    "requires_gpu: Tests requiring GPU",
+]
+
+[tool.coverage.run]
+source = ["kse_memory"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "E501"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "docs/source/conf.py",
+    "old",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+]
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 88
