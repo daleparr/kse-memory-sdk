@@ -235,24 +235,24 @@ class ProductionDeployer:
         
         try:
             # Create a sample production config
-            config = KSEConfig(
-                debug=False,
-                vector_store={
+            config = KSEConfig.from_dict({
+                "debug": False,
+                "vector_store": {
                     "backend": "pinecone",
                     "api_key": "test-key",
                     "environment": "production"
                 },
-                graph_store={
+                "graph_store": {
                     "backend": "neo4j",
                     "uri": "bolt://localhost:7687",
                     "username": "neo4j",
                     "password": "password"
                 },
-                concept_store={
+                "concept_store": {
                     "backend": "postgresql",
                     "uri": "postgresql://localhost:5432/kse"
                 }
-            )
+            })
             
             result = self.validator.validate_config(config)
             

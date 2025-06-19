@@ -46,6 +46,12 @@ def cli():
     help="Type of demo to run"
 )
 @click.option(
+    "--backend",
+    type=click.Choice(["chromadb", "weaviate", "qdrant", "memory", "auto"]),
+    default="auto",
+    help="Backend to use (auto-detects if not specified)"
+)
+@click.option(
     "--no-browser",
     is_flag=True,
     help="Skip opening web interface"
@@ -55,30 +61,36 @@ def cli():
     type=click.Path(),
     help="Save results to JSON file"
 )
-def quickstart(demo_type: str, no_browser: bool, output: Optional[str]):
+def quickstart(demo_type: str, backend: str, no_browser: bool, output: Optional[str]):
     """
     🚀 Run zero-configuration quickstart demo
     
     Experience hybrid AI search with instant "wow" moments.
-    No setup required - works out of the box!
+    Automatically detects and sets up the best available backend.
     
     Examples:
-        kse quickstart                    # Run retail demo
-        kse quickstart --demo-type finance # Run finance demo
-        kse quickstart --no-browser       # Skip web interface
+        kse quickstart                          # Auto-detect best backend
+        kse quickstart --backend chromadb       # Use ChromaDB (local, free)
+        kse quickstart --backend weaviate       # Use Weaviate (cloud, free tier)
+        kse quickstart --demo-type finance      # Run finance demo
+        kse quickstart --no-browser             # Skip web interface
     """
     console.print(Panel.fit(
         "[bold blue]🚀 KSE Memory SDK Quickstart[/bold blue]\n"
-        "Zero-configuration hybrid AI demo",
+        "Smart backend detection + zero-configuration demo",
         border_style="blue"
     ))
     
     async def run_demo():
         demo = QuickstartDemo()
         try:
+            # Pass backend preference to demo
+            backend_choice = None if backend == "auto" else backend
+            
             results = await demo.run(
                 demo_type=demo_type,
-                open_browser=not no_browser
+                open_browser=not no_browser,
+                backend=backend_choice
             )
             
             if output:
@@ -94,6 +106,87 @@ def quickstart(demo_type: str, no_browser: bool, output: Optional[str]):
             sys.exit(1)
     
     asyncio.run(run_demo())
+
+
+@cli.command()
+@click.option(
+    "--interactive",
+    is_flag=True,
+    help="Interactive backend selection with detailed comparison"
+)
+@click.option(
+    "--output",
+    type=click.Path(),
+    default="kse_config.yaml",
+    help="Output configuration file path"
+)
+def setup(interactive: bool, output: str):
+    """
+    🔧 Setup KSE Memory backend configuration
+    
+    Detect available backends and generate production-ready configuration.
+    Perfect for first-time setup or switching backends.
+    
+    Examples:
+        kse setup                    # Quick setup with auto-detection
+        kse setup --interactive      # Detailed backend comparison
+        kse setup --output my.yaml  # Save to custom file
+    """
+    from .quickstart.backend_detector import auto_detect_and_setup, BackendDetector
+    import yaml
+    
+    console.print(Panel.fit(
+        "[bold green]🔧 KSE Memory Backend Setup[/bold green]\n"
+        "Configure your optimal backend for production use",
+        border_style="green"
+    ))
+    
+    try:
+        if interactive:
+            # Full interactive setup
+            detector = BackendDetector()
+            backends = detector.detect_all_backends()
+            detector.display_backend_options(backends)
+            chosen_backend = detector.get_user_choice(backends)
+            
+            if not chosen_backend:
+                console.print("❌ Setup cancelled.")
+                return
+            
+            if not detector.install_backend(chosen_backend):
+                console.print("❌ Backend installation failed.")
+                return
+            
+            config = detector.generate_config(chosen_backend)
+        else:
+            # Quick auto-detection
+            chosen_backend, config = auto_detect_and_setup()
+            
+            if not chosen_backend or not config:
+                console.print("❌ Backend setup failed.")
+                return
+        
+        # Save configuration
+        output_path = Path(output)
+        with open(output_path, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, indent=2)
+        
+        console.print(Panel.fit(
+            f"✅ [bold green]Configuration saved![/bold green]\n"
+            f"Backend: {chosen_backend.display_name}\n"
+            f"Config file: {output_path.absolute()}\n"
+            f"Ready for: {chosen_backend.best_for}",
+            border_style="green"
+        ))
+        
+        console.print("\n🚀 Next steps:")
+        console.print("  1. Review the configuration file")
+        console.print("  2. Set any required environment variables")
+        console.print("  3. Run: kse quickstart")
+        
+    except Exception as e:
+        console.print(f"[red]❌ Setup failed: {str(e)}[/red]")
+        sys.exit(1)
 
 
 @cli.command()

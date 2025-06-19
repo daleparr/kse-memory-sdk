@@ -9,8 +9,9 @@ import asyncio
 import logging
 import tempfile
 import webbrowser
+import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from rich.console import Console
@@ -18,12 +19,14 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeEl
 from rich.table import Table
 from rich.panel import Panel
 from rich.text import Text
+from rich.prompt import Confirm
 
 from ..core.memory import KSEMemory
 from ..core.config import KSEConfig
 from ..core.models import Product, SearchQuery, SearchType, ConceptualDimensions
 from .datasets import SampleDatasets
 from .benchmark import BenchmarkRunner
+from .backend_detector import BackendDetector, auto_detect_and_setup
 
 console = Console()
 logger = logging.getLogger(__name__)
@@ -34,26 +37,31 @@ class QuickstartDemo:
     Zero-configuration demo that showcases KSE Memory capabilities.
     
     Provides instant "wow" moments with:
+    - Intelligent backend detection and setup
     - Sample retail dataset
     - Hybrid search demonstrations
     - Performance comparisons
     - Interactive web interface
     """
     
-    def __init__(self):
+    def __init__(self, auto_setup: bool = True):
         """Initialize quickstart demo."""
         self.temp_dir = None
         self.kse = None
         self.datasets = SampleDatasets()
         self.benchmark = BenchmarkRunner()
+        self.auto_setup = auto_setup
+        self.chosen_backend = None
+        self.config = None
         
-    async def run(self, demo_type: str = "retail", open_browser: bool = True) -> Dict[str, Any]:
+    async def run(self, demo_type: str = "retail", open_browser: bool = True, backend: Optional[str] = None) -> Dict[str, Any]:
         """
         Run the quickstart demo.
         
         Args:
             demo_type: Type of demo ('retail', 'finance', 'healthcare')
             open_browser: Whether to open web interface
+            backend: Specific backend to use (optional, will auto-detect if not provided)
             
         Returns:
             Demo results and metrics
@@ -65,8 +73,12 @@ class QuickstartDemo:
         ))
         
         try:
-            # Setup demo environment
+            # Setup demo environment and backend
             await self._setup_demo_environment()
+            
+            # Auto-detect and setup backend if not already configured
+            if self.auto_setup and not self.config:
+                await self._setup_backend(backend)
             
             # Load sample dataset
             products = await self._load_sample_dataset(demo_type)
@@ -92,6 +104,7 @@ class QuickstartDemo:
             
             return {
                 "demo_type": demo_type,
+                "backend": self.chosen_backend.name if self.chosen_backend else "unknown",
                 "products_loaded": len(products),
                 "search_results": search_results,
                 "benchmark_results": benchmark_results,
@@ -108,6 +121,50 @@ class QuickstartDemo:
         """Setup temporary demo environment."""
         self.temp_dir = tempfile.mkdtemp(prefix="kse_demo_")
         console.print(f"[dim]Demo environment: {self.temp_dir}[/dim]")
+    
+    async def _setup_backend(self, preferred_backend: Optional[str] = None):
+        """Setup backend using auto-detection or user preference."""
+        console.print("\n🔧 Setting up backend for optimal performance...")
+        
+        if preferred_backend:
+            # User specified a backend
+            detector = BackendDetector()
+            backends = detector.detect_all_backends()
+            
+            # Find the preferred backend
+            chosen = None
+            for backend in backends:
+                if backend.name.lower() == preferred_backend.lower():
+                    chosen = backend
+                    break
+            
+            if not chosen:
+                console.print(f"❌ Backend '{preferred_backend}' not available. Using auto-detection...")
+                chosen, config = auto_detect_and_setup()
+            else:
+                if not detector.install_backend(chosen):
+                    console.print(f"❌ Failed to install {chosen.display_name}. Using auto-detection...")
+                    chosen, config = auto_detect_and_setup()
+                else:
+                    config = detector.generate_config(chosen)
+        else:
+            # Auto-detect best backend
+            chosen, config = auto_detect_and_setup()
+        
+        if not chosen or not config:
+            console.print("❌ Backend setup failed. Using fallback memory backend.")
+            chosen = BackendDetector.BACKEND_DEFINITIONS["memory"]
+            config = BackendDetector().generate_config(chosen)
+        
+        self.chosen_backend = chosen
+        self.config = config
+        
+        # Save config for future use
+        config_path = Path(self.temp_dir) / "kse_config.yaml"
+        with open(config_path, 'w') as f:
+            yaml.dump(config, f, default_flow_style=False, indent=2)
+        
+        console.print(f"✅ Backend configured: {chosen.display_name}")
     
     async def _load_sample_dataset(self, demo_type: str) -> List[Product]:
         """Load sample dataset for demo."""
@@ -134,7 +191,7 @@ class QuickstartDemo:
         return products
     
     async def _initialize_kse_memory(self):
-        """Initialize KSE Memory with in-memory backends."""
+        """Initialize KSE Memory with detected backend configuration."""
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -142,32 +199,24 @@ class QuickstartDemo:
         ) as progress:
             task = progress.add_task("Initializing KSE Memory...", total=None)
             
-            # Use in-memory configuration for demo
-            config = KSEConfig(
-                debug=False,
-                vector_store={
-                    "backend": "memory",
-                },
-                graph_store={
-                    "backend": "memory",
-                },
-                concept_store={
-                    "backend": "memory",
-                },
-                embedding={
-                    "text_model": "sentence-transformers/all-MiniLM-L6-v2",
-                    "batch_size": 8,
-                },
-                conceptual={
-                    "auto_compute": False,  # Use pre-computed for demo speed
-                },
-                cache={
-                    "enabled": True,
-                    "backend": "memory",
+            # Use the configuration from backend detection
+            if not self.config:
+                console.print("⚠️ No configuration found, using fallback...")
+                self.config = {
+                    "debug": False,
+                    "vector_store": {"backend": "memory"},
+                    "graph_store": {"backend": "memory"},
+                    "concept_store": {"backend": "memory"},
+                    "embedding": {
+                        "text_model": "sentence-transformers/all-MiniLM-L6-v2",
+                        "batch_size": 8,
+                    },
+                    "conceptual": {"auto_compute": False},
+                    "cache": {"enabled": True, "backend": "memory"}
                 }
-            )
             
-            self.kse = KSEMemory(config)
+            kse_config = KSEConfig.from_dict(self.config)
+            self.kse = KSEMemory(kse_config)
             
             # Initialize with generic adapter
             await self.kse.initialize("generic", {
@@ -176,7 +225,8 @@ class QuickstartDemo:
             
             progress.update(task, description="KSE Memory initialized")
             
-        console.print("[green]✓[/green] KSE Memory system ready")
+        backend_name = self.chosen_backend.display_name if self.chosen_backend else "Memory"
+        console.print(f"[green]✓[/green] KSE Memory system ready with {backend_name} backend")
     
     async def _populate_memory(self, products: List[Product]):
         """Add products to KSE Memory."""

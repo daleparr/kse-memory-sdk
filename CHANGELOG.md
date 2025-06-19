@@ -5,219 +5,182 @@ All notable changes to the KSE Memory SDK will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2024-01-01
+## [1.2.0] - 2025-06-19
 
-### 🚀 Initial Release - The Foundation of Hybrid AI
+### 🚀 Major Features Added
 
-The first production release of KSE Memory SDK, establishing the foundation for hybrid knowledge retrieval across all domains.
+#### Multi-Backend Auto-Detection System
+- **NEW**: Intelligent backend detection and recommendation system
+- **NEW**: Automatic dependency installation for detected backends
+- **NEW**: Interactive backend selection with scoring algorithms
+- **NEW**: Zero-config quickstart experience (30-second setup)
 
-### ✨ Added
+#### Community-First Backend Support
+- **NEW**: ChromaDB integration (completely free, local, persistent)
+- **NEW**: Weaviate Cloud free tier support
+- **NEW**: Qdrant Cloud free tier support
+- **NEW**: Enhanced in-memory backend for testing
+- **IMPROVED**: Existing Pinecone integration with better error handling
 
-#### **Core Hybrid Knowledge Retrieval**
-- **Hybrid Fusion Engine**: Combines Knowledge Graphs + Conceptual Spaces + Neural Embeddings
-- **Three AI Approaches**: Vector similarity, conceptual reasoning, graph relationships
-- **Intelligent Score Fusion**: Weighted combination with consensus boosting
-- **18%+ Performance Improvement**: Consistently better than any single approach
+#### Production-Ready Infrastructure
+- **NEW**: Docker Compose community stack deployment
+- **NEW**: Environment variable management with `.env` templates
+- **NEW**: Comprehensive production deployment documentation
+- **NEW**: Enhanced CLI with backend selection and setup commands
 
-#### **Universal Product Intelligence**
-- **Multi-Domain Support**: Retail, finance, healthcare, enterprise software, real estate
-- **Conceptual Dimensions**: 10-dimensional spaces adapted per domain
-- **Domain-Specific Mappings**: Industry-optimized visualization and analysis
-- **Custom Domain Framework**: Create unlimited domain adaptations
+### 🐛 Critical Bug Fixes
 
-#### **Zero-Configuration Experience**
-- **Instant Quickstart**: `kse quickstart` works in 30 seconds
-- **Sample Datasets**: Curated data for retail, finance, healthcare demos
-- **Automated Benchmarking**: Performance comparison with visual results
-- **Rich CLI Interface**: Professional terminal experience with progress indicators
+#### Configuration System Overhaul
+- **FIXED**: Critical `'dict' object has no attribute 'backend'` error
+- **FIXED**: Configuration objectification after Pydantic-2 upgrade
+- **FIXED**: Proper dataclass object creation from dictionaries
+- **FIXED**: All test files updated to use correct configuration patterns
 
-#### **Revolutionary Visual Tooling**
-- **Interactive Web Dashboard**: Real-time visualization with WebSocket updates
-- **3D Conceptual Space Explorer**: First-ever 3D visualization of conceptual spaces
-- **Knowledge Graph Visualizer**: Interactive network exploration with Cytoscape.js
-- **Search Results Explainer**: Transparent AI reasoning with detailed breakdowns
-- **Performance Monitoring**: Live metrics and benchmark comparisons
+#### Security and Best Practices
+- **FIXED**: Removed hardcoded API keys from all examples
+- **FIXED**: Implemented secure environment variable usage
+- **FIXED**: Added proper error handling for missing configurations
+- **FIXED**: Unicode terminal output issues on Windows
 
-#### **Framework Integrations**
-- **LangChain Compatibility**: Drop-in replacement for vector stores with zero code changes
-- **LlamaIndex Integration**: Enhanced RAG with hybrid retrieval capabilities
-- **Migration Examples**: Before/after code comparisons for easy adoption
+### 📚 Documentation Improvements
 
-#### **Production-Ready Architecture**
-- **Modular Backends**: Support for Pinecone, Weaviate, Neo4j, PostgreSQL, Redis
-- **Platform Adapters**: Shopify, WooCommerce, generic data source integration
-- **Async/Await Support**: Full asynchronous operation for scalability
-- **Configuration System**: Environment variables and programmatic configuration
+#### User Experience
+- **NEW**: Complete QUICKSTART_GUIDE.md with step-by-step instructions
+- **NEW**: Comprehensive .env.example with all supported backends
+- **NEW**: Production deployment guides and best practices
+- **IMPROVED**: All examples updated with environment variable usage
 
-#### **Comprehensive CLI Tools**
-- `kse quickstart`: Zero-config demo experience
-- `kse search`: Interactive search with multiple approaches
-- `kse benchmark`: Performance testing and comparison
-- `kse ingest`: Batch product data processing
-- `kse status`: System health and configuration check
+#### Developer Experience
+- **NEW**: Backend detection system documentation
+- **NEW**: Docker deployment instructions
+- **NEW**: Contribution guidelines for new backends
+- **IMPROVED**: CLI help text and interactive prompts
 
-#### **Developer Experience**
-- **Type Safety**: Full TypeScript-style type hints with Pydantic
-- **Rich Documentation**: API reference, domain guides, visual tooling docs
-- **Example Gallery**: Comprehensive examples for all use cases
-- **Testing Infrastructure**: Unit, integration, and end-to-end tests
+### 🔧 Technical Improvements
 
-### 🏗️ Architecture
+#### Code Quality
+- **IMPROVED**: Systematic replacement of direct dictionary assignments
+- **IMPROVED**: Proper use of `KSEConfig.from_dict()` throughout codebase
+- **IMPROVED**: Enhanced error messages and debugging information
+- **IMPROVED**: Type hints and documentation strings
 
-#### **Hybrid Fusion Engine**
+#### Testing and Validation
+- **NEW**: Comprehensive integration tests for all backends
+- **NEW**: Production readiness verification scripts
+- **IMPROVED**: Existing test suite updated for new configuration system
+- **IMPROVED**: Better test coverage for edge cases
+
+### 🏗️ Architecture Changes
+
+#### Backend Architecture
+- **NEW**: Pluggable backend detection system
+- **NEW**: Backend scoring and ranking algorithms
+- **NEW**: Unified configuration interface across all backends
+- **IMPROVED**: Better separation of concerns between backends
+
+#### Configuration Management
+- **CHANGED**: Configuration objects now properly created from dictionaries
+- **CHANGED**: Environment variable precedence over hardcoded values
+- **CHANGED**: Secure handling of API keys and sensitive data
+- **IMPROVED**: Validation and error reporting for configurations
+
+### 📦 Dependencies and Compatibility
+
+#### New Dependencies
+- **ADDED**: `chromadb` for local vector storage (optional)
+- **ADDED**: `weaviate-client` for Weaviate integration (optional)
+- **ADDED**: `qdrant-client` for Qdrant integration (optional)
+- **ADDED**: `python-dotenv` for environment variable management
+
+#### Compatibility
+- **MAINTAINED**: Full backward compatibility with existing Pinecone setups
+- **IMPROVED**: Better Python 3.8+ compatibility
+- **IMPROVED**: Cross-platform support (Windows, macOS, Linux)
+
+### 🚀 Performance Improvements
+
+#### Startup Performance
+- **IMPROVED**: Faster backend detection and initialization
+- **IMPROVED**: Lazy loading of optional dependencies
+- **IMPROVED**: Reduced memory footprint for unused backends
+
+#### Runtime Performance
+- **IMPROVED**: Better connection pooling for vector databases
+- **IMPROVED**: Optimized configuration parsing and validation
+- **IMPROVED**: Enhanced error handling with minimal overhead
+
+### 🔄 Migration Guide
+
+#### From v1.1.x to v1.2.0
+
+**Configuration Changes:**
+```python
+# OLD (will cause errors)
+config = KSEConfig(vector_store={"backend": "pinecone"})
+
+# NEW (correct way)
+config = KSEConfig.from_dict({"vector_store": {"backend": "pinecone"}})
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                 Hybrid Fusion Engine                       │
-│  ⚡ Intelligent combination of three AI approaches         │
-├─────────────────────────────────────────────────────────────┤
-│  🧠 Neural         │  🎨 Conceptual     │  🕸️ Knowledge    │
-│  Embeddings        │  Spaces            │  Graphs          │
-└─────────────────────────────────────────────────────────────┘
-```
 
-#### **Universal Domain Adaptation**
-- **Retail Fashion**: elegance, comfort, boldness, modernity, minimalism, luxury, functionality, versatility, seasonality, innovation
-- **Financial Products**: risk_level, liquidity, growth_potential, stability, complexity, accessibility, regulatory_compliance, innovation, transparency, diversification
-- **Healthcare Devices**: precision, safety, usability, portability, cost_effectiveness, regulatory_approval, innovation, reliability, patient_comfort, clinical_efficacy
-- **Enterprise Software**: scalability, security, usability, integration, performance, cost_efficiency, support_quality, innovation, compliance, customization
-- **Real Estate**: location_quality, value_appreciation, rental_yield, property_condition, amenities, accessibility, neighborhood_safety, investment_potential, maintenance_requirements, market_liquidity
-
-### 📊 Performance Benchmarks
-
-| Approach | Avg Relevance | Latency | Consistency |
-|----------|---------------|---------|-------------|
-| Vector Only | 0.742 | 45ms | Medium |
-| Conceptual Only | 0.698 | 38ms | Low |
-| Graph Only | 0.651 | 52ms | High |
-| **KSE Hybrid** | **0.876** | **58ms** | **High** |
-| **Improvement** | **+18.1%** | **+13ms** | **Superior** |
-
-### 🎯 Use Cases Enabled
-
-#### **E-commerce & Retail**
-- Semantic product discovery with 20-30% better customer satisfaction
-- Inventory optimization with 15-25% improved turnover
-- Trend analysis and seasonal planning
-
-#### **Financial Services**
-- Investment product matching with 18-28% better risk-adjusted returns
-- Portfolio optimization and risk assessment
-- Regulatory compliance tracking
-
-#### **Healthcare**
-- Medical device selection with 20-30% better clinical outcomes
-- Evidence-based procurement with 15-25% cost savings
-- Research discovery and safety monitoring
-
-#### **Enterprise Software**
-- Vendor evaluation with 25-35% faster decision-making
-- System integration with 20-30% higher success rates
-- Architecture planning and capability matching
-
-#### **Real Estate**
-- Investment analysis with 20-30% better returns
-- Property matching and market research
-- Portfolio diversification optimization
-
-### 🔧 Configuration Options
-
-#### **Environment Variables**
+**Environment Variables:**
 ```bash
-# Vector Store
-KSE_VECTOR_BACKEND=pinecone
-KSE_PINECONE_API_KEY=your-key
-
-# Graph Store
-KSE_GRAPH_BACKEND=neo4j
-KSE_NEO4J_URI=bolt://localhost:7687
-
-# Embeddings
-KSE_EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+# Create .env file from template
+cp .env.example .env
+# Edit .env with your API keys
 ```
 
-#### **Programmatic Configuration**
-```python
-config = KSEConfig(
-    vector_store={"backend": "pinecone"},
-    graph_store={"backend": "neo4j"},
-    embedding={"text_model": "sentence-transformers/all-MiniLM-L6-v2"}
-)
-```
-
-### 📚 Documentation
-
-- **API Reference**: Complete documentation of all classes and methods
-- **Domain Adaptations Guide**: Industry-specific implementation guides
-- **Visual Tooling Roadmap**: Interactive AI exploration capabilities
-- **Integration Guide**: Framework-specific integration patterns
-- **Performance Tuning**: Optimization best practices
-
-### 🧪 Examples
-
-- **Hybrid Retrieval Demo**: Core foundation demonstration
-- **Multi-Domain Visualization**: Cross-industry intelligence showcase
-- **LangChain Integration**: Framework compatibility examples
-- **Quickstart Demo**: Zero-config experience
-- **Advanced Usage**: Production deployment patterns
-
-### 🤝 Community
-
-- **Open Source**: MIT license for maximum adoption
-- **Contributing Guide**: Clear contribution guidelines
-- **Issue Templates**: Structured bug reports and feature requests
-- **Code of Conduct**: Inclusive community standards
-
-### 🔄 Migration Support
-
-#### **From Vector Stores**
-```python
-# Before
-results = vector_store.similarity_search("query", k=10)
-
-# After
-results = await kse.search(SearchQuery(query="query", search_type="hybrid", limit=10))
-```
-
-#### **From LangChain**
-```python
-# Before
-vectorstore = Chroma.from_texts(texts, embeddings)
-
-# After - Zero code changes
-vectorstore = KSEVectorStore.from_texts(texts, search_type="hybrid")
-```
-
-### 🚀 Getting Started
-
+**CLI Usage:**
 ```bash
-# Install
-pip install kse-memory-sdk
-
-# Experience hybrid AI
+# New quickstart command
 kse quickstart
 
-# Integrate with existing systems
-pip install kse-memory-sdk[langchain]
+# New setup command
+kse setup --backend chromadb
 ```
 
-### 🎯 What's Next
+### 🎯 Breaking Changes
 
-#### **Planned for v1.1.0**
-- **VS Code Extension**: Integrated development environment
-- **Advanced Analytics**: Deeper performance insights
-- **More Domain Mappings**: Automotive, food & beverage, travel
-- **Enhanced Visualizations**: AR/VR conceptual space exploration
+- **NONE**: This release maintains full backward compatibility
+- **DEPRECATION**: Direct dictionary assignment to KSEConfig constructor (use `from_dict()`)
+- **RECOMMENDATION**: Migrate to environment variables for API keys
 
-#### **Roadmap to v2.0.0**
-- **Multi-Modal Support**: Images, audio, video understanding
-- **Federated Learning**: Distributed knowledge graph construction
-- **Real-Time Adaptation**: Dynamic conceptual dimension learning
-- **Enterprise Features**: Advanced security, compliance, audit trails
+### 🔮 What's Next
+
+#### Planned for v1.3.0
+- Advanced hybrid search algorithms
+- Enhanced knowledge graph integration
+- Performance optimization for large datasets
+- Additional vector database backends
+
+#### Community Contributions Welcome
+- New backend integrations
+- Performance improvements
+- Documentation enhancements
+- Example applications and tutorials
 
 ---
 
-**🧠 KSE Memory SDK v1.0.0 - The Foundation of Hybrid AI**
+## [1.1.0] - Previous Release
 
-*Transform your applications with the next generation of intelligent search and retrieval.*
+### Features
+- Initial Pydantic-2 support
+- Basic vector store integration
+- Core hybrid AI search functionality
 
-[Documentation](docs/) | [Examples](examples/) | [Contributing](CONTRIBUTING.md) | [License](LICENSE)
+### Known Issues
+- Configuration objectification bug (fixed in v1.2.0)
+- Limited backend options (expanded in v1.2.0)
+
+---
+
+## [1.0.0] - Initial Release
+
+### Features
+- Core KSE Memory SDK functionality
+- Basic Pinecone integration
+- Conceptual spaces and knowledge graphs
+- Initial CLI interface
+
+---
+
+**Note**: This changelog focuses on user-facing changes and improvements. For detailed technical changes, see the Git commit history.

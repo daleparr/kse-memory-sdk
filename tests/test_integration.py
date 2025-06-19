@@ -80,29 +80,29 @@ def sample_products():
 @pytest.fixture
 def test_config():
     """Create test configuration."""
-    return KSEConfig(
-        debug=True,
+    return KSEConfig.from_dict({
+        "debug": True,
         # Use in-memory backends for testing
-        vector_store={
+        "vector_store": {
             "backend": "memory",
         },
-        graph_store={
+        "graph_store": {
             "backend": "memory",
         },
-        concept_store={
+        "concept_store": {
             "backend": "memory",
         },
-        embedding={
+        "embedding": {
             "text_model": "sentence-transformers/all-MiniLM-L6-v2",
             "batch_size": 2,  # Small batch for testing
         },
-        conceptual={
+        "conceptual": {
             "auto_compute": False,  # Disable LLM for testing
         },
-        cache={
+        "cache": {
             "enabled": False,  # Disable cache for testing
         }
-    )
+    })
 
 
 @pytest.mark.asyncio

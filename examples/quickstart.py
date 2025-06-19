@@ -32,8 +32,11 @@ async def main():
     )
     
     # Update configuration components
+    # Note: API keys are automatically loaded from environment variables
+    # Copy .env.example to .env and fill in your actual values
+    
     config.vector_store.backend = "pinecone"
-    config.vector_store.api_key = "your-pinecone-api-key"
+    # config.vector_store.api_key is loaded from PINECONE_API_KEY env var
     config.vector_store.environment = "us-west1-gcp"
     config.vector_store.index_name = "kse-quickstart"
     config.vector_store.dimension = 384
@@ -41,20 +44,20 @@ async def main():
     config.graph_store.backend = "neo4j"
     config.graph_store.uri = "bolt://localhost:7687"
     config.graph_store.username = "neo4j"
-    config.graph_store.password = "password"
+    # config.graph_store.password is loaded from NEO4J_PASSWORD env var
     
     config.concept_store.backend = "postgresql"
     config.concept_store.host = "localhost"
     config.concept_store.port = 5432
     config.concept_store.database = "kse_concepts"
     config.concept_store.username = "postgres"
-    config.concept_store.password = "password"
+    # config.concept_store.password is loaded from POSTGRES_PASSWORD env var
     
     config.embedding.text_model = "sentence-transformers/all-MiniLM-L6-v2"
-    config.embedding.openai_api_key = "your-openai-api-key"
+    # config.embedding.openai_api_key is loaded from OPENAI_API_KEY env var
     
     config.conceptual.auto_compute = True
-    config.conceptual.llm_api_key = "your-openai-api-key"
+    # config.conceptual.llm_api_key is loaded from OPENAI_API_KEY env var
     
     # 2. Initialize KSE Memory
     kse = KSEMemory(config)

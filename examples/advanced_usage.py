@@ -62,8 +62,8 @@ async def advanced_configuration_example():
         # Conceptual configuration with LLM
         conceptual=ConceptualConfig(
             auto_compute=True,
-            llm_model="gpt-4",
-            llm_api_key="your-openai-api-key"
+            llm_model="gpt-4"
+            # llm_api_key is loaded from OPENAI_API_KEY env var
         ),
         
         # Advanced search configuration

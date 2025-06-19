@@ -41,12 +41,12 @@ class PerformanceBenchmark:
         print("=" * 60)
         
         # Initialize KSE Memory
-        config = KSEConfig(
-            debug=False,
-            vector_store={"backend": "memory"},
-            graph_store={"backend": "memory"},
-            concept_store={"backend": "memory"}
-        )
+        config = KSEConfig.from_dict({
+            "debug": False,
+            "vector_store": {"backend": "memory"},
+            "graph_store": {"backend": "memory"},
+            "concept_store": {"backend": "memory"}
+        })
         
         kse = KSEMemory(config)
         await kse.initialize("generic", {})

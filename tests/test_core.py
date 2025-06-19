@@ -436,17 +436,17 @@ class TestKSEMemoryIntegration:
     @pytest.fixture
     async def kse_memory_with_backends(self):
         """Create KSE Memory with real backend configurations."""
-        config = KSEConfig(
-            vector_store={
+        config = KSEConfig.from_dict({
+            "vector_store": {
                 "backend": "memory",  # Use memory for testing
             },
-            graph_store={
+            "graph_store": {
                 "backend": "memory",
             },
-            concept_store={
+            "concept_store": {
                 "backend": "memory",
             }
-        )
+        })
         kse = KSEMemory(config)
         await kse.initialize("generic", {})
         yield kse
@@ -531,11 +531,11 @@ class TestPerformance:
     @pytest.mark.performance
     async def test_search_performance(self):
         """Test search performance with larger dataset."""
-        config = KSEConfig(
-            vector_store={"backend": "memory"},
-            graph_store={"backend": "memory"},
-            concept_store={"backend": "memory"}
-        )
+        config = KSEConfig.from_dict({
+            "vector_store": {"backend": "memory"},
+            "graph_store": {"backend": "memory"},
+            "concept_store": {"backend": "memory"}
+        })
         kse = KSEMemory(config)
         await kse.initialize("generic", {})
         

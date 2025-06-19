@@ -19,12 +19,12 @@ class TestLangChainIntegration:
     @pytest.fixture
     async def kse_memory(self):
         """Create KSE Memory instance for testing."""
-        config = KSEConfig(
-            debug=True,
-            vector_store={"backend": "memory"},
-            graph_store={"backend": "memory"},
-            concept_store={"backend": "memory"}
-        )
+        config = KSEConfig.from_dict({
+            "debug": True,
+            "vector_store": {"backend": "memory"},
+            "graph_store": {"backend": "memory"},
+            "concept_store": {"backend": "memory"}
+        })
         kse = KSEMemory(config)
         await kse.initialize("generic", {})
         yield kse
@@ -181,12 +181,12 @@ class TestLlamaIndexIntegration:
     @pytest.fixture
     async def kse_memory(self):
         """Create KSE Memory instance for testing."""
-        config = KSEConfig(
-            debug=True,
-            vector_store={"backend": "memory"},
-            graph_store={"backend": "memory"},
-            concept_store={"backend": "memory"}
-        )
+        config = KSEConfig.from_dict({
+            "debug": True,
+            "vector_store": {"backend": "memory"},
+            "graph_store": {"backend": "memory"},
+            "concept_store": {"backend": "memory"}
+        })
         kse = KSEMemory(config)
         await kse.initialize("generic", {})
         yield kse
@@ -314,11 +314,11 @@ class TestIntegrationCompatibility:
     @pytest.mark.integration
     async def test_framework_interoperability(self):
         """Test that both frameworks can work with the same KSE instance."""
-        config = KSEConfig(
-            vector_store={"backend": "memory"},
-            graph_store={"backend": "memory"},
-            concept_store={"backend": "memory"}
-        )
+        config = KSEConfig.from_dict({
+            "vector_store": {"backend": "memory"},
+            "graph_store": {"backend": "memory"},
+            "concept_store": {"backend": "memory"}
+        })
         kse = KSEMemory(config)
         await kse.initialize("generic", {})
         
