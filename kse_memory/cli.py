@@ -98,7 +98,7 @@ def quickstart(demo_type: str, backend: str, no_browser: bool, output: Optional[
                     json.dump(results, f, indent=2, default=str)
                 console.print(f"[green]✓[/green] Results saved to {output}")
             
-            console.print("\n[bold green]🎉 Quickstart demo completed![/bold green]")
+            console.print("\n[bold green]Quickstart demo completed![/bold green]")
             console.print("Ready to integrate KSE Memory into your application.")
             
         except Exception as e:
@@ -179,7 +179,7 @@ def setup(interactive: bool, output: str):
             border_style="green"
         ))
         
-        console.print("\n🚀 Next steps:")
+        console.print("\nNext steps:")
         console.print("  1. Review the configuration file")
         console.print("  2. Set any required environment variables")
         console.print("  3. Run: kse quickstart")
@@ -578,7 +578,7 @@ def _display_search_results(results, query: str, search_type: str):
 
 def _display_benchmark_results(results: Dict[str, Any]):
     """Display benchmark results."""
-    console.print("\n[bold]📊 Benchmark Results[/bold]")
+    console.print("\n[bold]Benchmark Results[/bold]")
     
     # Summary table
     table = Table(show_header=True, header_style="bold blue")

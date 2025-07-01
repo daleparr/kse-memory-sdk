@@ -377,7 +377,7 @@ class KSEDashboard:
 <body>
     <div class="dashboard-container">
         <div class="header">
-            <h1>🧠 KSE Memory Dashboard</h1>
+            <h1>KSE Memory Dashboard</h1>
             <div class="search-container">
                 <input type="text" class="search-input" id="searchInput" placeholder="Search products..." />
                 <button class="search-button" onclick="performSearch()">Search</button>

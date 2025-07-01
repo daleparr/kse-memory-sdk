@@ -262,23 +262,23 @@ class SearchResultsExplainer:
         
         # Conceptual reasoning
         if conceptual_score > 0.7:
-            path.append(f"🎨 Excellent conceptual match: Product aligns with query intent (score: {conceptual_score:.2f})")
+            path.append(f"Excellent conceptual match: Product aligns with query intent (score: {conceptual_score:.2f})")
         elif conceptual_score > 0.5:
-            path.append(f"🎨 Good conceptual alignment: Product partially matches query concepts (score: {conceptual_score:.2f})")
+            path.append(f"Good conceptual alignment: Product partially matches query concepts (score: {conceptual_score:.2f})")
         else:
-            path.append(f"🎨 Weak conceptual match: Limited alignment with query intent (score: {conceptual_score:.2f})")
+            path.append(f"Weak conceptual match: Limited alignment with query intent (score: {conceptual_score:.2f})")
         
         # Graph reasoning
         if graph_score > 0.6:
-            path.append(f"🕸️ Strong relationship connections: Product well-connected to query context (score: {graph_score:.2f})")
+            path.append(f"Strong relationship connections: Product well-connected to query context (score: {graph_score:.2f})")
         elif graph_score > 0.3:
-            path.append(f"🕸️ Some relationship connections: Product has relevant associations (score: {graph_score:.2f})")
+            path.append(f"Some relationship connections: Product has relevant associations (score: {graph_score:.2f})")
         else:
-            path.append(f"🕸️ Limited connections: Few relevant relationships found (score: {graph_score:.2f})")
+            path.append(f"Limited connections: Few relevant relationships found (score: {graph_score:.2f})")
         
         # Final fusion
         final_score = (vector_score + conceptual_score + graph_score) / 3
-        path.append(f"⚡ Hybrid fusion: Combined all approaches for final score ({final_score:.2f})")
+        path.append(f"Hybrid fusion: Combined all approaches for final score ({final_score:.2f})")
         
         return path
     

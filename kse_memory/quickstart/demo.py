@@ -67,7 +67,7 @@ class QuickstartDemo:
             Demo results and metrics
         """
         console.print(Panel.fit(
-            "[bold blue]🚀 KSE Memory SDK - Quickstart Demo[/bold blue]\n"
+            "[bold blue]KSE Memory SDK - Quickstart Demo[/bold blue]\n"
             f"Running {demo_type} demo with hybrid AI search...",
             border_style="blue"
         ))
@@ -124,7 +124,7 @@ class QuickstartDemo:
     
     async def _setup_backend(self, preferred_backend: Optional[str] = None):
         """Setup backend using auto-detection or user preference."""
-        console.print("\n🔧 Setting up backend for optimal performance...")
+        console.print("\nSetting up backend for optimal performance...")
         
         if preferred_backend:
             # User specified a backend

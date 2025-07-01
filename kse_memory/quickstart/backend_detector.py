@@ -461,7 +461,7 @@ def auto_detect_and_setup() -> Tuple[BackendInfo, Dict[str, Any]]:
     """Main function to auto-detect backends and set up configuration."""
     
     console.print(Panel.fit(
-        "[bold blue]🚀 KSE Memory SDK - Smart Backend Setup[/bold blue]\n"
+        "[bold blue]KSE Memory SDK - Smart Backend Setup[/bold blue]\n"
         "Finding the best backend for your environment...",
         border_style="blue"
     ))
