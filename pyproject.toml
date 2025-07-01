@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kse-memory-sdk"
-version = "1.2.1"
-description = "Hybrid Knowledge Retrieval for Intelligent Applications"
+version = "2.0.0"
+description = "Industry-Agnostic Hybrid Knowledge Retrieval for Intelligent Applications"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.8"
@@ -13,8 +13,9 @@ authors = [
     {name = "KSE Memory Team", email = "team@kse-memory.com"},
 ]
 keywords = [
-    "ai", "search", "retrieval", "knowledge-graph", "embeddings", 
-    "conceptual-spaces", "hybrid-ai", "product-intelligence", "rag"
+    "ai", "search", "retrieval", "knowledge-graph", "embeddings",
+    "conceptual-spaces", "hybrid-ai", "universal-data-model", "rag",
+    "healthcare", "finance", "real-estate", "enterprise", "research", "retail"
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
