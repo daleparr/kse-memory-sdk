@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kse-memory-sdk"
-version = "2.0.0"
+version = "3.0.0a1"
 description = "Industry-Agnostic Hybrid Knowledge Retrieval for Intelligent Applications"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     {name = "KSE Memory Team", email = "team@kse-memory.com"},
 ]
@@ -38,6 +38,8 @@ dependencies = [
     "asyncio-mqtt>=0.11.0",
     "aiofiles>=23.0.0",
     "httpx>=0.24.0",
+    "onnxruntime>=1.16.0",
+    "hnswlib>=0.8.0",
     "rich>=13.0.0",
     "click>=8.0.0",
     "pyyaml>=6.0.0",
@@ -130,7 +132,7 @@ include = [
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py39']
 include = '\.pyi?$'
 extend-exclude = '''
 /(

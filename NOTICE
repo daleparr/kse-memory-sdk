@@ -1,0 +1,10 @@
+KSE Memory SDK — Notices
+
+Origin & IP: KSE (Knowledge Space Embeddings) was conceived by Dale Parr prior
+to his employment at EY. EY has sanctioned continued operation of this
+open-source project (verbal sanction recorded 2026-08-29).
+TODO(D-01): replace with reference to written sanction record before the
+public v3.0 launch push. See BD5_Decision_Log.md entry D-01.
+
+Claims policy (GOV-01): no performance claim in this repository may cite
+simulated outputs. See simulations/ warning headers and benchmarks/README.md.

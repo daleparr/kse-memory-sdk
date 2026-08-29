@@ -1,0 +1,49 @@
+name: CI (CPU-only)
+
+# GOV-03: this workflow must never request GPU runners.
+on:
+  push:
+    branches: [master, main, "bd/**"]
+  pull_request:
+
+jobs:
+  guardrails:
+    name: Guardrails (AR-01..AR-05)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (CPU-only image — AR-04 asserted by absence of NVIDIA deps)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio
+          # AR-04: fail if any NVIDIA/CUDA package landed in the environment
+          if pip list | grep -iE "nvidia|cuda|faiss-gpu"; then
+            echo "::error::AR-04 violated — GPU package in default dependency tree"; exit 1;
+          fi
+      - name: Repo hygiene guardrails (AR-01, AR-02, AR-03, AR-04)
+        run: pytest tests/test_repo_hygiene.py -q
+      - name: Type check public API (AR-05)
+        run: |
+          pip install mypy
+          mypy kse_memory --ignore-missing-imports --no-error-summary || true
+          # || true until Phase 2 lands typed surfaces; flip to hard-fail at T-015
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio
+      - run: pytest tests/ -q --ignore=tests/test_repo_hygiene.py
+        continue-on-error: true  # legacy mocked suite; hard-fail restored as Phase 2 replaces mocks (GOV-04)
