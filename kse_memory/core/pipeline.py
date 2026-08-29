@@ -27,6 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Mapping, Optional, Sequence
 
+from .dimension_store import DimensionScores
 from .ingest import content_hash, normalise_record
 from .models import Entity
 from .projection import (
@@ -64,11 +65,13 @@ class IngestPipeline:
         *,
         graph_store=None,
         vector_store=None,
+        concept_store=None,
     ) -> None:
         self.schema = schema
         self.embedder = embedder
         self.graph_store = graph_store
         self.vector_store = vector_store
+        self.concept_store = concept_store
         self._centroids: Optional[Dict[str, List[float]]] = None
 
     @property
@@ -103,11 +106,21 @@ class IngestPipeline:
         if self.graph_store is not None:
             changed = await upsert_projection(projection, self.graph_store)
         else:
-            changed = self.vector_store is not None
+            changed = self.vector_store is not None or self.concept_store is not None
 
         if changed and self.vector_store is not None:
             await self.vector_store.upsert_vectors(
                 [(entity.id, vector, self._metadata(entity, projection))]
+            )
+
+        if changed and self.concept_store is not None:
+            await self.concept_store.store_dimensions(
+                entity.id,
+                DimensionScores(
+                    schema_name=projection.schema_name,
+                    schema_version=projection.schema_version,
+                    scores=dict(projection.scores),
+                ),
             )
 
         written = changed

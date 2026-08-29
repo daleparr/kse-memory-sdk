@@ -198,6 +198,45 @@ class ConceptStoreInterface(ABC):
         """Get statistics for each conceptual dimension."""
         pass
 
+    # ------------------------------------------------------------------ TC-04
+    # Schema-driven surface. The ConceptualDimensions methods above are the
+    # legacy shape: ten hardcoded fashion axes, which cannot express a user's
+    # own schema. These methods are the generalisation.
+    #
+    # They are concrete rather than abstract so the generalisation does not
+    # break backends that have not migrated yet: an unmigrated store keeps
+    # working through the legacy surface and fails loudly, naming itself, the
+    # moment schema-driven scores are asked of it. Silent no-ops would be far
+    # worse than an explicit error.
+
+    async def store_dimensions(self, entity_id: str, scores) -> bool:
+        """Store schema-driven dimension scores for an entity."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented store_dimensions; it "
+            "still only supports the legacy ConceptualDimensions surface."
+        )
+
+    async def get_dimensions(self, entity_id: str):
+        """Get schema-driven dimension scores for an entity."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented get_dimensions; it "
+            "still only supports the legacy ConceptualDimensions surface."
+        )
+
+    async def delete_dimensions(self, entity_id: str) -> bool:
+        """Delete schema-driven dimension scores for an entity."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented delete_dimensions; it "
+            "still only supports the legacy ConceptualDimensions surface."
+        )
+
+    async def find_similar_dimensions(self, scores, threshold: float = 0.8, limit: int = 10):
+        """Find entities with similar scores, within the same schema."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented find_similar_dimensions; "
+            "it still only supports the legacy ConceptualDimensions surface."
+        )
+
 
 class EmbeddingServiceInterface(ABC):
     """Interface for embedding generation services."""

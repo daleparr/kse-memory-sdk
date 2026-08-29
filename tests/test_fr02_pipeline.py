@@ -227,3 +227,46 @@ async def test_vector_only_pipeline_still_writes(schema):
     result = await p.ingest(RECORD)
     assert result.written is True
     assert result.entity.id in vectors.vectors
+
+
+class FakeConceptStore:
+    def __init__(self):
+        self.stored = {}
+        self.calls = 0
+
+    async def store_dimensions(self, entity_id, scores):
+        self.calls += 1
+        self.stored[entity_id] = scores
+        return True
+
+    async def get_dimensions(self, entity_id):
+        return self.stored.get(entity_id)
+
+
+async def test_concept_store_receives_schema_driven_scores(schema, stores):
+    """TC-04: the projection's dimensions reach the concept store intact."""
+    graph, vectors = stores
+    concepts = FakeConceptStore()
+    p = IngestPipeline(schema, CountingEmbedder(), graph_store=graph,
+                       vector_store=vectors, concept_store=concepts)
+
+    result = await p.ingest(RECORD)
+
+    stored = concepts.stored[result.entity.id]
+    assert dict(stored.scores) == dict(result.projection.scores)
+    assert stored.schema_name == "s"
+    assert stored.schema_version == "1.0.0"
+
+
+async def test_concept_store_write_is_incremental(schema, stores):
+    graph, vectors = stores
+    concepts = FakeConceptStore()
+    p = IngestPipeline(schema, CountingEmbedder(), graph_store=graph,
+                       vector_store=vectors, concept_store=concepts)
+
+    await p.ingest(RECORD)
+    before = concepts.calls
+    result = await p.ingest(dict(RECORD))
+
+    assert result.written is False
+    assert concepts.calls == before

@@ -122,3 +122,19 @@ Template:
 **State:** 77/77 new suites green, 1 skipped; 134 tests collect clean CPU-only; AR-04 gate clean.
 **Next:** ConceptStoreInterface generalisation (unblocks TC-04), then point the quickstart at IngestPipeline once a model is cached.
 
+## 2026-08-29 — Session 8-CC (Claude Code, parallel track) — ConceptStoreInterface generalised
+**Phase/tasks:** TC-04's last structural blocker. TC-first (16 tests, verified RED first).
+**Delivered:**
+- kse_memory/core/dimension_store.py — DimensionScores (frozen; carries schema name + version, rejects scores outside [0,1]) and InMemoryDimensionStore, a working reference store needing no service (AR-01).
+- ConceptStoreInterface gains store_dimensions / get_dimensions / delete_dimensions / find_similar_dimensions. Deliberately concrete, not abstract: an unmigrated backend keeps working through the legacy surface and raises NotImplementedError naming itself the moment schema-driven scores are asked of it. Making them abstract would have broken every existing backend at import.
+- Similarity is scoped to schema_key. Two schemas may both define "risk" and mean unrelated things; scores across schemas are not commensurable and are never compared.
+- ConceptStoreAdapter — the single seam translating legacy ConceptualDimensions to/from generic scores, so the deprecation has one place to delete.
+- IngestPipeline gains concept_store; dimension scores are written under the same incremental verdict as the graph and vector writes.
+- Verified end to end against a real onnxruntime session with a pharma schema (trial_phase_maturity, regulatory_burden): arbitrary user vocabulary stored and searched, no fashion axes anywhere in the path.
+**Pre-existing defect found (not introduced here):** MongoDBBackend declares ConceptStoreInterface but leaves 5 legacy abstract methods unimplemented, so it cannot be instantiated at all. All 5 predate this change. PostgreSQLBackend is unaffected.
+**NOT done:**
+- PostgreSQLBackend and MongoDBBackend are not migrated. Postgres has the fashion vocabulary in its DDL (elegance/comfort/luxury as literal REAL columns), so migrating it is a data-migration decision, not a code edit, and neither backend can be tested here.
+- ConceptualDimensions itself still exists in models.py; TC-04 is unblocked but not closed until the backends migrate and the legacy class goes.
+**State:** 93/93 new suites green, 1 skipped; 150 tests collect clean CPU-only.
+**Next:** migrate a backend (Postgres JSONB or Mongo document) behind the generic surface; then point quickstart at IngestPipeline once a model is cached.
+
