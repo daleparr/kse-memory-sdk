@@ -10,9 +10,11 @@
 ## What it is
 
 Pure vector search answers "what is *similar* to this text?" It struggles with graded,
-multi-attribute intent: *comfortable minimalist running shoes*, *low-risk income funds
-with ESG tilt*, *concise beginner-friendly docs about auth*. KSE adds two more
-retrieval channels alongside dense vectors and fuses all three:
+multi-attribute intent — the way experts actually rank things in any domain:
+*low-risk income funds with ESG tilt*, *comfortable minimalist running shoes*,
+*aggressive indemnity clauses in recent precedents*, *concise beginner-friendly docs
+about auth*. KSE adds two more retrieval channels alongside dense vectors and fuses
+all three:
 
 1. **Neural embeddings** — semantic similarity (local ONNX model by default; no API key).
 2. **Conceptual dimensions** — *you* define a small schema of graded, business-meaningful
@@ -66,10 +68,11 @@ for r in results:
           r.knowledge_graph_similarity, r.product.title)
 ```
 
-Define your own dimensions (any domain — no built-in vocabulary):
+Define your own dimensions — any domain, no built-in vocabulary. The same substrate
+runs both of these unchanged; only the YAML differs:
 
 ```yaml
-# dimensions.yaml
+# dimensions.retail.yaml
 dimensions:
   - name: comfort
     description: physical comfort in extended use
@@ -78,6 +81,21 @@ dimensions:
     description: visual and functional restraint
     anchors: ["clean single-tone design", "no excess branding", "essential features only"]
 ```
+
+```yaml
+# dimensions.fixed-income.yaml
+dimensions:
+  - name: credit_quality
+    description: issuer creditworthiness and covenant strength
+    anchors: ["investment grade, strong covenants", "stable senior secured", "low default history"]
+  - name: liquidity
+    description: ease of exit at fair value
+    anchors: ["deep on-the-run market", "tight bid-ask", "high daily turnover"]
+```
+
+In regulated domains the per-channel provenance on every result doubles as an
+audit trail: the ranking decomposes into named dimension scores, graph
+relationships, and similarity — evidence, not a black box.
 
 ## Integrations
 

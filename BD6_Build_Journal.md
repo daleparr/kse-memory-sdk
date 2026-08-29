@@ -81,3 +81,7 @@ Template:
 **Done:** D-12 recorded (aha statement, brand essence "judgement with receipts", tagline, category claim, positioning, beachhead, competitive frames, Mom Test discovery approach). BD8 +T-057 (side-by-side slider demo, flagship launch asset) and +T-058 (launch copy per D-12, GOV-01 claims audit). BD4 +TC-23 tying the demo to AR-03.
 **Note:** D-12 explicitly subordinates marketing to GOV-01 — value statements remain labelled hypotheses until US5 artefacts exist. Brand and constitution now point the same direction.
 **Next:** unchanged — FR-02 TC-first.
+
+## 2026-08-29 — Session 7 (framing correction: universal substrate)
+**Done:** D-13 recorded — universal identity (any industry, FS or non-FS); supersedes D-12's beachhead clause. Flagship demo respecified as dual-domain schema-swap (T-057 amended): one substrate, FS screening + product search, schemas swapped live — universality proven, not claimed. T-058 gains D-13 domain-neutral language audit. README updated: multi-domain examples incl. fixed-income schema; provenance-as-audit-trail note for regulated domains. Hygiene suite still green (claims scan unaffected).
+**Next:** unchanged — FR-02 TC-first.
