@@ -40,9 +40,11 @@ __all__ = [
     "Projection",
     "TEXT_FIELDS",
     "default_cache_dir",
+    "default_model_dir",
     "default_model_path",
     "project",
     "score_dimensions",
+    "upsert_projection",
 ]
 
 #: Default local embedding model (D-04: all-MiniLM-L6-v2, ONNX int8).
@@ -75,14 +77,19 @@ def default_cache_dir() -> Path:
     return Path.home() / ".cache" / "kse"
 
 
-def default_model_path(model_id: str = DEFAULT_MODEL_ID) -> Path:
-    """Where a given model is expected to live inside the cache.
+def default_model_dir(model_id: str = DEFAULT_MODEL_ID) -> Path:
+    """The directory holding one model's artefacts (``model.onnx``, ``vocab.txt``).
 
     Namespaced by model id so several models can coexist and so a model
     upgrade cannot silently reuse a stale artefact — the id is part of a
     projection's replay identity.
     """
-    return default_cache_dir() / "models" / model_id / "model.onnx"
+    return default_cache_dir() / "models" / model_id
+
+
+def default_model_path(model_id: str = DEFAULT_MODEL_ID) -> Path:
+    """Where a given model's ONNX graph is expected to live."""
+    return default_model_dir(model_id) / "model.onnx"
 
 
 class ModelNotAvailableError(RuntimeError):
@@ -121,8 +128,17 @@ class OnnxEmbedder:
     mysterious.
     """
 
-    def __init__(self, model_path=None, model_id: str = DEFAULT_MODEL_ID) -> None:
-        path = Path(model_path) if model_path is not None else default_model_path(model_id)
+    def __init__(self, model_path=None, model_id: str = DEFAULT_MODEL_ID, model_dir=None) -> None:
+        if model_dir is not None:
+            directory = Path(model_dir)
+            path = directory / "model.onnx"
+        elif model_path is not None:
+            path = Path(model_path)
+            directory = path.parent
+        else:
+            directory = default_model_dir(model_id)
+            path = directory / "model.onnx"
+
         if not path.exists():
             raise ModelNotAvailableError(
                 f"embedding model not found at local path: {path}\n"
@@ -131,8 +147,10 @@ class OnnxEmbedder:
                 "KSE_CACHE_DIR to a cache that already contains it."
             )
         self.model_path = path
+        self.model_dir = directory
         self.model_id = model_id
         self._session = None
+        self._tokenizer = None
 
     def _ensure_session(self):
         if self._session is None:
@@ -143,11 +161,50 @@ class OnnxEmbedder:
             )
         return self._session
 
+    @property
+    def tokenizer(self):
+        """The WordPiece tokeniser, loaded from ``vocab.txt`` on first use."""
+        if self._tokenizer is None:
+            from .tokenizer import WordPieceTokenizer
+
+            self._tokenizer = WordPieceTokenizer.from_model_dir(self.model_dir)
+        return self._tokenizer
+
     def embed(self, texts: Sequence[str]) -> List[List[float]]:
-        raise NotImplementedError(
-            "ONNX inference lands with T-008's tokeniser work; the embedder "
-            "contract and its no-download guarantee are complete and tested."
-        )
+        """Embed ``texts`` into L2-normalised sentence vectors.
+
+        Mean-pools the final hidden states over real tokens only. The
+        attention mask is applied before averaging, so a short text batched
+        with a long one is unaffected by the padding between them — batching
+        is a performance decision and must never change a result.
+        """
+        import numpy as np
+
+        if not texts:
+            return []
+
+        encoded = self.tokenizer.encode_batch(list(texts))
+        session = self._ensure_session()
+
+        # Models differ on whether they accept token_type_ids; feed only what
+        # this graph declares, or onnxruntime rejects the call.
+        declared = {i.name for i in session.get_inputs()}
+        feed = {k: v for k, v in encoded.items() if k in declared}
+        missing = declared - set(feed)
+        if missing:
+            raise ValueError(
+                f"model expects inputs this tokeniser does not provide: {sorted(missing)}"
+            )
+
+        hidden = np.asarray(session.run(None, feed)[0], dtype=np.float64)
+        mask = encoded["attention_mask"].astype(np.float64)[..., None]
+
+        summed = (hidden * mask).sum(axis=1)
+        counts = np.clip(mask.sum(axis=1), 1e-9, None)
+        pooled = summed / counts
+
+        norms = np.clip(np.linalg.norm(pooled, axis=1, keepdims=True), 1e-12, None)
+        return (pooled / norms).tolist()
 
 
 def _entity_text(entity: Entity) -> str:
@@ -230,3 +287,74 @@ def project(entity: Entity, schema: DimensionSchema, embedder) -> Projection:
         model_id=getattr(embedder, "model_id", "unknown"),
         scores=score_dimensions(entity, schema, embedder),
     )
+
+
+#: Relationship type linking an entity to one scored dimension.
+SCORED_AS = "SCORED_AS"
+
+#: Node-id prefix for dimension nodes, namespaced by schema so two schemas
+#: naming the same dimension do not collide in one graph.
+def dimension_node_id(schema_name: str, dimension: str) -> str:
+    """Stable node id for a dimension within a schema."""
+    return f"dim:{schema_name}:{dimension}"
+
+
+def _identity(projection: "Projection") -> Dict[str, str]:
+    """The triple that decides whether stored state is current (BD4 Replay)."""
+    return {
+        "content_hash": projection.content_hash,
+        "schema_version": projection.schema_version,
+        "model_id": projection.model_id,
+    }
+
+
+async def upsert_projection(projection: "Projection", graph_store) -> bool:
+    """Write ``projection`` into the graph, incrementally.
+
+    Returns ``True`` if anything was written, ``False`` if the stored state was
+    already current. The check is the replay identity: if content hash, schema
+    version and model id all match what the node carries, nothing about the
+    projection can have changed, so the write is skipped entirely.
+
+    Stale edges are removed when a schema narrows, so a dimension dropped from
+    the schema does not linger as an orphaned score.
+
+    Guardrails honoured: AR-01 — this touches only the supplied store.
+    """
+    node_id = projection.entity_id
+    existing = await graph_store.get_node(node_id)
+    identity = _identity(projection)
+
+    if existing:
+        properties = existing.get("properties", {}) or {}
+        if all(properties.get(k) == v for k, v in identity.items()):
+            return False  # already current — the incremental guarantee
+
+    node_properties = {
+        **identity,
+        "schema_name": projection.schema_name,
+    }
+    if existing:
+        await graph_store.update_node(node_id, node_properties)
+    else:
+        await graph_store.create_node(node_id, ["Entity"], node_properties)
+
+    # Drop edges for dimensions this projection no longer scores. Existing
+    # edges are discovered through GraphStoreInterface.get_neighbors rather
+    # than any backend's internals, so this works against a real store.
+    wanted = {
+        dimension_node_id(projection.schema_name, name) for name in projection.scores
+    }
+    for neighbour in await graph_store.get_neighbors(node_id, [SCORED_AS]) or []:
+        target = neighbour.get("id") if isinstance(neighbour, Mapping) else neighbour
+        if target and target not in wanted:
+            await graph_store.delete_relationship(node_id, target, SCORED_AS)
+
+    for name, score in projection.scores.items():
+        await graph_store.create_relationship(
+            node_id,
+            dimension_node_id(projection.schema_name, name),
+            SCORED_AS,
+            {"score": score, "schema_version": projection.schema_version},
+        )
+    return True

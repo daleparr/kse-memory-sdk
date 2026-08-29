@@ -18,7 +18,7 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 - [X] TC first: failing test for FR-01 (GOV-04) — tests/test_fr01_ingest.py, 8 tests, verified red then green
 - [X] T-007 Implement FR-01: Ingest: adapter pulls item → normalise to universal record; SHA-256 content hash for dedupe/replay
 - [X] TC first: failing test for FR-02 (GOV-04) — tests/test_fr02_projection.py, 17 tests, verified RED (ModuleNotFoundError) before implementation
-- [ ] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental
+- [X] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental — all three limbs implemented; embedding verified against a real onnxruntime session but NOT yet against an actual MiniLM export (no model cached; AR-01 forbids fetching one in tests)
 - [ ] TC first: failing test for FR-03 (GOV-04)
 - [ ] T-009 Implement FR-03: Query parse: embed query; map to dimension targets via embedding similarity against each dimension's anchor descriptions
 - [ ] TC first: failing test for FR-04 (GOV-04)

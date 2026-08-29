@@ -85,3 +85,18 @@ Template:
 ## 2026-08-29 — Session 7 (framing correction: universal substrate)
 **Done:** D-13 recorded — universal identity (any industry, FS or non-FS); supersedes D-12's beachhead clause. Flagship demo respecified as dual-domain schema-swap (T-057 amended): one substrate, FS screening + product search, schemas swapped live — universality proven, not claimed. T-058 gains D-13 domain-neutral language audit. README updated: multi-domain examples incl. fixed-income schema; provenance-as-audit-trail note for regulated domains. Hygiene suite still green (claims scan unaffected).
 **Next:** unchanged — FR-02 TC-first.
+
+## 2026-08-29 — Session 6-CC (Claude Code, parallel track) — T-008 complete
+**Phase/tasks:** T-008 all three limbs. TC-first throughout (each suite verified RED first).
+**Delivered:**
+- kse_memory/core/tokenizer.py — hand-written BERT-uncased WordPiece (NFD accent strip, lowercase, punctuation split, greedy longest-match with ## continuations). Written rather than delegated because `transformers` requires torch, which pulls the CUDA stack and breaks AR-04 outright; `tokenizers` avoids torch but adds a compiled dependency. Zero new dependencies.
+- OnnxEmbedder.embed() — masked mean-pool over final hidden states, then L2 normalise. The feed is built from `session.get_inputs()` because models differ on token_type_ids.
+- upsert_projection() — incremental graph write. Skips entirely when the stored replay identity (content hash + schema version + model id) already matches; removes stale edges when a schema narrows.
+**Verification:**
+- 64/64 new suites green, 1 skipped (real-model integration, skips when no model cached). 121 tests collect clean CPU-only. AR-04 gate clean.
+- Built a genuine ONNX encoder (real Gather op) and ran it through onnxruntime: L2 norms exactly 1.0, batch-invariance max abs diff 0.0, end-to-end project() bounded and differentiated. This proves the tokeniser's int64 arrays are accepted by real onnxruntime, not just by a fake.
+- Caught during implementation: the first stale-edge cleanup read `graph_store.relationships`, an attribute only the test fake has. It would have silently no-opped against Neo4j. Rewritten to use GraphStoreInterface.get_neighbors, and mutation-tested (disabling cleanup now fails the test).
+**NOT verified:**
+- No actual all-MiniLM-L6-v2 export has been run. Tokeniser correctness against the real 30522-token vocab, and agreement with sentence-transformers reference embeddings, are unproven. Needs a model fetched out of band into ~/.cache/kse (D-14); the integration test un-skips automatically once one is there.
+- TC-04's "no fashion vocabulary in the default path" still holds only for the new modules; legacy ConceptualDimensions and ~10 files still carry it.
+**Next:** fetch a MiniLM export to un-skip the integration test; then wire projection into the ingest path so the legacy dimensions can be retired.
