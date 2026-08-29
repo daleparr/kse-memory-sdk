@@ -29,3 +29,13 @@ Template:
 **Blocked:** none.
 **BD3 updates propagated:** no spec changes needed (defect list unchanged; remediation of first two root-clutter/claims defects noted here).
 **Next:** Phase 2 — TC-first for FR-01 (ingest/normalise/content-hash), then FR-02 projection pipeline (ONNX embed + schema scorer + graph upsert).
+
+## 2026-08-29 — Session 2 (chat-container; user moving to Claude Code)
+**Phase/tasks:** Phase 2 — TC(FR-01) + T-007 complete.
+**Done:**
+- TC first: tests/test_fr01_ingest.py (8 tests) — normalise-to-Entity, deterministic kse-<hash16> ids, required-field validation, unknown-key preservation, SHA-256 content hash invariant under key order/volatile fields/round-trip, hash changes iff content changes. Verified RED (ModuleNotFoundError) before implementing.
+- T-007: kse_memory/core/ingest.py — normalise_record + content_hash over canonical CONTENT_FIELDS payload; volatile fields (id, timestamps, embeddings, graph ids) excluded from identity. GREEN 8/8; hygiene suite still 6/6.
+- DEFECT FOUND & FIXED (bonus): package failed to import in any environment without the visual extras — Image.Image annotation in services/embedding.py evaluated at class-definition time, defeating the optional-import guard. Fixed via `from __future__ import annotations`. The mocked legacy suite never caught this; first unmocked test run did. Validates GOV-04's no-mocks preference.
+**Known cleanup (not scoped):** datetime.utcnow() deprecation warnings in core/models.py — fold into T-015 typing pass.
+**BD3 updates propagated:** none needed; FR-01 implemented as specified.
+**Next:** FR-02 — TC first for the projection pipeline: ONNX MiniLM local embed (model from local cache path — must pass under no_network fixture), schema-driven dimension scorer (US4 YAML loader lands first), incremental graph upsert.

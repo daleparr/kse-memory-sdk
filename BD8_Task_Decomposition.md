@@ -15,8 +15,8 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 
 ## Phase 2 — Foundation (FR-01..FR-04 + confirmed guardrails)
 
-- [ ] TC first: failing test for FR-01 (GOV-04)
-- [ ] T-007 Implement FR-01: Ingest: adapter pulls item → normalise to universal record; SHA-256 content hash for dedupe/replay
+- [X] TC first: failing test for FR-01 (GOV-04) — tests/test_fr01_ingest.py, 8 tests, verified red then green
+- [X] T-007 Implement FR-01: Ingest: adapter pulls item → normalise to universal record; SHA-256 content hash for dedupe/replay
 - [ ] TC first: failing test for FR-02 (GOV-04)
 - [ ] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental
 - [ ] TC first: failing test for FR-03 (GOV-04)
