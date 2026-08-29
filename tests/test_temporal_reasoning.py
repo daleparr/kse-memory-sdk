@@ -1,3 +1,5 @@
+import pytest
+pytest.importorskip("torch", reason="requires [dev-heavy] extras — not part of CPU-only default suite (AR-04)")
 """
 Comprehensive test suite for temporal reasoning functionality
 """

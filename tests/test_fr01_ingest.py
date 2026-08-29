@@ -94,3 +94,29 @@ def test_content_hash_survives_roundtrip_replay():
     e = normalise_record(dict(RAW))
     replayed = Entity.from_dict(e.to_dict())
     assert content_hash(e) == content_hash(replayed)
+
+
+# ------------------------------------------------- review findings (session 3)
+def test_content_hash_is_tag_order_invariant():
+    """Tags are set-like for identity: reordering must not trigger re-projection."""
+    e1 = normalise_record({**RAW, "tags": ["running", "trail"]})
+    e2 = normalise_record({**RAW, "tags": ["trail", "running"]})
+    assert content_hash(e1) == content_hash(e2)
+
+
+def test_content_hash_rejects_non_serialisable_content():
+    """Silent str() fallback embeds memory addresses → non-deterministic hashes.
+    FR-01 must fail loudly instead of corrupting replay identity."""
+
+    class Weird:
+        pass
+
+    # With no explicit id, identity derives from the hash — so bad content
+    # fails at the ingest door, which is exactly where we want it.
+    with pytest.raises(ValueError, match="not deterministically serialisable"):
+        normalise_record({**RAW, "gadget": Weird()})
+
+    # With an explicit id, ingest defers hashing; the hash call itself must fail.
+    e = normalise_record({**RAW, "id": "sku-9", "gadget": Weird()})
+    with pytest.raises(ValueError, match="not deterministically serialisable"):
+        content_hash(e)

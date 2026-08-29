@@ -80,6 +80,9 @@ def normalise_record(raw: Mapping[str, Any]) -> Entity:
     return entity
 
 
+_SET_LIKE_FIELDS = frozenset({"tags"})  # order carries no meaning for identity
+
+
 def _canonical_payload(entity: Entity) -> Dict[str, Any]:
     """Extract the content fields in a canonical, hash-stable form."""
     payload: Dict[str, Any] = {}
@@ -87,6 +90,8 @@ def _canonical_payload(entity: Entity) -> Dict[str, Any]:
         value = getattr(entity, field_name, None)
         if value in (None, [], {}, ""):
             continue  # absent and empty are equivalent for identity purposes
+        if field_name in _SET_LIKE_FIELDS and isinstance(value, list):
+            value = sorted(str(v) for v in value)
         payload[field_name] = value
     return payload
 
@@ -98,11 +103,19 @@ def content_hash(entity: Entity) -> str:
     updated_at, embeddings, conceptual scores, knowledge_graph_id), and
     ``to_dict``/``from_dict`` round-trips. Changes iff content changes.
     """
-    canonical = json.dumps(
-        _canonical_payload(entity),
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        default=str,  # tolerate Decimal/dates inside user metadata deterministically
-    )
+    try:
+        canonical = json.dumps(
+            _canonical_payload(entity),
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            # No default= fallback: str() on arbitrary objects embeds memory
+            # addresses, silently corrupting replay identity (session-3 review).
+        )
+    except TypeError as exc:
+        raise ValueError(
+            "entity content is not deterministically serialisable for hashing; "
+            "convert custom objects to JSON-safe values before ingest "
+            f"(offending entity id={entity.id!r}): {exc}"
+        ) from exc
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()

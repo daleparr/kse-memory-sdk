@@ -39,3 +39,13 @@ Template:
 **Known cleanup (not scoped):** datetime.utcnow() deprecation warnings in core/models.py — fold into T-015 typing pass.
 **BD3 updates propagated:** none needed; FR-01 implemented as specified.
 **Next:** FR-02 — TC first for the projection pipeline: ONNX MiniLM local embed (model from local cache path — must pass under no_network fixture), schema-driven dimension scorer (US4 YAML loader lands first), incremental graph upsert.
+
+## 2026-08-29 — Session 3 (progress review + fixes)
+**Phase/tasks:** Review of Sessions 1–2; two FR-01 defects found and fixed test-first.
+**Findings & fixes:**
+- DEFECT (invariant violation): content_hash used json.dumps(default=str) — arbitrary objects in metadata hashed via str() incl. memory address → NON-DETERMINISTIC replay identity. Fixed: no fallback serialiser; non-JSON-safe content now raises ValueError at the ingest door (or at hash time when an explicit id deferred hashing). Red tests added first.
+- DESIGN FIX: tag reordering changed the hash → spurious re-projection. Tags now treated as set-like (sorted) in the canonical payload. Red test added first.
+- Legacy suite hygiene: 4 test files crashed collection on torch imports; guarded with pytest.importorskip so the CPU-only CI soft-fail job reports real results (58 legacy tests now collectable without torch).
+**State after review:** new suites 16/16 green; 72 tests collect cleanly; BD8 24 done / 58 open; branch 3 commits ahead of master.
+**BD3 updates propagated:** none — FR-01 spec unchanged; canonicalisation details are implementation-level.
+**Next:** unchanged — FR-02 TC-first (ONNX local-cache embed under no_network; US4 schema loader before scorer).
