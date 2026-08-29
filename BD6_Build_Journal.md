@@ -49,3 +49,10 @@ Template:
 **State after review:** new suites 16/16 green; 72 tests collect cleanly; BD8 24 done / 58 open; branch 3 commits ahead of master.
 **BD3 updates propagated:** none — FR-01 spec unchanged; canonicalisation details are implementation-level.
 **Next:** unchanged — FR-02 TC-first (ONNX local-cache embed under no_network; US4 schema loader before scorer).
+
+## 2026-08-29 — Session 4 (hotfix: GH Actions failures)
+**Trigger:** user's push ran legacy v2 'Tests' workflow — 3.8 failed in 23s, 3.9/3.10/3.11 cancelled.
+**Diagnosis:** tests.yml survived Session 1 (T-005 audit gap — only root *.md was swept, not .github/workflows/). Its 3.8 job fails at `pip install -e .[dev]` because requires-python>=3.9 (T-003) makes pip refuse the install — correct constraint, obsolete workflow. Siblings cancelled by default fail-fast:true.
+**Fix:** deleted .github/workflows/tests.yml (superseded by ci.yml); added fail-fast:false to ci.yml unit matrix so full matrix verdicts are always visible.
+**Lesson:** Phase-1 sweeps must enumerate .github/, not just repo root. Added to session checklist mentally; no BD3 change needed.
+**Next:** unchanged — FR-02 TC-first.
