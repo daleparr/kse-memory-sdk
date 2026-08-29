@@ -1,5 +1,6 @@
 import pytest
 pytest.importorskip("torch", reason="requires [dev-heavy] extras — not part of CPU-only default suite (AR-04)")
+pytest.importorskip("pandas", reason="requires [dev-heavy] extras — not part of CPU-only default suite (AR-04)")
 #!/usr/bin/env python3
 """
 Incremental Updates Analysis: KSE vs RAG
