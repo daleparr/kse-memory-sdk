@@ -43,7 +43,6 @@ dependencies = [
     "rich>=13.0.0",
     "click>=8.0.0",
     "pyyaml>=6.0.0",
-    "sentence-transformers>=2.2.0",
     "scikit-learn>=1.3.0",
     "networkx>=3.0.0",
     "redis>=4.5.0",
@@ -60,6 +59,13 @@ llamaindex = [
     "llama-index>=0.9.0",
     "llama-index-core>=0.9.0",
 ]
+
+# Embedding backends
+# sentence-transformers requires torch, and the Linux PyPI torch wheel pulls
+# the full NVIDIA CUDA stack (~20 nvidia-* packages, cuda-toolkit, triton).
+# Kept out of the default tree per AR-04 / GOV-03; the import is already
+# guarded in kse_memory/services/embedding.py.
+embeddings = ["sentence-transformers>=2.2.0"]
 
 # Vector stores
 pinecone = ["pinecone-client>=3.0.0"]
@@ -106,7 +112,7 @@ dev = [
 
 # All optional dependencies
 all = [
-    "kse-memory-sdk[langchain,llamaindex,pinecone,weaviate,qdrant,chroma,milvus,neo4j,arangodb,mongodb,visual,shopify,woocommerce]"
+    "kse-memory-sdk[embeddings,langchain,llamaindex,pinecone,weaviate,qdrant,chroma,milvus,neo4j,arangodb,mongodb,visual,shopify,woocommerce]"
 ]
 
 [project.urls]

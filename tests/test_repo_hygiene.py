@@ -90,13 +90,79 @@ def test_ar03_no_placeholder_arxiv_badge():
 
 
 # ---------------------------------------------------------------- AR-04
+# Distributions that pull torch, and therefore the full NVIDIA CUDA stack from
+# the Linux PyPI wheels, without naming CUDA anywhere in their own requirement
+# string. A literal substring scan is blind to every one of these.
+_GPU_TRANSITIVE = frozenset(
+    {
+        "sentence-transformers",
+        "transformers",
+        "torch",
+        "torchvision",
+        "torchaudio",
+        "accelerate",
+        "timm",
+        "tensorflow",
+        "jax",
+        "cupy",
+        "faiss-gpu",
+        "triton",
+        "xformers",
+        "bitsandbytes",
+        "deepspeed",
+        "vllm",
+    }
+)
+
+
+def _default_dependency_names():
+    """Normalised distribution names from [project.dependencies].
+
+    Parsed rather than substring-matched, so the AR-04 denylist can be applied
+    to real names. Strips comments, version specifiers and extras: a line like
+    ``"pkg[foo]>=1.0",  # note`` reduces to ``pkg``.
+    """
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    block = text.split("\ndependencies = [", 1)[1].split("\n]", 1)[0]
+    names = []
+    for raw in block.splitlines():
+        line = raw.split("#", 1)[0].strip().rstrip(",").strip().strip("\"'")
+        if not line:
+            continue
+        name = re.split(r"[<>=!~\[;\s]", line, 1)[0].strip()
+        if name:
+            names.append(name.lower().replace("_", "-"))
+    return names
+
+
 def test_ar04_no_cuda_packages_in_default_dependencies():
-    """AR-04 / GOV-03: no CUDA/GPU package in the default dependency tree."""
-    pyproject = (ROOT / "pyproject.toml").read_text()
-    # crude but effective: core [project.dependencies] block only
-    deps_block = pyproject.split("dependencies = [", 1)[1].split("]", 1)[0].lower()
+    """AR-04 / GOV-03: no CUDA/GPU package in the default dependency tree.
+
+    Two layers, because the literal scan alone gives a false green:
+
+    1. literal scan — catches a directly named GPU package.
+    2. denylist over parsed names — catches packages that pull torch (and so
+       the NVIDIA stack) transitively.
+
+    Layer 2 exists because layer 1 shipped a violation to CI: the default tree
+    carried ``sentence-transformers``, whose name contains neither "cuda" nor
+    "torch", so this test passed 6/6 while a real ``pip install -e .`` pulled
+    torch, triton, cuda-toolkit and ~20 nvidia-* wheels.
+
+    CI additionally greps ``pip list`` after a real install, which remains the
+    authoritative check — resolution is the only way to see the true tree. This
+    test exists to fail on the obvious cases before CI has to.
+    """
+    text = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    deps_block = text.split("\ndependencies = [", 1)[1].split("\n]", 1)[0].lower()
     for forbidden in ("cuda", "nvidia", "faiss-gpu", "torch>=",):
         assert forbidden not in deps_block, f"forbidden GPU-adjacent dep: {forbidden}"
+
+    offenders = sorted(set(_default_dependency_names()) & _GPU_TRANSITIVE)
+    assert not offenders, (
+        f"default dependencies pull the CUDA stack transitively: {offenders}. "
+        "Move them to an optional extra under [project.optional-dependencies]."
+    )
 
 
 # ---------------------------------------------------------------- AR-01
