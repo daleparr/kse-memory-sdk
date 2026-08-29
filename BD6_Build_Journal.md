@@ -70,7 +70,7 @@ Template:
 - FR-02's third limb (incremental graph-edge upsert) untouched — depends on GraphStoreInterface, specified by TC-09, deliberately left to its own TC cycle.
 - Consequently the legacy hardcoded ConceptualDimensions still stands; TC-04's "no fashion vocabulary in the default path" is enforced for the new modules only.
 **State:** new suites 33/33 green; 89 tests collect clean CPU-only; AR-04 gate clean.
-**Follow-up (same session):** D-11 confirmed — model cache at `~/.cache/kse`, honouring `XDG_CACHE_HOME`, overridable via `KSE_CACHE_DIR`. Implemented TC-first (+8 tests, RED on ImportError first). `OnnxEmbedder()` now takes no arguments in the default case and fails with a message naming both the resolved path and the override.
+**Follow-up (same session):** D-14 confirmed — model cache at `~/.cache/kse`, honouring `XDG_CACHE_HOME`, overridable via `KSE_CACHE_DIR`. Implemented TC-first (+8 tests, RED on ImportError first). `OnnxEmbedder()` now takes no arguments in the default case and fails with a message naming both the resolved path and the override.
 **Next:** finish T-008 — ONNX tokeniser + `InferenceSession.run` against the cached model, then wire projection into the ingest path and retire ConceptualDimensions.
 
 ## 2026-08-29 — Session 5 (design decision)

@@ -57,7 +57,7 @@ _PRECISION = 6
 
 
 def default_cache_dir() -> Path:
-    """Resolve KSE's local cache directory (D-11).
+    """Resolve KSE's local cache directory (D-14).
 
     Precedence: ``KSE_CACHE_DIR`` (explicit override) → ``XDG_CACHE_HOME/kse``
     → ``~/.cache/kse``. XDG is honoured because the convention exists and
@@ -115,7 +115,7 @@ class OnnxEmbedder:
     """Default CPU-only text embedder, backed by a locally cached ONNX model.
 
     The model is *never* downloaded. ``model_path`` defaults to the local cache
-    (D-11: ``~/.cache/kse``) and must already exist; if it does not,
+    (D-14: ``~/.cache/kse``) and must already exist; if it does not,
     construction fails immediately with a message naming the path and the
     override, so a CPU-only, offline setup is diagnosable rather than
     mysterious.
