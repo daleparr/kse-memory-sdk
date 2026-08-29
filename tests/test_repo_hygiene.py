@@ -166,19 +166,8 @@ def test_ar04_no_cuda_packages_in_default_dependencies():
 
 
 # ---------------------------------------------------------------- AR-01
-@pytest.fixture
-def no_network(monkeypatch):
-    """Fixture: any socket connection attempt fails the test (AR-01).
-
-    Use on every default-path test. Quickstart and local flows must pass
-    under this fixture with zero exemptions.
-    """
-
-    def _blocked(*args, **kwargs):  # pragma: no cover - triggered only on violation
-        raise AssertionError("AR-01 violated: default path attempted a network call")
-
-    monkeypatch.setattr(socket.socket, "connect", _blocked)
-    yield
+# The no_network fixture now lives in tests/conftest.py so every suite can use
+# it, not just this one.
 
 
 def test_ar01_fixture_blocks_network(no_network):

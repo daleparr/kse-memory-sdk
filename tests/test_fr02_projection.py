@@ -1,0 +1,251 @@
+"""
+FR-02 — Projection: embed text, score dimensions against a user schema.
+
+Written test-first per GOV-04: every test here was RED before
+kse_memory/core/schema.py and kse_memory/core/projection.py existed.
+
+Acceptance criteria encoded (BD4):
+- TC-04 (US4): a YAML schema of named dimensions with anchors is loaded,
+  dimensions are scored and queryable, and no hardcoded fashion vocabulary
+  remains in the default path.
+- TC-07 (US7): with no API key, the local scorer produces schema-conformant
+  scores.
+- TC-02 (US2) / AR-01: the default path makes zero network calls.
+- BD4 "Replay": content hash + schema version + model IDs reproduce any
+  projection.
+
+Scope note: FR-02's third limb — incremental graph-edge upsert — is not
+covered here. It depends on GraphStoreInterface and is specified by TC-09,
+so it is deliberately left to its own TC cycle rather than half-tested here.
+"""
+from __future__ import annotations
+
+import hashlib
+import math
+from pathlib import Path
+
+import pytest
+
+from kse_memory.core.ingest import content_hash, normalise_record
+from kse_memory.core.projection import (
+    ModelNotAvailableError,
+    OnnxEmbedder,
+    Projection,
+    project,
+)
+from kse_memory.core.schema import DimensionSchema, SchemaError, load_schema
+
+
+# --------------------------------------------------------------------------
+# A deterministic stand-in for the ONNX embedder.
+#
+# The real default embedder resolves an ONNX MiniLM from a local cache path
+# (never the network — AR-01). Tests must not depend on a model artefact being
+# present, so the *contract* is exercised with this stub and the real loader is
+# tested separately for its no-download behaviour.
+# --------------------------------------------------------------------------
+class StubEmbedder:
+    model_id = "stub-minilm-v1"
+    dim = 16
+
+    def embed(self, texts):
+        out = []
+        for text in texts:
+            digest = hashlib.sha256(text.encode("utf-8")).digest()
+            vec = [(digest[i % len(digest)] / 255.0) - 0.5 for i in range(self.dim)]
+            norm = math.sqrt(sum(v * v for v in vec)) or 1.0
+            out.append([v / norm for v in vec])
+        return out
+
+
+SCHEMA_YAML = """
+name: generic-v1
+version: 1.0.0
+dimensions:
+  - name: technical_depth
+    description: How technical the material is
+    anchors:
+      - dense technical specification with precise terminology
+      - implementation detail aimed at engineers
+  - name: accessibility
+    description: How approachable the material is for a newcomer
+    anchors:
+      - plain language introduction for a general audience
+      - gentle explanation assuming no prior knowledge
+"""
+
+
+@pytest.fixture
+def schema(tmp_path):
+    path = tmp_path / "schema.yaml"
+    path.write_text(SCHEMA_YAML, encoding="utf-8")
+    return load_schema(path)
+
+
+@pytest.fixture
+def entity():
+    return normalise_record(
+        {
+            "title": "Vector index internals",
+            "description": "HNSW graph construction and ef_search tuning.",
+            "tags": ["ann", "index"],
+        }
+    )
+
+
+# ------------------------------------------------------------------ US4 schema
+def test_load_schema_from_yaml_file(schema):
+    assert isinstance(schema, DimensionSchema)
+    assert schema.name == "generic-v1"
+    assert schema.version == "1.0.0"
+    assert schema.names() == ("technical_depth", "accessibility")
+    assert schema["technical_depth"].anchors  # anchors are retained for scoring
+
+
+def test_load_schema_from_mapping():
+    s = load_schema(
+        {
+            "name": "inline",
+            "version": "0.1.0",
+            "dimensions": [{"name": "d", "description": "x", "anchors": ["a"]}],
+        }
+    )
+    assert s.names() == ("d",)
+
+
+def test_schema_rejects_duplicate_dimension_names():
+    with pytest.raises(SchemaError, match="duplicate"):
+        load_schema(
+            {
+                "name": "dup",
+                "version": "1.0.0",
+                "dimensions": [
+                    {"name": "d", "description": "x", "anchors": ["a"]},
+                    {"name": "d", "description": "y", "anchors": ["b"]},
+                ],
+            }
+        )
+
+
+def test_schema_rejects_dimension_without_anchors():
+    with pytest.raises(SchemaError, match="anchor"):
+        load_schema(
+            {
+                "name": "noanchor",
+                "version": "1.0.0",
+                "dimensions": [{"name": "d", "description": "x", "anchors": []}],
+            }
+        )
+
+
+def test_schema_rejects_non_semver_version():
+    with pytest.raises(SchemaError, match="version"):
+        load_schema(
+            {
+                "name": "badver",
+                "version": "v1",
+                "dimensions": [{"name": "d", "description": "x", "anchors": ["a"]}],
+            }
+        )
+
+
+def test_schema_rejects_empty_dimension_set():
+    with pytest.raises(SchemaError, match="dimension"):
+        load_schema({"name": "empty", "version": "1.0.0", "dimensions": []})
+
+
+# ------------------------------------------------------------- TC-04 / TC-07
+def test_project_scores_every_schema_dimension(schema, entity):
+    """TC-04: dimensions are scored and queryable by name."""
+    p = project(entity, schema, StubEmbedder())
+    assert isinstance(p, Projection)
+    assert set(p.scores) == set(schema.names())
+
+
+def test_scores_are_bounded_unit_interval(schema, entity):
+    """TC-07: the local scorer produces schema-conformant scores, no API key."""
+    p = project(entity, schema, StubEmbedder())
+    assert all(0.0 <= v <= 1.0 for v in p.scores.values()), p.scores
+
+
+def test_projection_carries_replay_identity(schema, entity):
+    """BD4 Replay: content hash + schema version + model id reproduce a projection."""
+    p = project(entity, schema, StubEmbedder())
+    assert p.content_hash == content_hash(entity)
+    assert p.schema_name == schema.name
+    assert p.schema_version == schema.version
+    assert p.model_id == StubEmbedder.model_id
+
+
+def test_projection_is_deterministic(schema, entity):
+    a = project(entity, schema, StubEmbedder())
+    b = project(entity, schema, StubEmbedder())
+    assert a == b
+
+
+def test_projection_changes_when_content_changes(schema):
+    a = project(normalise_record({"title": "t", "description": "alpha"}), schema, StubEmbedder())
+    b = project(normalise_record({"title": "t", "description": "beta"}), schema, StubEmbedder())
+    assert a.scores != b.scores
+
+
+def test_projection_survives_tag_reorder(schema):
+    """Ties to FR-01: cosmetic reorder must not force re-projection."""
+    a = project(normalise_record({"title": "t", "description": "d", "tags": ["x", "y"]}), schema, StubEmbedder())
+    b = project(normalise_record({"title": "t", "description": "d", "tags": ["y", "x"]}), schema, StubEmbedder())
+    assert a == b
+
+
+def test_schema_version_participates_in_identity(schema, entity, tmp_path):
+    """A schema bump must be visible in the projection, or replay is a lie."""
+    bumped_path = tmp_path / "bumped.yaml"
+    bumped_path.write_text(SCHEMA_YAML.replace("version: 1.0.0", "version: 1.1.0"), encoding="utf-8")
+    bumped = load_schema(bumped_path)
+    a = project(entity, schema, StubEmbedder())
+    b = project(entity, bumped, StubEmbedder())
+    assert a.schema_version != b.schema_version
+    assert a != b
+
+
+# ------------------------------------------------------------------- AR-01
+def test_projection_makes_no_network_calls(no_network, schema, entity):
+    """AR-01: the whole default projection path is socket-free."""
+    p = project(entity, schema, StubEmbedder())
+    assert p.scores
+
+
+def test_onnx_embedder_never_downloads(no_network, tmp_path):
+    """AR-01: a missing local model fails loudly; it must never fetch one."""
+    missing = tmp_path / "definitely-absent.onnx"
+    with pytest.raises(ModelNotAvailableError, match="local"):
+        OnnxEmbedder(model_path=missing)
+
+
+def test_onnx_embedder_reports_the_path_it_wanted(tmp_path):
+    """The error must name the path, or the CPU-only setup story is unusable."""
+    missing = tmp_path / "absent.onnx"
+    with pytest.raises(ModelNotAvailableError) as exc:
+        OnnxEmbedder(model_path=missing)
+    assert str(missing) in str(exc.value)
+
+
+# ------------------------------------------------------------------- TC-04
+_DOMAIN_VOCABULARY = (
+    "elegance",
+    "comfort",
+    "boldness",
+    "modernity",
+    "minimalism",
+    "luxury",
+    "seasonality",
+)
+
+
+def test_default_path_has_no_hardcoded_domain_vocabulary():
+    """TC-04: dimensions come from the user's schema, never from the library."""
+    root = Path(__file__).resolve().parents[1] / "kse_memory" / "core"
+    offenders = []
+    for module in ("projection.py", "schema.py"):
+        text = (root / module).read_text(encoding="utf-8").lower()
+        offenders += [f"{module}:{w}" for w in _DOMAIN_VOCABULARY if w in text]
+    assert not offenders, f"hardcoded domain vocabulary in default path: {offenders}"

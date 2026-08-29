@@ -56,3 +56,18 @@ Template:
 **Fix:** deleted .github/workflows/tests.yml (superseded by ci.yml); added fail-fast:false to ci.yml unit matrix so full matrix verdicts are always visible.
 **Lesson:** Phase-1 sweeps must enumerate .github/, not just repo root. Added to session checklist mentally; no BD3 change needed.
 **Next:** unchanged — FR-02 TC-first.
+
+## 2026-08-29 — Session 5 (FR-02 TC-first + partial T-008)
+**Phase/tasks:** TC-first for FR-02 (done); T-008 partially implemented.
+**Delivered:**
+- tests/test_fr02_projection.py — 17 tests encoding TC-04, TC-07, AR-01 and BD4 replay identity. Verified RED (ModuleNotFoundError) before any implementation, per GOV-04.
+- tests/conftest.py — no_network promoted out of the hygiene suite so every suite can assert AR-01, not just one.
+- kse_memory/core/schema.py (US4) — versioned YAML dimension schema with anchors. Strict eager validation: semver, non-empty dimension set, unique names, non-empty anchors. Ships no vocabulary of its own (TC-04).
+- kse_memory/core/projection.py (FR-02) — anchor-centroid cosine scoring into [0,1]; one batched embed call per projection; Projection carries full replay identity (content hash + schema name/version + model id). Tag reorder cannot change a projection, matching FR-01's set-like tags.
+- OnnxEmbedder: local-cache-only constructor. A missing model raises ModelNotAvailableError naming the path; there is no download code, so AR-01 holds by construction rather than convention.
+**NOT done — T-008 stays open:**
+- OnnxEmbedder.embed() raises NotImplementedError. Tokenisation + InferenceSession.run are unwritten; the contract and the no-download guarantee are complete and tested, the inference is not.
+- FR-02's third limb (incremental graph-edge upsert) untouched — depends on GraphStoreInterface, specified by TC-09, deliberately left to its own TC cycle.
+- Consequently the legacy hardcoded ConceptualDimensions still stands; TC-04's "no fashion vocabulary in the default path" is enforced for the new modules only.
+**State:** new suites 33/33 green; 89 tests collect clean CPU-only; AR-04 gate clean.
+**Next:** finish T-008 — ONNX tokeniser + inference against a local model, then wire projection into the ingest path and retire ConceptualDimensions.
