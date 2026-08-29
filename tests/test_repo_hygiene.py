@@ -15,6 +15,17 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
 # ---------------------------------------------------------------- AR-02
+def _py_files(directory: pathlib.Path, recursive: bool = False):
+    """Python sources under *directory*, minus macOS AppleDouble sidecars.
+
+    Filesystems without native xattr support (exFAT/NTFS volumes) grow a
+    ``._name.py`` metadata file beside every source file. Those are resource
+    forks, not Python, and must never be counted as repo content.
+    """
+    walk = directory.rglob if recursive else directory.glob
+    return [f for f in walk("*.py") if not f.name.startswith("._")]
+
+
 def _imports_of(pyfile: pathlib.Path):
     try:
         tree = ast.parse(pyfile.read_text(encoding="utf-8", errors="ignore"))
@@ -34,7 +45,7 @@ def test_ar02_benchmarks_never_import_simulations():
     bench = ROOT / "benchmarks"
     offenders = [
         str(f)
-        for f in bench.rglob("*.py")
+        for f in _py_files(bench, recursive=True)
         for mod in _imports_of(f)
         if mod.split(".")[0] == "simulations"
     ]
@@ -43,7 +54,7 @@ def test_ar02_benchmarks_never_import_simulations():
 
 def test_ar02_simulation_files_carry_warning_header():
     """Every simulation harness must declare itself non-empirical."""
-    sims = list((ROOT / "simulations").glob("*.py"))
+    sims = _py_files(ROOT / "simulations")
     missing = [
         str(f)
         for f in sims
