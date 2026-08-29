@@ -50,5 +50,11 @@ Test-first per GOV-04: every TC below is written and failing (red) before its FR
 Versioned: dimension schema (semver), embedding model IDs, fusion config, scorer prompts, dataset pins.
 Replay: Deterministic: content hash + schema version + model IDs reproduce any projection; fusion seedable; any ranked result reconstructable from source + pins.
 
+### Amendments (session 6)
+
+| TC | Traces to | Criterion (BDD / assertion) | FR/AR refs |
+|---|---|---|---|
+| TC-23 | US11/D-12 | Given the flagship demo, when a user drags a dimension slider, then the KSE pane re-ranks in real time with D-11 chip strips per result, while the vector-only pane stays static — and no copy in the demo or launch assets states a numeric performance claim lacking a benchmarks/ artefact (AR-03). | AR-03 |
+
 <!-- manual-start -->
 <!-- manual-end -->

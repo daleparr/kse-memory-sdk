@@ -76,3 +76,8 @@ Template:
 ## 2026-08-29 — Session 5 (design decision)
 **Done:** D-11 recorded — braid signature visual + frozen channel colour triple (purple/teal/coral). Applies to FR-06 explain output (chip strip in CLI/API examples), US5 benchmark charts (rank-braid), US11 launch assets (README hero SVG), and the visual explorer.
 **Next:** unchanged — FR-02 TC-first. When FR-06 lands, render provenance as the three-chip strip per D-11.
+
+## 2026-08-29 — Session 6 (brand & positioning decision)
+**Done:** D-12 recorded (aha statement, brand essence "judgement with receipts", tagline, category claim, positioning, beachhead, competitive frames, Mom Test discovery approach). BD8 +T-057 (side-by-side slider demo, flagship launch asset) and +T-058 (launch copy per D-12, GOV-01 claims audit). BD4 +TC-23 tying the demo to AR-03.
+**Note:** D-12 explicitly subordinates marketing to GOV-01 — value statements remain labelled hypotheses until US5 artefacts exist. Brand and constitution now point the same direction.
+**Next:** unchanged — FR-02 TC-first.
