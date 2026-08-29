@@ -39,6 +39,9 @@ __all__ = [
     "OnnxEmbedder",
     "Projection",
     "TEXT_FIELDS",
+    "anchor_centroids",
+    "entity_text",
+    "score_from_vectors",
     "default_cache_dir",
     "default_model_dir",
     "default_model_path",
@@ -237,6 +240,43 @@ def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
 def _centroid(vectors: Sequence[Sequence[float]]) -> List[float]:
     count = len(vectors)
     return [sum(col) / count for col in zip(*vectors)]
+
+
+def anchor_centroids(schema: DimensionSchema, embedder) -> Dict[str, List[float]]:
+    """Embed every dimension's anchors once and average them per dimension.
+
+    Anchors are schema-level and constant, so a long-lived caller should
+    compute this once and reuse it. Re-deriving it per item would make ingest
+    cost scale with schema size for no benefit.
+    """
+    texts: List[str] = []
+    spans = []
+    for dimension in schema.dimensions:
+        start = len(texts)
+        texts.extend(dimension.anchors)
+        spans.append((start, len(texts)))
+
+    vectors = embedder.embed(texts)
+    return {
+        dimension.name: _centroid(vectors[start:end])
+        for dimension, (start, end) in zip(schema.dimensions, spans)
+    }
+
+
+def score_from_vectors(
+    entity_vector: Sequence[float], centroids: Mapping[str, Sequence[float]]
+) -> Dict[str, float]:
+    """Score one entity vector against precomputed dimension centroids."""
+    scores: Dict[str, float] = {}
+    for name, centroid in centroids.items():
+        unit = (_cosine(entity_vector, centroid) + 1.0) / 2.0
+        scores[name] = round(min(1.0, max(0.0, unit)), _PRECISION)
+    return scores
+
+
+def entity_text(entity: Entity) -> str:
+    """Public alias for the canonical text rendering used when embedding."""
+    return _entity_text(entity)
 
 
 def score_dimensions(

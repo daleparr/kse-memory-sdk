@@ -105,3 +105,20 @@ Template:
 **Done:** D-14 (all inspection flavours: CLI, Datasette, Jupyter+marimo, DataFrame/Parquet, graph-native, dashboard-fused-with-demo; FR-02 constraint — plain queryable SQLite columns, no pickled blobs). D-15 (platform integration: Tier 1 Parquet/Arrow/DuckDB universal interchange; Tier 2 Snowflake/Databricks/BigQuery connectors; Tier 3 CDC/orchestrators/dbt; egress-as-tables unlock; CPU-first enables in-platform compute). BD8 +T-059..T-063.
 **Note for FR-02 session:** T-059 (CLI inspection) is now in-scope alongside FR-02 — build the scorer and the lens on it together.
 **Next:** FR-02 TC-first, now paired with T-059.
+
+## 2026-08-29 — Session 7-CC (Claude Code, parallel track) — ingest wired to projection
+**Phase/tasks:** the FR-01/FR-02 seam. TC-first (13 tests, verified RED first).
+**Delivered:**
+- kse_memory/core/pipeline.py — IngestPipeline: raw record -> normalise_record -> project -> incremental writes to whichever stores are configured. IngestResult carries entity, projection and `written`.
+- Incremental end to end: the graph's upsert verdict gates the vector write too, so re-ingesting unchanged content costs nothing anywhere. Verified against a real onnxruntime session: 2nd identical ingest wrote zero.
+- Anchor centroids computed once per pipeline, not per record. projection.py gained anchor_centroids / score_from_vectors / entity_text so a long-lived caller can cache; project() is unchanged for the simple case.
+- Normalisation runs before any store is touched, so a malformed record cannot leave a half-written graph. Asserted directly.
+**Two defects of my own, caught and fixed:**
+- Vector-only pipeline (vector_store set, graph_store None) wrote nothing and reported success — the write was gated on the graph verdict and then re-checked for a graph. The suite passed because it only covered *no* stores. Regression test added and mutation-tested.
+- An `__import__(...)` call for content_hash where a normal import works. Removed.
+**NOT done:**
+- `kse quickstart` is still broken. It runs the legacy KSEMemory.add_product path (EmbeddingService + hardcoded ConceptualDimensions), not this pipeline, and it is additionally blocked on there being no cached MiniLM. Wiring the CLI is a separate change from wiring the path.
+- Concept store not written: ConceptStoreInterface is typed against ConceptualDimensions, so it cannot hold schema-driven scores without an interface change. Scores live in the graph as scored edges. This is the blocker for retiring ConceptualDimensions and completing TC-04.
+**State:** 77/77 new suites green, 1 skipped; 134 tests collect clean CPU-only; AR-04 gate clean.
+**Next:** ConceptStoreInterface generalisation (unblocks TC-04), then point the quickstart at IngestPipeline once a model is cached.
+
