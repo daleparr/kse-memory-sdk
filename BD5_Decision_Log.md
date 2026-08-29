@@ -17,6 +17,6 @@ Append new decisions below. Never delete — supersede with a new D-XX entry ref
 | D-09 | LLM service | None by default; optional current OpenAI client or local cross-encoder scorer for dimension scoring. | Recommended — awaiting confirmation |
 | D-10 | p95 latency target | <150ms in-process hybrid query, 100k items, CPU-only (inferred). | Recommended — confirm during build |
 
-| D-11 | Local model cache location | Default embedding model resolves from `~/.cache/kse/models/<model_id>/model.onnx`. Precedence: `KSE_CACHE_DIR` > `XDG_CACHE_HOME/kse` > `~/.cache/kse`. Resolution is pure — never creates directories, never downloads (AR-01). Namespaced by model id so a model upgrade cannot silently reuse a stale artefact, since the id is part of projection replay identity. | Confirmed 2026-08-29 |
+| D-11 | Signature visual: the braid | Three-strand fusion motif is the brand mark. Frozen channel colours used everywhere (docs, README hero, explorer, CLI, benchmark charts): purple #7F77DD = vector, teal #1D9E75 = conceptual (brand accent — the differentiator carries the brand colour), coral #D85A30 = graph. Result-level provenance = three-chip strip, opacity = channel contribution. Benchmark visual = rank-braid (bump/alluvial) showing channel rankings weaving into the fused RRF ranking. 3D conceptual explorer becomes the click-through triptych (vector cloud / dimension-polygon overlap / graph ego-network). | Confirmed 2026-08-29 |
 
 <!-- Append new entries below this line -->
