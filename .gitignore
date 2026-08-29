@@ -199,3 +199,9 @@ htmlcov/
 # Documentation build
 docs/build/
 docs/_build/
+
+# Credentials — never commit
+.pypirc
+
+# macOS AppleDouble sidecars (exFAT/NTFS volumes lack native xattr support)
+._*
