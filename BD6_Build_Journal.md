@@ -70,7 +70,7 @@ Template:
 - FR-02's third limb (incremental graph-edge upsert) untouched — depends on GraphStoreInterface, specified by TC-09, deliberately left to its own TC cycle.
 - Consequently the legacy hardcoded ConceptualDimensions still stands; TC-04's "no fashion vocabulary in the default path" is enforced for the new modules only.
 **State:** new suites 33/33 green; 89 tests collect clean CPU-only; AR-04 gate clean.
-**Follow-up (same session):** D-14 confirmed — model cache at `~/.cache/kse`, honouring `XDG_CACHE_HOME`, overridable via `KSE_CACHE_DIR`. Implemented TC-first (+8 tests, RED on ImportError first). `OnnxEmbedder()` now takes no arguments in the default case and fails with a message naming both the resolved path and the override.
+**Follow-up (same session):** D-101 confirmed — model cache at `~/.cache/kse`, honouring `XDG_CACHE_HOME`, overridable via `KSE_CACHE_DIR`. Implemented TC-first (+8 tests, RED on ImportError first). `OnnxEmbedder()` now takes no arguments in the default case and fails with a message naming both the resolved path and the override.
 **Next:** finish T-008 — ONNX tokeniser + `InferenceSession.run` against the cached model, then wire projection into the ingest path and retire ConceptualDimensions.
 
 ## 2026-08-29 — Session 5 (design decision)
@@ -97,6 +97,11 @@ Template:
 - Built a genuine ONNX encoder (real Gather op) and ran it through onnxruntime: L2 norms exactly 1.0, batch-invariance max abs diff 0.0, end-to-end project() bounded and differentiated. This proves the tokeniser's int64 arrays are accepted by real onnxruntime, not just by a fake.
 - Caught during implementation: the first stale-edge cleanup read `graph_store.relationships`, an attribute only the test fake has. It would have silently no-opped against Neo4j. Rewritten to use GraphStoreInterface.get_neighbors, and mutation-tested (disabling cleanup now fails the test).
 **NOT verified:**
-- No actual all-MiniLM-L6-v2 export has been run. Tokeniser correctness against the real 30522-token vocab, and agreement with sentence-transformers reference embeddings, are unproven. Needs a model fetched out of band into ~/.cache/kse (D-14); the integration test un-skips automatically once one is there.
+- No actual all-MiniLM-L6-v2 export has been run. Tokeniser correctness against the real 30522-token vocab, and agreement with sentence-transformers reference embeddings, are unproven. Needs a model fetched out of band into ~/.cache/kse (D-101); the integration test un-skips automatically once one is there.
 - TC-04's "no fashion vocabulary in the default path" still holds only for the new modules; legacy ConceptualDimensions and ~10 files still carry it.
 **Next:** fetch a MiniLM export to un-skip the integration test; then wire projection into the ingest path so the legacy dimensions can be retired.
+
+## 2026-08-29 — Session 8 (inspection + platform strategy)
+**Done:** D-14 (all inspection flavours: CLI, Datasette, Jupyter+marimo, DataFrame/Parquet, graph-native, dashboard-fused-with-demo; FR-02 constraint — plain queryable SQLite columns, no pickled blobs). D-15 (platform integration: Tier 1 Parquet/Arrow/DuckDB universal interchange; Tier 2 Snowflake/Databricks/BigQuery connectors; Tier 3 CDC/orchestrators/dbt; egress-as-tables unlock; CPU-first enables in-platform compute). BD8 +T-059..T-063.
+**Note for FR-02 session:** T-059 (CLI inspection) is now in-scope alongside FR-02 — build the scorer and the lens on it together.
+**Next:** FR-02 TC-first, now paired with T-059.

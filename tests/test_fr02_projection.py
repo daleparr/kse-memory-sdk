@@ -254,7 +254,7 @@ def test_default_path_has_no_hardcoded_domain_vocabulary():
 
 
 # --------------------------------------------------------------- model cache
-# D-14: the default embedding model resolves from ~/.cache/kse. These tests
+# D-101: the default embedding model resolves from ~/.cache/kse. These tests
 # never touch the real home directory — every one redirects it.
 def test_cache_dir_defaults_under_home(monkeypatch, tmp_path):
     monkeypatch.delenv("KSE_CACHE_DIR", raising=False)
