@@ -17,4 +17,6 @@ Append new decisions below. Never delete — supersede with a new D-XX entry ref
 | D-09 | LLM service | None by default; optional current OpenAI client or local cross-encoder scorer for dimension scoring. | Recommended — awaiting confirmation |
 | D-10 | p95 latency target | <150ms in-process hybrid query, 100k items, CPU-only (inferred). | Recommended — confirm during build |
 
+| D-11 | Local model cache location | Default embedding model resolves from `~/.cache/kse/models/<model_id>/model.onnx`. Precedence: `KSE_CACHE_DIR` > `XDG_CACHE_HOME/kse` > `~/.cache/kse`. Resolution is pure — never creates directories, never downloads (AR-01). Namespaced by model id so a model upgrade cannot silently reuse a stale artefact, since the id is part of projection replay identity. | Confirmed 2026-08-29 |
+
 <!-- Append new entries below this line -->

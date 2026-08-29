@@ -24,6 +24,7 @@ AR-05 (typed public surface).
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Mapping, Sequence
@@ -33,13 +34,19 @@ from .models import Entity
 from .schema import DimensionSchema
 
 __all__ = [
+    "DEFAULT_MODEL_ID",
     "ModelNotAvailableError",
     "OnnxEmbedder",
     "Projection",
     "TEXT_FIELDS",
+    "default_cache_dir",
+    "default_model_path",
     "project",
     "score_dimensions",
 ]
+
+#: Default local embedding model (D-04: all-MiniLM-L6-v2, ONNX int8).
+DEFAULT_MODEL_ID = "onnx-minilm-l6-v2"
 
 #: Entity fields that carry natural language worth embedding. Deliberately a
 #: subset of ingest.CONTENT_FIELDS: media paths, variations and free-form
@@ -47,6 +54,35 @@ __all__ = [
 TEXT_FIELDS = ("title", "description", "entity_type", "category", "source", "tags")
 
 _PRECISION = 6
+
+
+def default_cache_dir() -> Path:
+    """Resolve KSE's local cache directory (D-11).
+
+    Precedence: ``KSE_CACHE_DIR`` (explicit override) → ``XDG_CACHE_HOME/kse``
+    → ``~/.cache/kse``. XDG is honoured because the convention exists and
+    users who set it mean it; the fallback is the documented default.
+
+    Resolution is pure — nothing is created. Writing into the cache is the job
+    of whatever populates it, never of a default-path read (AR-01).
+    """
+    explicit = os.environ.get("KSE_CACHE_DIR")
+    if explicit:
+        return Path(explicit)
+    xdg = os.environ.get("XDG_CACHE_HOME")
+    if xdg:
+        return Path(xdg) / "kse"
+    return Path.home() / ".cache" / "kse"
+
+
+def default_model_path(model_id: str = DEFAULT_MODEL_ID) -> Path:
+    """Where a given model is expected to live inside the cache.
+
+    Namespaced by model id so several models can coexist and so a model
+    upgrade cannot silently reuse a stale artefact — the id is part of a
+    projection's replay identity.
+    """
+    return default_cache_dir() / "models" / model_id / "model.onnx"
 
 
 class ModelNotAvailableError(RuntimeError):
@@ -78,18 +114,21 @@ class Projection:
 class OnnxEmbedder:
     """Default CPU-only text embedder, backed by a locally cached ONNX model.
 
-    The model is *never* downloaded. ``model_path`` must already exist; if it
-    does not, construction fails immediately with a message naming the path,
-    so a CPU-only, offline setup is diagnosable rather than mysterious.
+    The model is *never* downloaded. ``model_path`` defaults to the local cache
+    (D-11: ``~/.cache/kse``) and must already exist; if it does not,
+    construction fails immediately with a message naming the path and the
+    override, so a CPU-only, offline setup is diagnosable rather than
+    mysterious.
     """
 
-    def __init__(self, model_path: Path, model_id: str = "onnx-minilm-l6-v2") -> None:
-        path = Path(model_path)
+    def __init__(self, model_path=None, model_id: str = DEFAULT_MODEL_ID) -> None:
+        path = Path(model_path) if model_path is not None else default_model_path(model_id)
         if not path.exists():
             raise ModelNotAvailableError(
-                f"embedding model not found at local path: {path}. "
-                "The default path never downloads models (AR-01); fetch it out "
-                "of band and point model_path at the local cache."
+                f"embedding model not found at local path: {path}\n"
+                "KSE never downloads models on the default path (AR-01). Fetch "
+                "the model out of band and place it at that path, or set "
+                "KSE_CACHE_DIR to a cache that already contains it."
             )
         self.model_path = path
         self.model_id = model_id

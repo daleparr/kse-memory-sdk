@@ -29,6 +29,8 @@ import pytest
 from kse_memory.core.ingest import content_hash, normalise_record
 from kse_memory.core.projection import (
     ModelNotAvailableError,
+    default_cache_dir,
+    default_model_path,
     OnnxEmbedder,
     Projection,
     project,
@@ -249,3 +251,70 @@ def test_default_path_has_no_hardcoded_domain_vocabulary():
         text = (root / module).read_text(encoding="utf-8").lower()
         offenders += [f"{module}:{w}" for w in _DOMAIN_VOCABULARY if w in text]
     assert not offenders, f"hardcoded domain vocabulary in default path: {offenders}"
+
+
+# --------------------------------------------------------------- model cache
+# D-11: the default embedding model resolves from ~/.cache/kse. These tests
+# never touch the real home directory — every one redirects it.
+def test_cache_dir_defaults_under_home(monkeypatch, tmp_path):
+    monkeypatch.delenv("KSE_CACHE_DIR", raising=False)
+    monkeypatch.delenv("XDG_CACHE_HOME", raising=False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    assert default_cache_dir() == tmp_path / ".cache" / "kse"
+
+
+def test_cache_dir_honours_xdg(monkeypatch, tmp_path):
+    monkeypatch.delenv("KSE_CACHE_DIR", raising=False)
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    assert default_cache_dir() == tmp_path / "xdg" / "kse"
+
+
+def test_cache_dir_env_override_wins(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path / "xdg"))
+    monkeypatch.setenv("KSE_CACHE_DIR", str(tmp_path / "explicit"))
+    assert default_cache_dir() == tmp_path / "explicit"
+
+
+def test_cache_resolution_creates_nothing(monkeypatch, tmp_path):
+    """Resolving a path must not have side effects on the filesystem."""
+    monkeypatch.setenv("KSE_CACHE_DIR", str(tmp_path / "untouched"))
+    default_cache_dir()
+    default_model_path("some-model")
+    assert not (tmp_path / "untouched").exists()
+
+
+def test_model_path_is_namespaced_by_model_id(monkeypatch, tmp_path):
+    monkeypatch.setenv("KSE_CACHE_DIR", str(tmp_path))
+    path = default_model_path("minilm-x")
+    assert "minilm-x" in path.parts
+    assert tmp_path in path.parents
+
+
+def test_embedder_defaults_to_the_cache(no_network, monkeypatch, tmp_path):
+    """AR-01: with no model cached, the default construction fails loudly."""
+    monkeypatch.setenv("KSE_CACHE_DIR", str(tmp_path))
+    with pytest.raises(ModelNotAvailableError) as exc:
+        OnnxEmbedder()
+    assert str(tmp_path) in str(exc.value)
+
+
+def test_missing_model_error_is_actionable(monkeypatch, tmp_path):
+    """The message must say where to put the model, not just that it is absent."""
+    monkeypatch.setenv("KSE_CACHE_DIR", str(tmp_path))
+    with pytest.raises(ModelNotAvailableError) as exc:
+        OnnxEmbedder()
+    message = str(exc.value)
+    assert "KSE_CACHE_DIR" in message  # names the override
+    assert "never downloads" in message  # states the AR-01 guarantee
+
+
+def test_embedder_accepts_a_cached_model(no_network, monkeypatch, tmp_path):
+    """A present model resolves without error and reports its id."""
+    monkeypatch.setenv("KSE_CACHE_DIR", str(tmp_path))
+    target = default_model_path("onnx-minilm-l6-v2")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(b"not a real onnx graph")
+    embedder = OnnxEmbedder()
+    assert embedder.model_id == "onnx-minilm-l6-v2"
+    assert embedder.model_path == target
