@@ -316,3 +316,14 @@ Template:
 **One deviation from the map, stated:** test_backends.py went ahead of per-backend conformance wiring. Every cloud-backend interface test in it errored at setup on fixture rot — it provided zero working cloud coverage to preserve. Cloud conformance wiring remains scheduled (TC-09).
 **Result:** soft-fail lane 14F/23E → **1F/3E**, all in test_integrations.py (framework-story fixtures, pre-v3 adapter config shape — story-gated, as mapped). Collection 261; hard lanes 244 passed / 9 skipped. The T-015 flip criterion (0F/0E, two consecutive runs) is now exactly one story away.
 
+## 2026-08-30 — Session 24-CC (Claude Code, parallel track) — framework story + T-015 FLIPPED
+**Framework story (TC-first, 4 component tests, RED first):**
+- LangChain adapter modernised: tries langchain_core first (current ecosystem), legacy langchain second, stub last — it was silently using its stub even with langchain-core installed. SearchType(search_type.upper()) fixed to .lower() (enum values are lowercase; every string construction raised ValueError).
+- Peeling the adapter's failures exposed three v2 default-path defects, each fixed: (1) EmbeddingService now serves the default MiniLM through OnnxEmbedder from the local cache when sentence-transformers is absent — D-04's "ONNX int8 default" finally true in the v2 path too; (2) CLIP image-model init made conditional — it eagerly demanded torch for text-only users; (3) similarity_threshold 0.7 -> 0.25 — real cosine for a short query vs a matching description is ~0.4-0.6, so the old default silently emptied ordinary searches.
+- tests/test_integrations.py deleted; live extras-gated coverage in tests/component/test_langchain_adapter.py (langchain-core installed in the venv; AR-04 verified still clean — no torch). LlamaIndex remains gated for its own cycle, stated in the map.
+**T-015 FLIPPED:**
+- Criterion 1: lane at 0F/0E — 241 passed/12 skipped, five consecutive local runs. One unreproduced failure appeared immediately post-deletion and never recurred in five attempts; recorded rather than hidden, CI's consecutive runs arbitrate.
+- Criterion 2: mypy clean on the 14-module public surface (42 errors fixed: annotations, a lazy-session typing, Optional-id narrowing after normalise_record, gather typing; mypy python_version corrected 3.8->3.9 to match requires-python). Enforced hard in CI; whole-package advisory remains until the v2 remainder retires.
+- Criterion 3: continue-on-error removed from the unit job. The soft-fail concession D-16 called "temporary by construction" is over.
+**State (printed):** 257 tests collected in 0.37s; hard lanes 248 passed / 9 skipped locally.
+

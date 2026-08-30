@@ -69,10 +69,13 @@ class EmbeddingService(EmbeddingServiceInterface):
         try:
             # Initialize text embedding model
             await self._initialize_text_model()
-            
-            # Initialize image embedding model
-            await self._initialize_image_model()
-            
+
+            # Image embedding is an optional capability (CLIP needs torch —
+            # AR-04 keeps that out of the default tree). Initialise it lazily
+            # on first image request instead of failing text-only users here.
+            if CLIP_AVAILABLE:
+                await self._initialize_image_model()
+
             self._initialized = True
             logger.info("Embedding models initialized successfully")
             
@@ -94,12 +97,22 @@ class EmbeddingService(EmbeddingServiceInterface):
             self._text_model = "openai"
             
         elif self.config.text_model.startswith("sentence-transformers"):
-            # Sentence Transformers model
-            if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                raise EmbeddingError("Sentence Transformers not available. Install with: pip install sentence-transformers")
-            
-            model_name = self.config.text_model
-            self._text_model = SentenceTransformer(model_name)
+            if SENTENCE_TRANSFORMERS_AVAILABLE:
+                self._text_model = SentenceTransformer(self.config.text_model)
+            else:
+                # D-04: the default model is MiniLM as ONNX int8 from the
+                # local cache. sentence-transformers is an opt-in extra
+                # (AR-04: its torch dependency pulls the CUDA stack), so the
+                # default path serves the same model through onnxruntime.
+                from ..core.projection import ModelNotAvailableError, OnnxEmbedder
+
+                try:
+                    self._text_model = OnnxEmbedder()
+                except ModelNotAvailableError as exc:
+                    raise EmbeddingError(
+                        "No embedding backend available: sentence-transformers "
+                        f"is not installed and no ONNX model is cached. {exc}"
+                    )
             
         else:
             raise EmbeddingError(f"Unsupported text embedding model: {self.config.text_model}")
@@ -147,10 +160,15 @@ class EmbeddingService(EmbeddingServiceInterface):
                 vector = response["data"][0]["embedding"]
                 dimension = len(vector)
                 
-            elif isinstance(self._text_model, SentenceTransformer):
+            elif SENTENCE_TRANSFORMERS_AVAILABLE and isinstance(self._text_model, SentenceTransformer):
                 # Use Sentence Transformers
                 vector = self._text_model.encode(text, normalize_embeddings=self.config.normalize)
                 vector = vector.tolist()
+                dimension = len(vector)
+
+            elif hasattr(self._text_model, "embed"):
+                # ONNX default path (D-04): embed() returns L2-normalised vectors.
+                vector = self._text_model.embed([text])[0]
                 dimension = len(vector)
                 
             else:

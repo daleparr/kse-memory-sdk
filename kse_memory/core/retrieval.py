@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from .dimension_store import DimensionScores
 from .projection import SCORED_AS, dimension_node_id
@@ -63,12 +63,12 @@ class RetrievalResult:
         )
 
 
-async def _vector_channel(parsed: ParsedQuery, store, top_k: int):
+async def _vector_channel(parsed: ParsedQuery, store: Any, top_k: int) -> Tuple[Tuple[str, float], ...]:
     rows = await store.search_vectors(list(parsed.vector), top_k=top_k)
     return tuple((entity_id, float(score)) for entity_id, score, *_ in rows[:top_k])
 
 
-async def _conceptual_channel(parsed: ParsedQuery, store, top_k: int):
+async def _conceptual_channel(parsed: ParsedQuery, store: Any, top_k: int) -> Tuple[Tuple[str, float], ...]:
     targets = DimensionScores(
         schema_name=parsed.schema_name,
         schema_version=parsed.schema_version,
@@ -78,7 +78,7 @@ async def _conceptual_channel(parsed: ParsedQuery, store, top_k: int):
     return tuple((entity_id, float(score)) for entity_id, score in hits[:top_k])
 
 
-async def _graph_channel(parsed: ParsedQuery, store, top_k: int):
+async def _graph_channel(parsed: ParsedQuery, store: Any, top_k: int) -> Tuple[Tuple[str, float], ...]:
     seeds = sorted(parsed.targets, key=lambda name: (-parsed.targets[name], name))
     seeds = seeds[:GRAPH_SEED_DIMENSIONS]
 
@@ -97,9 +97,9 @@ async def _graph_channel(parsed: ParsedQuery, store, top_k: int):
 async def retrieve(
     parsed: ParsedQuery,
     *,
-    vector_store=None,
-    concept_store=None,
-    graph_store=None,
+    vector_store: Any = None,
+    concept_store: Any = None,
+    graph_store: Any = None,
     top_k: int = 10,
 ) -> RetrievalResult:
     """Run every configured channel concurrently and collect the rankings.
@@ -115,10 +115,9 @@ async def retrieve(
         "graph": _graph_channel(parsed, graph_store, top_k) if graph_store else None,
     }
 
-    names = [name for name, coro in channels.items() if coro is not None]
-    outcomes = await asyncio.gather(
-        *(channels[name] for name in names), return_exceptions=True
-    )
+    live = {name: coro for name, coro in channels.items() if coro is not None}
+    names = list(live)
+    outcomes = await asyncio.gather(*live.values(), return_exceptions=True)
 
     results: Dict[str, Tuple[Tuple[str, float], ...]] = {
         "vector": (), "conceptual": (), "graph": ()

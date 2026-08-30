@@ -136,7 +136,11 @@ class SearchConfig:
         "conceptual": 0.3,
         "knowledge_graph": 0.3
     })
-    similarity_threshold: float = 0.7
+    # 0.7 assumed near-duplicate text; real cosine between a short query and
+    # a matching description sits ~0.4-0.6, so 0.7 silently emptied ordinary
+    # searches. v3 handles answer confidence properly (FR-07); this floor now
+    # only drops clear noise.
+    similarity_threshold: float = 0.25
     enable_reranking: bool = True
     rerank_model: Optional[str] = None
 

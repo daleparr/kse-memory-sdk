@@ -27,7 +27,7 @@ import math
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Mapping, Sequence
+from typing import Any, Dict, List, Mapping, Sequence
 
 from .ingest import content_hash
 from .models import Entity
@@ -135,7 +135,7 @@ class OnnxEmbedder:
     mysterious.
     """
 
-    def __init__(self, model_path=None, model_id: str = DEFAULT_MODEL_ID, model_dir=None) -> None:
+    def __init__(self, model_path: "str | Path | None" = None, model_id: str = DEFAULT_MODEL_ID, model_dir: "str | Path | None" = None) -> None:
         if model_dir is not None:
             directory = Path(model_dir)
             path = directory / "model.onnx"
@@ -156,10 +156,10 @@ class OnnxEmbedder:
         self.model_path = path
         self.model_dir = directory
         self.model_id = model_id
-        self._session = None
-        self._tokenizer = None
+        self._session: Any = None
+        self._tokenizer: Any = None
 
-    def _ensure_session(self):
+    def _ensure_session(self) -> Any:
         if self._session is None:
             import onnxruntime  # imported lazily: absent in doc/lint contexts
 
@@ -169,7 +169,7 @@ class OnnxEmbedder:
         return self._session
 
     @property
-    def tokenizer(self):
+    def tokenizer(self) -> Any:
         """The WordPiece tokeniser, loaded from ``vocab.txt`` on first use."""
         if self._tokenizer is None:
             from .tokenizer import WordPieceTokenizer
@@ -211,7 +211,7 @@ class OnnxEmbedder:
         pooled = summed / counts
 
         norms = np.clip(np.linalg.norm(pooled, axis=1, keepdims=True), 1e-12, None)
-        return (pooled / norms).tolist()
+        return (pooled / norms).tolist()  # type: ignore[no-any-return]  # numpy tolist is untyped
 
 
 def _entity_text(entity: Entity) -> str:
@@ -252,7 +252,7 @@ def _centroid(vectors: Sequence[Sequence[float]]) -> List[float]:
     return [sum(col) / count for col in zip(*vectors)]
 
 
-def anchor_centroids(schema: DimensionSchema, embedder) -> Dict[str, List[float]]:
+def anchor_centroids(schema: DimensionSchema, embedder: Any) -> Dict[str, List[float]]:
     """Embed every dimension's anchors once and average them per dimension.
 
     Anchors are schema-level and constant, so a long-lived caller should
@@ -290,7 +290,7 @@ def entity_text(entity: Entity) -> str:
 
 
 def score_dimensions(
-    entity: Entity, schema: DimensionSchema, embedder
+    entity: Entity, schema: DimensionSchema, embedder: Any
 ) -> Dict[str, float]:
     """Score ``entity`` against every dimension in ``schema``.
 
@@ -323,12 +323,13 @@ def score_dimensions(
     return scores
 
 
-def project(entity: Entity, schema: DimensionSchema, embedder) -> Projection:
+def project(entity: Entity, schema: DimensionSchema, embedder: Any) -> Projection:
     """Project ``entity`` into ``schema``'s dimension space.
 
     The returned :class:`Projection` carries the full replay identity, so it
     can be recomputed — or invalidated — without consulting the source system.
     """
+    assert entity.id is not None  # normalise_record always derives an id
     return Projection(
         entity_id=entity.id,
         content_hash=content_hash(entity),
@@ -358,7 +359,7 @@ def _identity(projection: "Projection") -> Dict[str, str]:
     }
 
 
-async def upsert_projection(projection: "Projection", graph_store) -> bool:
+async def upsert_projection(projection: "Projection", graph_store: Any) -> bool:
     """Write ``projection`` into the graph, incrementally.
 
     Returns ``True`` if anything was written, ``False`` if the stored state was

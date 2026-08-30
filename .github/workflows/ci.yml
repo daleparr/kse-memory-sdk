@@ -25,11 +25,20 @@ jobs:
           fi
       - name: Repo hygiene guardrails (AR-01, AR-02, AR-03, AR-04)
         run: pytest tests/test_repo_hygiene.py -q
-      - name: Type check public API (AR-05)
+      - name: Type check public API (AR-05) — HARD-FAIL on the v3 surface (T-015)
         run: |
-          pip install mypy
+          pip install mypy types-PyYAML
+          # The public surface, per docs/LEGACY_RETIREMENT.md: mypy-clean, enforced.
+          mypy kse_memory/core/ingest.py kse_memory/core/schema.py \
+               kse_memory/core/projection.py kse_memory/core/tokenizer.py \
+               kse_memory/core/query.py kse_memory/core/retrieval.py \
+               kse_memory/core/fusion.py kse_memory/core/answer.py \
+               kse_memory/core/explain.py kse_memory/core/pipeline.py \
+               kse_memory/core/dimension_store.py kse_memory/services/hybrid.py \
+               kse_memory/backends/memory_graph.py kse_memory/quickstart/v3.py \
+               --ignore-missing-imports --follow-imports=silent
+          # Advisory over the v2 remainder until its modules retire:
           mypy kse_memory --ignore-missing-imports --no-error-summary || true
-          # || true until Phase 2 lands typed surfaces; flip to hard-fail at T-015
 
   unit:
     name: Unit tests
@@ -49,7 +58,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e . pytest pytest-asyncio hypothesis
       - run: pytest tests/ -q --ignore=tests/test_repo_hygiene.py
-        continue-on-error: true  # legacy mocked suite; hard-fail restored as Phase 2 replaces mocks (GOV-04)
+        # T-015 FLIPPED 2026-08-30: the legacy mocked suite is retired; every
+        # remaining test is a real lane. A failure here is a failure.
       - name: Changed-line coverage (D-16 diff-cover ratchet — report-only until T-015)
         if: matrix.python-version == '3.11'
         run: |

@@ -66,7 +66,7 @@ class DimensionSchema:
     def __getitem__(self, name: str) -> Dimension:
         for d in self.dimensions:
             if d.name == name:
-                return d
+                return d  # type: ignore[no-any-return]  # tuple field is untyped-generic
         raise KeyError(name)
 
     def __iter__(self) -> Iterator:

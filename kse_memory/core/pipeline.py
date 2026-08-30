@@ -61,11 +61,11 @@ class IngestPipeline:
     def __init__(
         self,
         schema: DimensionSchema,
-        embedder,
+        embedder: Any,
         *,
-        graph_store=None,
-        vector_store=None,
-        concept_store=None,
+        graph_store: Any = None,
+        vector_store: Any = None,
+        concept_store: Any = None,
     ) -> None:
         self.schema = schema
         self.embedder = embedder
@@ -91,6 +91,7 @@ class IngestPipeline:
         entity = normalise_record(raw)
 
         vector = self.embedder.embed([entity_text(entity)])[0]
+        assert entity.id is not None  # normalise_record always derives an id
         projection = Projection(
             entity_id=entity.id,
             content_hash=content_hash(entity),

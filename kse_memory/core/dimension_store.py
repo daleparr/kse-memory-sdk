@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 __all__ = ["ConceptStoreAdapter", "DimensionScores", "InMemoryDimensionStore", "cosine_similarity"]
 
@@ -152,7 +152,7 @@ class ConceptStoreAdapter:
     LEGACY_SCHEMA = ("legacy-conceptual-dimensions", "2.0.0")
 
     @staticmethod
-    def to_generic(dimensions) -> DimensionScores:
+    def to_generic(dimensions: Any) -> DimensionScores:
         raw = dimensions.to_dict() if hasattr(dimensions, "to_dict") else dict(dimensions)
         name, version = ConceptStoreAdapter.LEGACY_SCHEMA
         return DimensionScores(

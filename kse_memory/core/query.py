@@ -23,7 +23,7 @@ Guardrails honoured: AR-01 (no network), AR-04 (no GPU), AR-05 (typed surface).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .projection import SCORE_PRECISION, anchor_centroids, vector_cosine
 from .schema import DimensionSchema
@@ -62,7 +62,7 @@ class ParsedQuery:
 def parse_query(
     text: str,
     schema: DimensionSchema,
-    embedder,
+    embedder: Any,
     centroids: Optional[Mapping[str, Sequence[float]]] = None,
 ) -> ParsedQuery:
     """Parse ``text`` against ``schema`` using ``embedder``.

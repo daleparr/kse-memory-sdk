@@ -123,12 +123,12 @@ class _VectorIndex:
     def __init__(self) -> None:
         self.rows: Dict[str, Tuple[List[float], Dict[str, Any]]] = {}
 
-    async def upsert_vectors(self, vectors) -> bool:
+    async def upsert_vectors(self, vectors: Any) -> bool:
         for entity_id, vector, metadata in vectors:
             self.rows[entity_id] = (list(vector), dict(metadata))
         return True
 
-    async def search_vectors(self, query_vector, top_k: int = 10, filters=None):
+    async def search_vectors(self, query_vector: Sequence[float], top_k: int = 10, filters: Any = None) -> List[Tuple[str, float, Dict[str, Any]]]:
         """The VectorStoreInterface search contract, over in-memory rows."""
         from ..core.projection import vector_cosine
 
@@ -141,7 +141,7 @@ class _VectorIndex:
         return ranked[:top_k]
 
 
-def build_pipeline(embedder, schema: Optional[DimensionSchema] = None) -> IngestPipeline:
+def build_pipeline(embedder: Any, schema: Optional[DimensionSchema] = None) -> IngestPipeline:
     """An IngestPipeline over fresh in-memory stores."""
     return IngestPipeline(
         schema or load_schema(DEFAULT_SCHEMA),
@@ -153,7 +153,7 @@ def build_pipeline(embedder, schema: Optional[DimensionSchema] = None) -> Ingest
 
 
 async def run_quickstart(
-    embedder,
+    embedder: Any,
     schema: Optional[Mapping[str, Any]] = None,
     records: Optional[Sequence[Mapping[str, Any]]] = None,
     queries: Optional[Sequence[str]] = None,

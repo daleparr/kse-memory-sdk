@@ -54,7 +54,7 @@ class WordPieceTokenizer:
         self.sep_id = vocab[_SEP]
 
     @classmethod
-    def from_model_dir(cls, model_dir) -> "WordPieceTokenizer":
+    def from_model_dir(cls, model_dir: "str | Path") -> "WordPieceTokenizer":
         """Load ``vocab.txt`` from a cached model directory.
 
         Raises:
@@ -71,7 +71,7 @@ class WordPieceTokenizer:
                 "KSE never downloads model artefacts (AR-01). The vocab.txt "
                 "shipped with the ONNX export belongs beside model.onnx."
             )
-        vocab = {}
+        vocab: Dict[str, int] = {}
         with path.open(encoding="utf-8") as handle:
             for index, line in enumerate(handle):
                 token = line.rstrip("\n")

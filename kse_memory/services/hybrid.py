@@ -16,7 +16,7 @@ Guardrails honoured: AR-01 (no network), AR-04 (no GPU), AR-05 (typed surface).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Mapping, Optional, Tuple
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 from ..core.answer import DEFAULT_CONFIDENCE_THRESHOLD, HybridAnswer, answer
 from ..core.explain import Explanation, explain_results
@@ -44,11 +44,11 @@ class HybridSearchService:
     def __init__(
         self,
         schema: DimensionSchema,
-        embedder,
+        embedder: Any,
         *,
-        vector_store=None,
-        concept_store=None,
-        graph_store=None,
+        vector_store: Any = None,
+        concept_store: Any = None,
+        graph_store: Any = None,
         centroids: Optional[Mapping[str, List[float]]] = None,
     ) -> None:
         self.schema = schema
