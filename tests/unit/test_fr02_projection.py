@@ -229,10 +229,17 @@ _DOMAIN_VOCABULARY = (
 
 def test_default_path_has_no_hardcoded_domain_vocabulary():
     """TC-04: dimensions come from the user's schema, never from the library."""
-    root = Path(__file__).resolve().parents[2] / "kse_memory" / "core"
+    package = Path(__file__).resolve().parents[2] / "kse_memory"
+    surface = [
+        "core/ingest.py", "core/schema.py", "core/projection.py",
+        "core/tokenizer.py", "core/query.py", "core/retrieval.py",
+        "core/fusion.py", "core/answer.py", "core/explain.py",
+        "core/pipeline.py", "core/dimension_store.py", "services/hybrid.py",
+        "backends/memory_graph.py", "quickstart/v3.py",
+    ]
     offenders = []
-    for module in ("projection.py", "schema.py"):
-        text = (root / module).read_text(encoding="utf-8").lower()
+    for module in surface:
+        text = (package / module).read_text(encoding="utf-8").lower()
         offenders += [f"{module}:{w}" for w in _DOMAIN_VOCABULARY if w in text]
     assert not offenders, f"hardcoded domain vocabulary in default path: {offenders}"
 

@@ -18,6 +18,7 @@ Guardrails honoured: AR-01, AR-04, AR-05.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
@@ -154,7 +155,7 @@ def build_pipeline(embedder: Any, schema: Optional[DimensionSchema] = None) -> I
 
 async def run_quickstart(
     embedder: Any,
-    schema: Optional[Mapping[str, Any]] = None,
+    schema: "Mapping[str, Any] | str | Path | None" = None,
     records: Optional[Sequence[Mapping[str, Any]]] = None,
     queries: Optional[Sequence[str]] = None,
     top_k: int = 5,
@@ -166,7 +167,7 @@ async def run_quickstart(
     re-ingesting unchanged content writes nothing.
     """
     if pipeline is None:
-        loaded = load_schema(dict(schema)) if schema else load_schema(DEFAULT_SCHEMA)
+        loaded = load_schema(schema) if schema is not None else load_schema(DEFAULT_SCHEMA)
         pipeline = build_pipeline(embedder, loaded)
 
     results = await pipeline.ingest_many(list(records or DEFAULT_RECORDS))

@@ -11,7 +11,7 @@ Test-first per GOV-04: every TC below is written and failing (red) before its FR
 | TC-01 | US1 | Given the current repo, when README v3 lands, then no unvalidated numeric claim remains, the placeholder arXiv badge is removed, status markdowns are consolidated into docs/, and simulation code lives under simulations/ with explicit labelling. | AR-02, AR-03 |
 | TC-02 [X] | US2 | Given a fresh venv on CPU-only hardware, when I run pip install kse-memory-sdk && kse quickstart, then hybrid results return in <60s with no external service, no API key, no network call, and no CUDA dependency installed. | FR-01, FR-02, FR-03, FR-04, FR-05, FR-06, FR-07, AR-01, AR-04 |
 | TC-03 [X] | US3 | Given results from >=2 channels with incompatible score scales, when fused, then RRF is applied by default and every result retains per-channel rank/score provenance. | FR-04, FR-05, FR-06, AR-05 |
-| TC-04 | US4 | Given a YAML schema of named dimensions with anchors, when items are ingested, then dimensions are scored and queryable, and no hardcoded fashion vocabulary remains in the default path. | FR-02, FR-03, AR-01 |
+| TC-04 [X] | US4 | Given a YAML schema of named dimensions with anchors, when items are ingested, then dimensions are scored and queryable, and no hardcoded fashion vocabulary remains in the default path. | FR-02, FR-03, AR-01 |
 | TC-05 | US5 | Given pinned BEIR/ESCI datasets, when I run make bench, then the full results table including losses regenerates in one command on documented CPU hardware. | AR-03, AR-04 |
 | TC-06 | US6 | Given the examples directory, when I open the retail, finance, or documents pack, then each ships a dimension schema plus a runnable notebook demonstrating a query pure vector search handles worse. | FR-02, FR-03, FR-04, FR-05, FR-06, AR-01 |
 | TC-07 | US7 | Given no API key, when dimension scoring runs, then the local scorer produces schema-conformant scores and quickstart parity is maintained. | FR-02, AR-01, AR-04 |
@@ -72,4 +72,10 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *RRF by default*: `answer()` fuses via `fuse_rrf` unconditionally (`core/answer.py`); D-07.
 - *incompatible score scales*: the Hypothesis scale-invariance suite proves fusion is unchanged under positive rescaling of any channel (~200 generated examples).
 - *per-channel rank/score provenance*: `FusedItem.ranks`/`.scores` carry both, `None` for absence; asserted in `test_fr05_fusion.py` and surfaced end to end by FR-06 (`test_fr06_explain.py`).
+
+**TC-04 [X]** — verified 2026-08-30 (Session 25-CC), clause by clause:
+- *YAML schema of named dimensions with anchors*: `tests/component/test_us4_custom_schema.py` drives the story from an actual YAML file (finance vocabulary) through `load_schema`, and `run_quickstart`/`kse quickstart --schema`/`kse explain --schema` all accept a schema path directly.
+- *dimensions are scored*: every ingested item's receipts carry the developer's dimension names (asserted).
+- *and queryable*: `find_similar_dimensions` answers in the same schema, and FR-03 query targets are keyed by the developer's vocabulary — live with the genuine model, "something easy to sell fast" targets liquidity 0.71.
+- *no hardcoded fashion vocabulary in the default path*: the TC-04 scan now covers all 14 public-surface modules, not 2; clean. (The v2 `search.py` legacy list survives for legacy stored data only, per the retirement map.)
 

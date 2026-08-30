@@ -66,10 +66,10 @@ _As a developer, I get scale-free fusion by default._  · FR: FR-04, FR-05, FR-0
 ## Phase 6 — US4: Custom dimension schema (P1)
 
 _As a developer in any domain, I define my own conceptual dimensions._  · FR: FR-02, FR-03 · AR: AR-01
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US4
-- [ ] T-030 US4 × FR-02: implement/extend for this story
-- [ ] T-031 US4 × FR-03: implement/extend for this story
-- [ ] T-032 US4: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US4 — tests/component/test_us4_custom_schema.py, RED on the three new capabilities first
+- [X] T-030 US4 × FR-02: implement/extend for this story — schema-path support end to end; scoring under user vocabulary (Sessions 13-CC..25-CC)
+- [X] T-031 US4 × FR-03: implement/extend for this story — query targets keyed by user vocabulary; CLI --schema on quickstart and explain
+- [X] T-032 US4: verify green, mark BD4 TCs [X], journal in BD6 — TC-04 verified clause-by-clause (BD4 verification record)
 
 ## Phase 7 — US5: Real benchmarks (P2)
 

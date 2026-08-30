@@ -327,3 +327,11 @@ Template:
 - Criterion 3: continue-on-error removed from the unit job. The soft-fail concession D-16 called "temporary by construction" is over.
 **State (printed):** 257 tests collected in 0.37s; hard lanes 248 passed / 9 skipped locally.
 
+## 2026-08-30 — Session 25-CC (Claude Code, parallel track) — US4 closes
+**The story, not just the machinery:** FR-02/FR-03 already scored and queried custom dimensions; what US4 needed was a developer actually reaching it. TC-first (4 tests; the end-to-end story passed immediately — evidence the FRs delivered it — and the three new capabilities were RED): run_quickstart now takes a schema *path* (load_schema already understood paths; the plumbing insisted on a mapping), and `kse quickstart --schema my.yaml` / `kse explain --schema` land the D-14 CLI surface.
+**TC-04's vocabulary clause hardened:** the scan covered 2 modules; now all 14 of the public surface. Clean.
+**Live proof with the genuine model:** a finance schema (liquidity/volatility/regulatory_burden) drives the CLI end to end; "something easy to sell fast" targets liquidity 0.71 — the user's vocabulary, semantically mapped, with receipts.
+**US4 closes** — the fourth user story, and the last P1. TC-04 marked in BD4 with per-clause evidence.
+**State (printed):** 261 tests collected in 0.51s; 252 passed, 12 skipped, 72 warnings in 10.77s.
+**Remaining stories:** US5 benchmarks (P2), US6 domain packs, US7 scorer parity, US8 domain mapping, US9 backends, US10/US11 (P3). Next BD patch reconciliation pending.
+

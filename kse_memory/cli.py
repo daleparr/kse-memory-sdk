@@ -41,8 +41,10 @@ def cli():
 @click.option("--query", "queries", multiple=True,
               help="Query to run (repeatable). Defaults to the demo queries.")
 @click.option("--top-k", default=5, show_default=True, help="Results per query")
+@click.option("--schema", "schema_path", type=click.Path(exists=True),
+              help="Your own dimension schema (YAML). Defaults to the demo schema.")
 @click.option("--output", type=click.Path(), help="Save results to JSON file")
-def quickstart(queries, top_k: int, output: Optional[str]):
+def quickstart(queries, top_k: int, schema_path: Optional[str], output: Optional[str]):
     """
     🚀 Ingest a demo corpus and search it — offline, CPU-only, no API key.
 
@@ -82,6 +84,7 @@ def quickstart(queries, top_k: int, output: Optional[str]):
     started = _time.perf_counter()
     result = asyncio.run(run_quickstart(
         embedder,
+        schema=schema_path,
         queries=list(queries) or None,
         top_k=top_k,
     ))
@@ -141,7 +144,9 @@ def quickstart(queries, top_k: int, output: Optional[str]):
 @cli.command()
 @click.argument("query")
 @click.option("--top", default=1, show_default=True, help="How many results to explain")
-def explain(query: str, top: int):
+@click.option("--schema", "schema_path", type=click.Path(exists=True),
+              help="Your own dimension schema (YAML). Defaults to the demo schema.")
+def explain(query: str, top: int, schema_path: Optional[str]):
     """
     🔍 Explain a query's results — the D-14 inspection layer over FR-06.
 
@@ -160,7 +165,7 @@ def explain(query: str, top: int):
         console.print(f"[red]{exc}[/red]")
         raise SystemExit(1)
 
-    result = asyncio.run(run_quickstart(embedder, queries=[query]))
+    result = asyncio.run(run_quickstart(embedder, schema=schema_path, queries=[query]))
     explanations = result.explanations[query][:top]
     if not explanations:
         console.print("[yellow]No results to explain.[/yellow]")
