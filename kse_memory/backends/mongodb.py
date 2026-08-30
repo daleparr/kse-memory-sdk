@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Optional
 import asyncio
 from datetime import datetime
 from ..core.interfaces import ConceptStoreInterface
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 from ..core.config import ConceptStoreConfig
 from ..exceptions import BackendError, ConceptStoreError
 
@@ -127,7 +127,7 @@ class MongoDBBackend(ConceptStoreInterface):
                 "title": product.title,
                 "category": product.category,
                 "brand": product.brand,
-                "conceptual_dimensions": product.conceptual_dimensions.to_dict(),
+                "conceptual_dimensions": dict(product.conceptual_dimensions),
                 "metadata": product.metadata or {},
                 "updated_at": datetime.utcnow()
             }
@@ -144,7 +144,7 @@ class MongoDBBackend(ConceptStoreInterface):
         except Exception as e:
             raise ConceptStoreError(f"Failed to store product concepts: {str(e)}", "store_product_concepts")
     
-    async def get_product_concepts(self, product_id: str) -> Optional[ConceptualDimensions]:
+    async def get_product_concepts(self, product_id: str) -> Optional[Dict[str, float]]:
         """Get conceptual dimensions for a product."""
         if not self._connected:
             raise ConceptStoreError("Not connected to MongoDB", "get_product_concepts")
@@ -153,20 +153,20 @@ class MongoDBBackend(ConceptStoreInterface):
             doc = await self.products_collection.find_one({"product_id": product_id})
             
             if doc and "conceptual_dimensions" in doc:
-                return ConceptualDimensions.from_dict(doc["conceptual_dimensions"])
+                return {k: float(v) for k, v in doc["conceptual_dimensions"].items()}
             
             return None
             
         except Exception as e:
             raise ConceptStoreError(f"Failed to get product concepts: {str(e)}", "get_product_concepts")
     
-    async def find_similar_products(self, target_dimensions: ConceptualDimensions, threshold: float = 0.8, limit: int = 10) -> List[Dict[str, Any]]:
+    async def find_similar_products(self, target_dimensions: Dict[str, float], threshold: float = 0.8, limit: int = 10) -> List[Dict[str, Any]]:
         """Find products with similar conceptual dimensions."""
         if not self._connected:
             raise ConceptStoreError("Not connected to MongoDB", "find_similar_products")
         
         try:
-            target_dict = target_dimensions.to_dict()
+            target_dict = (target_dimensions.to_dict() if hasattr(target_dimensions, 'to_dict') else dict(target_dimensions))
             
             # Build aggregation pipeline for similarity search
             pipeline = [
@@ -474,13 +474,13 @@ class MongoDBBackend(ConceptStoreInterface):
     # ConceptStoreInterface conformance.
     #
     # This class previously implemented the right behaviour under the wrong
-    # names — store_product_concepts rather than store_conceptual_dimensions,
+    # names — store_product_concepts rather than the interface's store method,
     # and so on — leaving five abstract methods unsatisfied. The class could
     # therefore never be instantiated: construction raised TypeError.
     #
     # The generic, schema-driven surface is implemented natively; MongoDB's
     # free-form documents suit arbitrary dimension names with no schema
-    # migration. The legacy ConceptualDimensions methods are thin adapters
+    # migration. The legacy fixed-dimension methods were thin adapters
     # over it, so there is one implementation rather than two.
 
     _DIMENSION_FIELD = "conceptual_dimensions"
@@ -597,25 +597,3 @@ class MongoDBBackend(ConceptStoreInterface):
             raise
         except Exception as e:
             raise ConceptStoreError(f"Failed to get dimension statistics: {str(e)}", "get_dimension_statistics")
-
-    # ------------------------------------------------- legacy compatibility
-    async def store_conceptual_dimensions(self, product_id: str, dimensions) -> bool:
-        from ..core.dimension_store import ConceptStoreAdapter
-
-        return await self.store_dimensions(product_id, ConceptStoreAdapter.to_generic(dimensions))
-
-    async def get_conceptual_dimensions(self, product_id: str):
-        from ..core.dimension_store import ConceptStoreAdapter
-
-        stored = await self.get_dimensions(product_id)
-        return None if stored is None else ConceptStoreAdapter.to_legacy(stored)
-
-    async def delete_conceptual_dimensions(self, product_id: str) -> bool:
-        return await self.delete_dimensions(product_id)
-
-    async def find_similar_concepts(self, dimensions, threshold: float = 0.8, limit: int = 10):
-        from ..core.dimension_store import ConceptStoreAdapter
-
-        return await self.find_similar_dimensions(
-            ConceptStoreAdapter.to_generic(dimensions), threshold, limit
-        )

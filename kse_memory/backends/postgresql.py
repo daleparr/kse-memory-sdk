@@ -16,7 +16,6 @@ except ImportError:
 
 from ..core.interfaces import ConceptStoreInterface
 from ..core.config import ConceptStoreConfig
-from ..core.models import ConceptualDimensions
 from ..exceptions import ConceptStoreError, AuthenticationError
 
 
@@ -117,7 +116,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             logger.error(f"Error during PostgreSQL disconnection: {str(e)}")
             return False
     
-    async def store_conceptual_dimensions(self, product_id: str, dimensions: ConceptualDimensions) -> bool:
+    async def store_conceptual_dimensions(self, product_id: str, dimensions) -> bool:
         """
         Store conceptual dimensions for a product.
         
@@ -134,7 +133,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
         self._ensure_connected()
         
         try:
-            dim_dict = dimensions.to_dict()
+            dim_dict = (dimensions.to_dict() if hasattr(dimensions, 'to_dict') else dict(dimensions))
             
             # Create vector representation
             vector = [dim_dict.get(dim, 0.0) for dim in self.dimensions]
@@ -186,7 +185,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             logger.error(f"Failed to store conceptual dimensions for product {product_id}: {str(e)}")
             raise ConceptStoreError(f"Storage failed: {str(e)}", operation="store")
     
-    async def get_conceptual_dimensions(self, product_id: str) -> Optional[ConceptualDimensions]:
+    async def get_conceptual_dimensions(self, product_id: str) -> Optional[Dict[str, float]]:
         """
         Get conceptual dimensions for a product.
         
@@ -194,7 +193,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             product_id: Product identifier
             
         Returns:
-            ConceptualDimensions if found, None otherwise
+            Mapping of legacy dimension scores if found, None otherwise
             
         Raises:
             ConceptStoreError: If retrieval fails
@@ -211,18 +210,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
                 """, product_id)
                 
                 if row:
-                    return ConceptualDimensions(
-                        elegance=row["elegance"],
-                        comfort=row["comfort"],
-                        boldness=row["boldness"],
-                        modernity=row["modernity"],
-                        minimalism=row["minimalism"],
-                        luxury=row["luxury"],
-                        functionality=row["functionality"],
-                        versatility=row["versatility"],
-                        seasonality=row["seasonality"],
-                        innovation=row["innovation"]
-                    )
+                    return {d: float(row[d]) for d in self.dimensions}
                 
                 return None
                 
@@ -264,7 +252,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
     
     async def find_similar_concepts(
         self, 
-        dimensions: ConceptualDimensions, 
+        dimensions, 
         threshold: float = 0.8,
         limit: int = 10
     ) -> List[Tuple[str, float]]:
@@ -285,7 +273,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
         self._ensure_connected()
         
         try:
-            dim_dict = dimensions.to_dict()
+            dim_dict = (dimensions.to_dict() if hasattr(dimensions, 'to_dict') else dict(dimensions))
             target_vector = [dim_dict.get(dim, 0.0) for dim in self.dimensions]
             
             async with self.pool.acquire() as conn:

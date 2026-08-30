@@ -13,7 +13,7 @@ import numpy as np
 from pathlib import Path
 
 from ..core.memory import KSEMemory
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 from .federated_models import (
     FederationConfig, ModelUpdate, PrivateModelUpdate, 
     FederatedMetrics, FederationRole, PrivacyLevel

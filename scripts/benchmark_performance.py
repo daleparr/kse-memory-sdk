@@ -13,7 +13,7 @@ from datetime import datetime
 
 from kse_memory.core.memory import KSEMemory
 from kse_memory.core.config import KSEConfig
-from kse_memory.core.models import Product, SearchQuery, SearchType, ConceptualDimensions
+from kse_memory.core.models import Product, SearchQuery, SearchType
 from kse_memory.quickstart.datasets import SampleDatasets
 
 

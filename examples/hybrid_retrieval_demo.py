@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 
 from kse_memory.core.memory import KSEMemory
 from kse_memory.core.config import KSEConfig
-from kse_memory.core.models import Product, SearchQuery, SearchType, ConceptualDimensions
+from kse_memory.core.models import Product, SearchQuery, SearchType
 from kse_memory.visual.search_explainer import SearchResultsExplainer
 
 
@@ -38,7 +38,7 @@ async def demonstrate_core_hybrid_retrieval():
             price=129.99,
             category="Athletic Footwear",
             tags=["running", "athletic", "comfortable", "breathable", "lightweight"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.6, comfort=0.9, boldness=0.4, modernity=0.8,
                 minimalism=0.7, luxury=0.3, functionality=0.95, versatility=0.8,
                 seasonality=0.5, innovation=0.7
@@ -51,7 +51,7 @@ async def demonstrate_core_hybrid_retrieval():
             price=299.99,
             category="Formal Footwear",
             tags=["formal", "leather", "elegant", "business", "classic"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.95, comfort=0.6, boldness=0.2, modernity=0.4,
                 minimalism=0.8, luxury=0.9, functionality=0.7, versatility=0.6,
                 seasonality=0.3, innovation=0.2
@@ -64,7 +64,7 @@ async def demonstrate_core_hybrid_retrieval():
             price=189.99,
             category="Casual Footwear", 
             tags=["casual", "sneakers", "bold", "colorful", "street-style"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.4, comfort=0.7, boldness=0.95, modernity=0.9,
                 minimalism=0.2, luxury=0.5, functionality=0.6, versatility=0.7,
                 seasonality=0.6, innovation=0.8
@@ -284,7 +284,7 @@ async def demonstrate_performance_comparison():
             description="Maximum comfort athletic footwear with advanced cushioning",
             category="Athletic Footwear",
             tags=["running", "comfortable", "athletic"],
-            conceptual_dimensions=ConceptualDimensions(comfort=0.95, functionality=0.9, modernity=0.8)
+            conceptual_dimensions=dict(comfort=0.95, functionality=0.9, modernity=0.8)
         ),
         Product(
             id="prod_002", 
@@ -292,7 +292,7 @@ async def demonstrate_performance_comparison():
             description="Elegant leather shoes for office and formal occasions",
             category="Formal Footwear",
             tags=["business", "formal", "leather"],
-            conceptual_dimensions=ConceptualDimensions(elegance=0.9, luxury=0.8, comfort=0.6)
+            conceptual_dimensions=dict(elegance=0.9, luxury=0.8, comfort=0.6)
         ),
         Product(
             id="prod_003",
@@ -300,7 +300,7 @@ async def demonstrate_performance_comparison():
             description="Comfortable everyday sneakers for casual wear and walking",
             category="Casual Footwear",
             tags=["casual", "walking", "comfortable"],
-            conceptual_dimensions=ConceptualDimensions(comfort=0.8, versatility=0.9, functionality=0.7)
+            conceptual_dimensions=dict(comfort=0.8, versatility=0.9, functionality=0.7)
         ),
         Product(
             id="prod_004",
@@ -308,7 +308,7 @@ async def demonstrate_performance_comparison():
             description="Advanced training shoes with superior performance features",
             category="Athletic Footwear", 
             tags=["training", "performance", "athletic"],
-            conceptual_dimensions=ConceptualDimensions(functionality=0.95, innovation=0.8, modernity=0.9)
+            conceptual_dimensions=dict(functionality=0.95, innovation=0.8, modernity=0.9)
         )
     ]
     

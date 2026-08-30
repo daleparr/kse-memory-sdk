@@ -2,7 +2,7 @@
 Schema-driven dimension scores and a reference store (TC-04).
 
 Why this exists:
-``ConceptStoreInterface`` was typed against ``ConceptualDimensions`` — ten
+``ConceptStoreInterface`` was typed against a legacy fixed class of ten
 hardcoded fashion axes. A user's schema may name any dimensions it likes, so
 that type made the concept store structurally incapable of holding a v3
 projection. It was the last blocker on TC-04's "no hardcoded fashion
@@ -140,30 +140,13 @@ class InMemoryDimensionStore:
             for name, values in by_dimension.items()
         }
 
-    # ---------------------------------------------------- legacy compatibility
-    async def store_conceptual_dimensions(self, product_id: str, dimensions) -> bool:
-        return await self.store_dimensions(
-            product_id, ConceptStoreAdapter.to_generic(dimensions)
-        )
-
-    async def get_conceptual_dimensions(self, product_id: str):
-        stored = await self.get_dimensions(product_id)
-        return None if stored is None else ConceptStoreAdapter.to_legacy(stored)
-
-    async def delete_conceptual_dimensions(self, product_id: str) -> bool:
-        return await self.delete_dimensions(product_id)
-
-    async def find_similar_concepts(self, dimensions, threshold: float = 0.8, limit: int = 10):
-        return await self.find_similar_dimensions(
-            ConceptStoreAdapter.to_generic(dimensions), threshold, limit
-        )
-
 
 class ConceptStoreAdapter:
-    """Translates between the legacy ConceptualDimensions and generic scores.
+    """Translates legacy fixed-dimension payloads into generic scores.
 
-    Kept in one place so the deprecation has a single seam to delete when
-    ConceptualDimensions finally goes.
+    The legacy class is gone (v3); what remains is the schema constant and the
+    dict converter, which the Postgres data migration and legacy stored
+    payloads still need.
     """
 
     LEGACY_SCHEMA = ("legacy-conceptual-dimensions", "2.0.0")
@@ -177,17 +160,3 @@ class ConceptStoreAdapter:
             schema_version=version,
             scores={k: float(v) for k, v in raw.items()},
         )
-
-    @staticmethod
-    def to_legacy(scores: DimensionScores):
-        from .models import ConceptualDimensions
-
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")  # the class warns on construction
-            legacy = ConceptualDimensions()
-        for name, value in scores.scores.items():
-            if hasattr(legacy, name):
-                setattr(legacy, name, float(value))
-        return legacy

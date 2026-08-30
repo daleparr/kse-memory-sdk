@@ -14,10 +14,9 @@ from kse_memory import (
     Product,
     SearchQuery,
     SearchType,
-    ConceptualDimensions,
 )
 from kse_memory.adapters import GenericAdapter
-from kse_memory.services import EmbeddingService, ConceptualService
+from kse_memory.services import EmbeddingService
 from kse_memory.exceptions import KSEError
 
 
@@ -34,7 +33,7 @@ def sample_products():
             category="Footwear",
             brand="SportsBrand",
             tags=["running", "comfortable", "athletic", "breathable"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 comfort=0.9,
                 functionality=0.8,
                 modernity=0.7,
@@ -50,7 +49,7 @@ def sample_products():
             category="Clothing",
             brand="LuxuryFashion",
             tags=["elegant", "formal", "silk", "evening"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.95,
                 luxury=0.9,
                 modernity=0.6,
@@ -66,7 +65,7 @@ def sample_products():
             category="Accessories",
             brand="ModernTime",
             tags=["minimalist", "watch", "timeless", "premium"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 minimalism=0.95,
                 elegance=0.8,
                 modernity=0.9,
@@ -373,29 +372,6 @@ class TestServiceIntegration:
             # Skip test if model not available
             pytest.skip(f"Embedding model not available: {e}")
     
-    async def test_conceptual_service_integration(self, sample_products):
-        """Test conceptual service integration."""
-        from kse_memory.core.config import ConceptualConfig
-        
-        config = ConceptualConfig(
-            auto_compute=False,  # Disable LLM for testing
-        )
-        
-        service = ConceptualService(config)
-        
-        # Test similarity computation
-        dims1 = ConceptualDimensions(elegance=0.8, comfort=0.6, luxury=0.9)
-        dims2 = ConceptualDimensions(elegance=0.7, comfort=0.8, luxury=0.8)
-        
-        similarity = service.compute_similarity(dims1, dims2)
-        assert 0.0 <= similarity <= 1.0
-        
-        # Test dimension weights
-        weights = service.get_dimension_weights("elegant luxury items")
-        assert "elegance" in weights
-        assert "luxury" in weights
-        assert weights["elegance"] > 1.0  # Should be boosted
-        assert weights["luxury"] > 1.0    # Should be boosted
 
 
 @pytest.mark.asyncio

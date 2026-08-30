@@ -15,7 +15,6 @@ from kse_memory import (
     Product,
     SearchQuery,
     SearchType,
-    ConceptualDimensions,
 )
 
 # Configure logging
@@ -153,7 +152,7 @@ def create_sample_products() -> List[Product]:
             brand="Nike",
             tags=["running", "comfortable", "breathable", "casual", "athletic"],
             images=["https://example.com/nike-air-max-270.jpg"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 comfort=0.9,
                 functionality=0.8,
                 modernity=0.7,
@@ -172,7 +171,7 @@ def create_sample_products() -> List[Product]:
             brand="Luxury Fashion Co",
             tags=["elegant", "silk", "formal", "luxury", "sophisticated"],
             images=["https://example.com/silk-dress.jpg"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.95,
                 luxury=0.9,
                 modernity=0.7,
@@ -191,7 +190,7 @@ def create_sample_products() -> List[Product]:
             brand="Modern Time",
             tags=["minimalist", "watch", "timeless", "premium", "accessories"],
             images=["https://example.com/minimalist-watch.jpg"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 minimalism=0.95,
                 elegance=0.8,
                 modernity=0.9,
@@ -210,7 +209,7 @@ def create_sample_products() -> List[Product]:
             brand="Urban Style",
             tags=["bold", "statement", "unique", "fashion", "jacket"],
             images=["https://example.com/statement-jacket.jpg"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 boldness=0.95,
                 modernity=0.8,
                 innovation=0.7,
@@ -229,7 +228,7 @@ def create_sample_products() -> List[Product]:
             brand="Comfort Plus",
             tags=["comfortable", "lounge", "soft", "relaxation", "casual"],
             images=["https://example.com/lounge-set.jpg"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 comfort=0.95,
                 functionality=0.8,
                 versatility=0.7,

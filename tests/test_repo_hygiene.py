@@ -173,3 +173,21 @@ def test_ar04_no_cuda_packages_in_default_dependencies():
 def test_ar01_fixture_blocks_network(no_network):
     with pytest.raises(AssertionError, match="AR-01"):
         socket.create_connection(("example.com", 80), timeout=1)
+
+
+# ---------------------------------------------------------------- TC-04
+def test_conceptual_dimensions_is_gone():
+    """TC-04: the hardcoded fashion-vocabulary class is removed in v3.
+
+    Scans the package source, not the import graph, so references hiding in
+    modules that only import under optional extras (temporal, federated) are
+    caught too.
+    """
+    package = ROOT / "kse_memory"
+    offenders = []
+    for path in package.rglob("*.py"):
+        if path.name.startswith("._"):
+            continue
+        if "ConceptualDimensions" in path.read_text(encoding="utf-8", errors="ignore"):
+            offenders.append(str(path.relative_to(ROOT)))
+    assert not offenders, f"ConceptualDimensions still referenced: {sorted(offenders)}"

@@ -15,7 +15,7 @@ from kse_memory.core.models import (
     Entity, 
     ConceptualSpace, 
     Product,  # Deprecated
-    ConceptualDimensions,  # Deprecated
+    dict,  # Deprecated
     SearchResult
 )
 
@@ -112,9 +112,9 @@ def test_backward_compatibility():
         print(f"Entity type: {product.entity_type}")
         print(f"Deprecation warnings captured: {len(w)}")
         
-        # Test deprecated ConceptualDimensions
-        print("\n--- Deprecated ConceptualDimensions ---")
-        old_dims = ConceptualDimensions()
+        # Test deprecated dict
+        print("\n--- Deprecated dict ---")
+        old_dims = dict()
         new_space = old_dims.to_conceptual_space()
         
         print(f"Converted to ConceptualSpace: {type(new_space).__name__}")

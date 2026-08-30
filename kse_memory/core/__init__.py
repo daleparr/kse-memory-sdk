@@ -11,7 +11,6 @@ from .models import (
     SearchQuery,
     SearchResult,
     SearchType,
-    ConceptualDimensions,  # Deprecated - use ConceptualSpace instead
     KnowledgeGraph,
     EmbeddingVector,
 )
@@ -31,7 +30,6 @@ __all__ = [
     "SearchQuery",
     "SearchResult",
     "SearchType",
-    "ConceptualDimensions",  # Deprecated - use ConceptualSpace instead
     "KnowledgeGraph",
     "EmbeddingVector",
     "AdapterInterface",

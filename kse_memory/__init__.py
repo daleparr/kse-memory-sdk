@@ -16,7 +16,6 @@ from .core import (
     SearchQuery,
     SearchResult,
     SearchType,
-    ConceptualDimensions,
 )
 
 from .adapters import (
@@ -54,7 +53,6 @@ __all__ = [
     "SearchQuery",
     "SearchResult",
     "SearchType",
-    "ConceptualDimensions",
     
     # Adapters
     "ShopifyAdapter",

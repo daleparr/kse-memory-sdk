@@ -10,7 +10,7 @@ from typing import List
 
 from kse_memory.core.memory import KSEMemory
 from kse_memory.core.config import KSEConfig
-from kse_memory.core.models import Product, SearchQuery, SearchType, ConceptualDimensions
+from kse_memory.core.models import Product, SearchQuery, SearchType
 
 
 class TestKSEMemoryCore:
@@ -54,7 +54,7 @@ class TestKSEMemoryCore:
                 price=129.99,
                 category="Athletic Footwear",
                 tags=["running", "athletic", "comfortable"],
-                conceptual_dimensions=ConceptualDimensions(
+                conceptual_dimensions=dict(
                     comfort=0.9, functionality=0.95, modernity=0.8
                 )
             ),
@@ -65,7 +65,7 @@ class TestKSEMemoryCore:
                 price=299.99,
                 category="Formal Wear",
                 tags=["elegant", "formal", "silk"],
-                conceptual_dimensions=ConceptualDimensions(
+                conceptual_dimensions=dict(
                     elegance=0.95, luxury=0.9, comfort=0.6
                 )
             ),
@@ -76,7 +76,7 @@ class TestKSEMemoryCore:
                 price=29.99,
                 category="Casual Wear",
                 tags=["casual", "cotton", "basic"],
-                conceptual_dimensions=ConceptualDimensions(
+                conceptual_dimensions=dict(
                     comfort=0.8, versatility=0.95, minimalism=0.9
                 )
             )
@@ -339,55 +339,6 @@ class TestKSEMemoryCore:
         assert len(results) == len(sample_products)
 
 
-class TestConceptualDimensions:
-    """Test suite for conceptual dimensions functionality."""
-    
-    @pytest.mark.unit
-    def test_conceptual_dimensions_creation(self):
-        """Test creating conceptual dimensions."""
-        dims = ConceptualDimensions(
-            elegance=0.8,
-            comfort=0.9,
-            boldness=0.3
-        )
-        
-        assert dims.elegance == 0.8
-        assert dims.comfort == 0.9
-        assert dims.boldness == 0.3
-        
-        # Test default values
-        assert dims.modernity == 0.0  # Default value
-    
-    @pytest.mark.unit
-    def test_conceptual_dimensions_validation(self):
-        """Test conceptual dimensions validation."""
-        # Valid dimensions (0-1 range)
-        dims = ConceptualDimensions(elegance=0.5, comfort=1.0, boldness=0.0)
-        assert dims.elegance == 0.5
-        
-        # Test boundary values
-        dims = ConceptualDimensions(elegance=0.0, comfort=1.0)
-        assert dims.elegance == 0.0
-        assert dims.comfort == 1.0
-    
-    @pytest.mark.unit
-    def test_conceptual_dimensions_to_dict(self):
-        """Test converting conceptual dimensions to dictionary."""
-        dims = ConceptualDimensions(
-            elegance=0.8,
-            comfort=0.9,
-            boldness=0.3
-        )
-        
-        dims_dict = dims.to_dict()
-        
-        assert isinstance(dims_dict, dict)
-        assert dims_dict["elegance"] == 0.8
-        assert dims_dict["comfort"] == 0.9
-        assert dims_dict["boldness"] == 0.3
-        assert "modernity" in dims_dict  # Should include defaults
-
-
 class TestSearchQuery:
     """Test suite for search query functionality."""
     
@@ -465,7 +416,7 @@ class TestKSEMemoryIntegration:
             price=99.99,
             category="Test Category",
             tags=["test", "e2e", "product"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 functionality=0.8,
                 innovation=0.7,
                 comfort=0.6
@@ -550,7 +501,7 @@ class TestPerformance:
                     price=float(i * 10),
                     category="Test Category",
                     tags=["test", f"product_{i}"],
-                    conceptual_dimensions=ConceptualDimensions(
+                    conceptual_dimensions=dict(
                         functionality=min(1.0, i / 100.0),
                         innovation=min(1.0, (i + 10) / 100.0)
                     )

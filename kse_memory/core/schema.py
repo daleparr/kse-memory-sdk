@@ -5,7 +5,7 @@ Design (BD2/BD3, criteria TC-04):
 - Dimensions are *the user's*, never the library's. KSE ships no vocabulary of
   its own; a schema names each dimension and supplies anchor descriptions that
   the scorer embeds and compares against. This is what retires the legacy
-  hardcoded retail dimensions (``ConceptualDimensions``, deprecated for v3).
+  hardcoded retail dimension class (removed in v3).
 - Schemas are versioned with semver because the version participates in
   projection identity: a schema bump must invalidate projections computed
   under the old one, or replay claims are false (BD4 "Replay").

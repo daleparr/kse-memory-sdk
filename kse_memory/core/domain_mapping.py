@@ -8,7 +8,6 @@ across different industries and domains while maintaining mathematical consisten
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-from .models import ConceptualDimensions
 
 
 class Domain(Enum):
@@ -173,7 +172,7 @@ class ConceptualSpaceMapper:
         return list(self.domain_profiles.keys())
     
     def map_dimensions(self, source_domain: Domain, target_domain: Domain, 
-                      source_dimensions: ConceptualDimensions) -> ConceptualDimensions:
+                      source_dimensions: Dict[str, float]) -> Dict[str, float]:
         """
         Map conceptual dimensions from one domain to another.
         
@@ -216,7 +215,7 @@ class ConceptualSpaceMapper:
         return mapping
     
     def create_domain_specific_dimensions(self, domain: Domain, 
-                                        base_dimensions: ConceptualDimensions) -> Dict[str, float]:
+                                        base_dimensions: Dict[str, float]) -> Dict[str, float]:
         """
         Create domain-specific dimension representation.
         
@@ -265,7 +264,7 @@ def get_mapper() -> ConceptualSpaceMapper:
     return _mapper_instance
 
 
-def map_to_domain(domain: Domain, base_dimensions: ConceptualDimensions) -> Dict[str, float]:
+def map_to_domain(domain: Domain, base_dimensions: Dict[str, float]) -> Dict[str, float]:
     """
     Convenience function to map base dimensions to domain-specific representation.
     

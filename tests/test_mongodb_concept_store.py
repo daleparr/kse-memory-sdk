@@ -138,24 +138,6 @@ async def test_find_similar_respects_threshold_and_limit(backend):
     assert len(await backend.find_similar_dimensions(SCORES, threshold=0.0, limit=1)) == 1
 
 
-# ------------------------------------------------------------- legacy surface
-async def test_legacy_conceptual_dimensions_round_trip(backend):
-    from kse_memory.core.models import ConceptualDimensions
-
-    await backend.store_conceptual_dimensions("p1", ConceptualDimensions(elegance=0.7))
-    back = await backend.get_conceptual_dimensions("p1")
-    assert isinstance(back, ConceptualDimensions)
-    assert back.elegance == pytest.approx(0.7)
-
-
-async def test_legacy_delete_and_find(backend):
-    from kse_memory.core.models import ConceptualDimensions
-
-    await backend.store_conceptual_dimensions("p1", ConceptualDimensions(elegance=0.7))
-    assert await backend.find_similar_concepts(ConceptualDimensions(elegance=0.7), threshold=0.0, limit=5)
-    assert await backend.delete_conceptual_dimensions("p1") is True
-
-
 async def test_dimension_statistics_are_per_dimension(backend):
     await backend.store_dimensions("a", SCORES)
     await backend.store_dimensions("b", DimensionScores(

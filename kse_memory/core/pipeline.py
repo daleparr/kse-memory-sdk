@@ -16,7 +16,7 @@ Design (BD2/BD3; criteria TC-02, TC-04; decisions D-03, D-08):
   raises at the door rather than leaving a half-written graph.
 
 Not written here: the concept store. ``ConceptStoreInterface`` is typed
-against the legacy ``ConceptualDimensions``, so it cannot hold schema-driven
+against the legacy fixed-dimension class, so it could not hold schema-driven
 scores without an interface change. Scores live in the graph as scored edges.
 
 Guardrails honoured: AR-01 (no network), AR-04 (no GPU dependency),

@@ -8,7 +8,7 @@ import pytest
 import asyncio
 from typing import List, Dict, Any
 
-from kse_memory.core.models import Product, ConceptualDimensions
+from kse_memory.core.models import Product
 from kse_memory.core.config import VectorStoreConfig, GraphStoreConfig, ConceptStoreConfig
 from kse_memory.backends import (
     get_vector_store, get_graph_store, get_concept_store,
@@ -137,7 +137,7 @@ class TestBackendInterfaces:
             category="Electronics",
             brand="TestBrand",
             tags=["test", "electronics"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.7,
                 comfort=0.8,
                 boldness=0.6,
@@ -357,7 +357,7 @@ class TestBackendIntegration:
             currency="USD",
             category="Test",
             brand="TestBrand",
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.7,
                 comfort=0.8,
                 boldness=0.6

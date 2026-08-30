@@ -3,14 +3,13 @@ Generalising the concept store: schema-driven dimension scores.
 
 Written test-first per GOV-04.
 
-ConceptStoreInterface was typed against ConceptualDimensions — ten hardcoded
+ConceptStoreInterface was typed against a legacy class of ten hardcoded
 fashion axes. A user's schema can name any dimensions it likes, so that type
 made the concept store structurally incapable of holding a v3 projection, and
 was the last blocker on TC-04.
 
-The generalisation keeps the legacy surface working: the ConceptualDimensions
-methods become adapters over the generic ones, so existing callers are not
-broken by the change.
+v3 removed the legacy class and its methods outright; these tests cover the
+generic surface that replaced them.
 """
 from __future__ import annotations
 
@@ -115,38 +114,12 @@ async def test_find_similar_respects_limit(store):
     assert len(await store.find_similar_dimensions(SCORES, threshold=0.0, limit=2)) == 2
 
 
-# ------------------------------------------------------ legacy compatibility
-async def test_legacy_conceptual_dimensions_still_store(store):
-    """Existing callers must not break on the generalisation."""
-    from kse_memory.core.models import ConceptualDimensions
-
-    legacy = ConceptualDimensions(elegance=0.7, comfort=0.3)
-    await store.store_conceptual_dimensions("p1", legacy)
-
-    generic = await store.get_dimensions("p1")
-    assert generic is not None
-    assert generic["elegance"] == pytest.approx(0.7)
-
-
-async def test_legacy_getter_returns_a_legacy_object(store):
-    from kse_memory.core.models import ConceptualDimensions
-
-    await store.store_conceptual_dimensions("p1", ConceptualDimensions(elegance=0.7))
-    back = await store.get_conceptual_dimensions("p1")
-    assert isinstance(back, ConceptualDimensions)
-    assert back.elegance == pytest.approx(0.7)
-
-
 async def test_unmigrated_backend_fails_loudly_not_silently():
     """A backend that has not implemented the generic surface must say so."""
 
     class LegacyOnlyBackend(ConceptStoreInterface):
         async def connect(self): return True
         async def disconnect(self): return True
-        async def store_conceptual_dimensions(self, product_id, dimensions): return True
-        async def get_conceptual_dimensions(self, product_id): return None
-        async def delete_conceptual_dimensions(self, product_id): return True
-        async def find_similar_concepts(self, dimensions, threshold=0.8, limit=10): return []
         async def get_dimension_statistics(self): return {}
 
     backend = LegacyOnlyBackend()

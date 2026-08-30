@@ -82,7 +82,7 @@ class ConceptualSpace:
     """
     Flexible conceptual space for any domain.
     
-    Replaces the hardcoded retail-specific ConceptualDimensions with a dynamic system
+    Replaces the hardcoded retail-specific dimension class (removed in v3) with a dynamic system
     that can adapt to any industry or use case.
     """
     dimensions: Dict[str, float] = field(default_factory=dict)
@@ -168,62 +168,6 @@ class ConceptualSpace:
             domain=data.get("domain"),
             dimension_descriptions=data.get("dimension_descriptions", {})
         )
-
-
-# Backward compatibility - deprecated retail-specific class
-@dataclass
-class ConceptualDimensions:
-    """
-    DEPRECATED: Use ConceptualSpace instead.
-    
-    Legacy retail-specific conceptual dimensions. This class is maintained for
-    backward compatibility but will be removed in v3.0.0.
-    """
-    elegance: float = 0.0
-    comfort: float = 0.0
-    boldness: float = 0.0
-    modernity: float = 0.0
-    minimalism: float = 0.0
-    luxury: float = 0.0
-    functionality: float = 0.0
-    versatility: float = 0.0
-    seasonality: float = 0.0
-    innovation: float = 0.0
-    
-    def __post_init__(self):
-        """Issue deprecation warning."""
-        warnings.warn(
-            "ConceptualDimensions is deprecated and will be removed in v3.0.0. "
-            "Use ConceptualSpace.create_for_domain('retail') instead.",
-            DeprecationWarning,
-            stacklevel=2
-        )
-    
-    def to_dict(self) -> Dict[str, float]:
-        """Convert to dictionary representation."""
-        return {
-            "elegance": self.elegance,
-            "comfort": self.comfort,
-            "boldness": self.boldness,
-            "modernity": self.modernity,
-            "minimalism": self.minimalism,
-            "luxury": self.luxury,
-            "functionality": self.functionality,
-            "versatility": self.versatility,
-            "seasonality": self.seasonality,
-            "innovation": self.innovation,
-        }
-    
-    @classmethod
-    def from_dict(cls, data: Dict[str, float]) -> "ConceptualDimensions":
-        """Create from dictionary representation."""
-        return cls(**{k: v for k, v in data.items() if hasattr(cls, k)})
-    
-    def to_conceptual_space(self) -> ConceptualSpace:
-        """Convert to new ConceptualSpace format."""
-        space = ConceptualSpace.create_for_domain("retail")
-        space.dimensions.update(self.to_dict())
-        return space
 
 
 # Backward compatibility enum - deprecated
@@ -429,9 +373,11 @@ class Entity:
         if "conceptual_space" in data:
             conceptual_space = ConceptualSpace.from_dict(data["conceptual_space"])
         elif "conceptual_dimensions" in data:
-            # Legacy support - convert old format to new
-            legacy_dims = ConceptualDimensions.from_dict(data["conceptual_dimensions"])
-            conceptual_space = legacy_dims.to_conceptual_space()
+            # Legacy payloads carried a flat mapping of retail dimension scores.
+            conceptual_space = ConceptualSpace.create_for_domain("retail")
+            conceptual_space.dimensions.update(
+                {k: float(v) for k, v in (data["conceptual_dimensions"] or {}).items()}
+            )
         
         # Handle embeddings
         text_embedding = None
@@ -635,27 +581,26 @@ class Product(Entity):
         
         super().__post_init__()
     
-    # Override conceptual_dimensions property for backward compatibility
+    # Backward-compatible view of the conceptual space as a flat mapping.
+    # v3: the legacy fixed-dimension class is gone; dimension scores are plain
+    # dicts everywhere, and the schema-driven path uses DimensionScores.
     @property
-    def conceptual_dimensions(self) -> Optional[ConceptualDimensions]:
-        """Get conceptual dimensions in legacy format."""
-        if not self.conceptual_space or self.conceptual_space.domain != "retail":
+    def conceptual_dimensions(self) -> Optional[Dict[str, float]]:
+        """Dimension scores as a flat mapping, or None."""
+        if not self.conceptual_space:
             return None
-        
-        # Convert ConceptualSpace back to ConceptualDimensions
-        dims = ConceptualDimensions()
-        for dim_name, value in self.conceptual_space.dimensions.items():
-            if hasattr(dims, dim_name):
-                setattr(dims, dim_name, value)
-        return dims
-    
+        return dict(self.conceptual_space.dimensions)
+
     @conceptual_dimensions.setter
-    def conceptual_dimensions(self, value: Optional[ConceptualDimensions]):
-        """Set conceptual dimensions from legacy format."""
+    def conceptual_dimensions(self, value) -> None:
+        """Accept a flat mapping (or anything with to_dict()) of scores."""
         if value is None:
             self.conceptual_space = None
-        else:
-            self.conceptual_space = value.to_conceptual_space()
+            return
+        scores = value.to_dict() if hasattr(value, "to_dict") else dict(value)
+        space = self.conceptual_space or ConceptualSpace.create_for_domain("retail")
+        space.dimensions.update({k: float(v) for k, v in scores.items()})
+        self.conceptual_space = space
 
 
 @dataclass

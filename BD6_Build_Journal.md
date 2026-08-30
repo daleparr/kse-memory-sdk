@@ -167,3 +167,12 @@ Template:
 **State:** 118/118 new suites green, 1 skipped; 175 tests collect clean CPU-only.
 **Next:** TC-04 can now close once ConceptualDimensions itself is removed from models.py and the ~10 files still referencing it. Then quickstart onto IngestPipeline, which still needs a cached model.
 
+## 2026-08-30 — Session 11-CC (Claude Code, parallel track) — ConceptualDimensions removed
+**Phase/tasks:** the v3 removal the class's own deprecation warning promised. TC-04 closes. RED-first via a hygiene test scanning package source for the token (catches optional-extra modules the import graph misses).
+**Scale:** 34 files referenced it — not the ~10 estimated. Removed from: models.py (class deleted; Product.conceptual_dimensions property now speaks plain dicts; from_dict legacy branch maps straight onto a retail ConceptualSpace), interfaces.py (5 legacy abstract methods + ConceptualServiceInterface deleted), services/conceptual.py (file deleted — the LLM scorer that required an API key, violating D-09/AR-01; it was the source of the 25 "LLM API key required" errors in the soft-fail lane), memory.py (rewired to store_dimensions/find_similar_dimensions via ConceptStoreAdapter), search.py (dict-based; keyword-boost service replaced by equal-weight fallback pending FR-03), both backends' v2 methods (dict-based), demo/datasets/explorers, temporal/federated (import-only refs), both __init__ exports, 4 examples, benchmark script, root test.
+**Soft-fail lane transformed:** 118 passed vs 48 before — the LLM-key requirement was failing ~70 legacy tests. Errors 25→24, failures unchanged at 13. Collection clean at 168.
+**Deliberately kept:** ConceptStoreAdapter.LEGACY_SCHEMA + to_generic (dict-capable; needed by the Postgres data migration and legacy stored payloads). The legacy Postgres table and its v2 methods (now dict-typed) — data-bearing. The ten-name retail list inside search.py's _extract path — replaced by schema-driven mapping at FR-03, noted inline.
+**Process failures of mine, recorded honestly:** twice discarded my own edits by asserting before writing (models.py, interfaces.py — switched to write-then-report); one range-splice mangled test_integration.py badly enough to need a git restore and surgical redo.
+**State:** 115/115 new suites green; 168 collect clean; hygiene test enforces the absence permanently; e2e pipeline against real onnxruntime unaffected.
+**Next:** quickstart onto IngestPipeline (needs a cached MiniLM); FR-03 replaces search.py's legacy query path.
+

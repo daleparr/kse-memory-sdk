@@ -9,7 +9,7 @@ incremental writes to the configured stores come out — with the replay identit
 carried end to end, so re-ingesting unchanged content costs nothing.
 
 Scope note: the concept store is deliberately NOT written. ConceptStoreInterface
-is typed against the legacy ConceptualDimensions class, so it cannot hold
+was typed against the legacy fixed-dimension class (since removed), so it could not hold
 schema-driven scores without an interface change (TC-04 follow-up). Dimension
 scores live in the graph as scored edges, which is where upsert_projection
 puts them.

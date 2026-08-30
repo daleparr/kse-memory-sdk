@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import numpy as np
 
 from ..core.memory import KSEMemory
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 
 
 @dataclass
@@ -357,7 +357,7 @@ class ConceptualSpaceExplorer:
             # Add some variation
             varied_dims = [max(0, min(1, d + np.random.normal(0, 0.1))) for d in dims]
             
-            conceptual_dims = ConceptualDimensions(**dict(zip(dimension_names, varied_dims)))
+            conceptual_dims = dict(zip(dimension_names, varied_dims))
             
             product = Product(
                 id=f"fashion_{i+1:03d}",
@@ -391,7 +391,7 @@ class ConceptualSpaceExplorer:
                 break
                 
             varied_dims = [max(0, min(1, d + np.random.normal(0, 0.1))) for d in dims]
-            conceptual_dims = ConceptualDimensions(**dict(zip(dimension_names, varied_dims)))
+            conceptual_dims = dict(zip(dimension_names, varied_dims))
             
             product = Product(
                 id=f"finance_{i+1:03d}",
@@ -425,7 +425,7 @@ class ConceptualSpaceExplorer:
                 break
                 
             varied_dims = [max(0, min(1, d + np.random.normal(0, 0.05))) for d in dims]
-            conceptual_dims = ConceptualDimensions(**dict(zip(dimension_names, varied_dims)))
+            conceptual_dims = dict(zip(dimension_names, varied_dims))
             
             product = Product(
                 id=f"healthcare_{i+1:03d}",
@@ -463,7 +463,7 @@ class ConceptualSpaceExplorer:
             if not product.conceptual_dimensions:
                 continue
             
-            dims_dict = product.conceptual_dimensions.to_dict()
+            dims_dict = dict(product.conceptual_dimensions)
             
             # Map to domain-specific dimensions
             mapped_dims = {}

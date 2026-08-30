@@ -23,7 +23,7 @@ from rich.prompt import Confirm
 
 from ..core.memory import KSEMemory
 from ..core.config import KSEConfig
-from ..core.models import Product, SearchQuery, SearchType, ConceptualDimensions
+from ..core.models import Product, SearchQuery, SearchType
 from .datasets import SampleDatasets
 from .benchmark import BenchmarkRunner
 from .backend_detector import BackendDetector, auto_detect_and_setup
@@ -535,10 +535,10 @@ class MemoryConceptStore:
     async def find_similar_concepts(self, dimensions, threshold=0.8, limit=10):
         # Simple conceptual similarity for demo
         results = []
-        target_dict = dimensions.to_dict()
+        target_dict = dimensions.to_dict() if hasattr(dimensions, 'to_dict') else dict(dimensions)
         
         for product_id, stored_dims in self.concepts.items():
-            stored_dict = stored_dims.to_dict()
+            stored_dict = stored_dims.to_dict() if hasattr(stored_dims, 'to_dict') else dict(stored_dims)
             
             # Calculate cosine similarity between concept vectors
             import numpy as np

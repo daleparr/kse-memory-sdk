@@ -117,7 +117,7 @@ class ArangoDBBackend(GraphStoreInterface):
             
             # Add conceptual dimensions if available
             if product.conceptual_dimensions:
-                product_doc["conceptual_dimensions"] = product.conceptual_dimensions.to_dict()
+                product_doc["conceptual_dimensions"] = dict(product.conceptual_dimensions)
             
             # Insert or update product
             await asyncio.to_thread(

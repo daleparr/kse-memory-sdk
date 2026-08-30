@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 import networkx as nx
 
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 from .temporal_models import (
     TemporalKnowledgeItem, TemporalRelationship, TemporalQuery,
     TemporalEvent, TimeInterval, TemporalPattern

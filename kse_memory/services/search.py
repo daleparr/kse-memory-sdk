@@ -17,9 +17,8 @@ from ..core.interfaces import (
     CacheInterface,
 )
 from ..core.config import SearchConfig
-from ..core.models import SearchQuery, SearchResult, Product, SearchType, ConceptualDimensions
+from ..core.models import SearchQuery, SearchResult, Product, SearchType
 from ..exceptions import SearchError
-from .conceptual import ConceptualService
 
 
 logger = logging.getLogger(__name__)
@@ -59,11 +58,6 @@ class SearchService(SearchServiceInterface):
         self.concept_store = concept_store
         self.embedding_service = embedding_service
         self.cache_service = cache_service
-        
-        # Initialize conceptual service for similarity computation
-        from ..core.config import ConceptualConfig
-        conceptual_config = ConceptualConfig(auto_compute=False)  # No LLM needed for similarity
-        self.conceptual_service = ConceptualService(conceptual_config)
         
         logger.info("Search service initialized")
     
@@ -175,7 +169,7 @@ class SearchService(SearchServiceInterface):
             logger.error(f"Semantic search failed: {str(e)}")
             raise SearchError(f"Semantic search failed: {str(e)}", query=query)
     
-    async def conceptual_search(self, dimensions: ConceptualDimensions, limit: int = 10) -> List[SearchResult]:
+    async def conceptual_search(self, dimensions: Dict[str, float], limit: int = 10) -> List[SearchResult]:
         """
         Perform conceptual search using conceptual dimensions.
         
@@ -377,24 +371,19 @@ class SearchService(SearchServiceInterface):
             logger.error(f"Hybrid search failed: {str(e)}")
             raise SearchError(f"Hybrid search failed: {str(e)}", query=query.query)
     
-    def _extract_conceptual_dimensions(self, query: SearchQuery) -> ConceptualDimensions:
+    def _extract_conceptual_dimensions(self, query: SearchQuery) -> Dict[str, float]:
         """Extract conceptual dimensions from search query."""
-        # Use provided weights or extract from query text
+        # Legacy retail vocabulary: replaced by schema-driven mapping in FR-03.
+        dimensions_list = ["elegance", "comfort", "boldness", "modernity", "minimalism",
+                           "luxury", "functionality", "versatility", "seasonality", "innovation"]
+        # Use provided weights or fall back to equal weighting
         if query.conceptual_weights:
-            dimensions_dict = {}
-            for dim in ["elegance", "comfort", "boldness", "modernity", "minimalism", 
-                       "luxury", "functionality", "versatility", "seasonality", "innovation"]:
-                dimensions_dict[dim] = query.conceptual_weights.get(dim, 0.5)
-            return ConceptualDimensions(**dimensions_dict)
+            return {dim: query.conceptual_weights.get(dim, 0.5) for dim in dimensions_list}
         else:
-            # Extract from query text using keyword matching
-            weights = self.conceptual_service.get_dimension_weights(query.query)
-            
-            # Normalize weights to 0-1 range
-            max_weight = max(weights.values()) if weights else 1.0
-            normalized_weights = {dim: weight / max_weight for dim, weight in weights.items()}
-            
-            return ConceptualDimensions(**normalized_weights)
+            # v3: the keyword-boost service is gone with the legacy conceptual
+            # layer. Without explicit weights, weight all dimensions equally;
+            # schema-driven query mapping arrives with FR-03.
+            return {dim: 0.5 for dim in dimensions_list}
     
     def _extract_entities(self, query: str) -> List[str]:
         """Extract entities from query text (simplified approach)."""
