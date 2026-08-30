@@ -1,0 +1,57 @@
+{
+  "records": [
+    {
+      "id": "cashmere-wrap",
+      "title": "Sable cashmere wrap",
+      "description": "Hand-loomed cashmere with a satin lining and mother-of-pearl clasp.",
+      "tags": [
+        "accessories"
+      ]
+    },
+    {
+      "id": "phone-case",
+      "title": "Budget phone case",
+      "description": "A cheap case that feels really high-end and indulgent without the price.",
+      "tags": [
+        "electronics"
+      ]
+    },
+    {
+      "id": "steel-bottle",
+      "title": "Steel water bottle",
+      "description": "Insulated bottle, dishwasher safe, fits any cup holder.",
+      "tags": [
+        "kitchen"
+      ]
+    },
+    {
+      "id": "trail-sock",
+      "title": "Trail running socks",
+      "description": "Breathable wool blend socks with arch support.",
+      "tags": [
+        "sport"
+      ]
+    },
+    {
+      "id": "desk-lamp",
+      "title": "LED desk lamp",
+      "description": "Adjustable arm, three brightness levels, USB charging port.",
+      "tags": [
+        "office"
+      ]
+    },
+    {
+      "id": "canvas-tote",
+      "title": "Canvas tote bag",
+      "description": "Plain sturdy tote for groceries and books.",
+      "tags": [
+        "accessories"
+      ]
+    }
+  ],
+  "showcase": {
+    "query": "something that feels really high-end and indulgent",
+    "target_id": "cashmere-wrap",
+    "why": "The query is phrased in shopper language ('high-end and indulgent') that the cheap phone case literally quotes, so dense search ranks the phone case first. The luxury anchors carry BOTH registers \u2014 'cashmere, silk and satin' and 'high-end and indulgent' \u2014 bridging the query to the cashmere wrap that never uses the query's words."
+  }
+}

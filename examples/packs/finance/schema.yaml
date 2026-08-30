@@ -1,0 +1,13 @@
+name: finance-instruments
+version: 1.0.0
+dimensions:
+- name: liquidity
+  description: How quickly it converts to cash
+  anchors:
+  - deep secondary market with tight bid-ask spreads, settles within a day
+  - easy to exit quickly without losing value
+- name: growth
+  description: Capital appreciation potential
+  anchors:
+  - compounds into large gains over many years
+  - early-stage bets aiming to multiply capital

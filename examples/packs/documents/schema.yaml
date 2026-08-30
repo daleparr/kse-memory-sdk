@@ -1,0 +1,13 @@
+name: documents-readability
+version: 1.0.0
+dimensions:
+- name: accessibility
+  description: Approachable for newcomers
+  anchors:
+  - plain language for a complete beginner, assumes no prior knowledge
+  - gentle introduction using everyday analogies
+- name: rigour
+  description: Formal precision
+  anchors:
+  - formal definitions, proofs and precise terminology
+  - assumes advanced background

@@ -210,3 +210,20 @@ async def test_result_is_deterministic(parsed):
 async def test_retrieve_makes_no_network_calls(no_network, parsed):
     result = await retrieve(parsed, concept_store=await seeded_concept_store())
     assert result.conceptual
+
+
+async def test_graph_channel_abstains_when_coverage_cannot_discriminate(parsed):
+    """Uniform coverage is a constant function — zero rank information. The
+    old behaviour emitted id-alphabetical order at full channel weight, which
+    is fabricated evidence; US6's pack lab caught it corrupting fusion.
+    An uninformative channel must abstain (empty), which FR-07 already
+    handles gracefully."""
+    alpha, beta = dimension_node_id("r", "alpha"), dimension_node_id("r", "beta")
+    uniform = FakeGraphStore(edges=[
+        ("x", alpha), ("x", beta),
+        ("y", alpha), ("y", beta),
+        ("z", alpha), ("z", beta),
+    ])
+    result = await retrieve(parsed, graph_store=uniform)
+    assert result.graph == ()
+    assert result.errors == {}   # abstention is not a failure

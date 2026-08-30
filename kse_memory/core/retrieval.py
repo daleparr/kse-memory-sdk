@@ -90,6 +90,13 @@ async def _graph_channel(parsed: ParsedQuery, store: Any, top_k: int) -> Tuple[T
             if entity_id:
                 coverage[entity_id] = coverage.get(entity_id, 0) + 1
 
+    # A constant coverage function carries no rank information: emitting an
+    # id-ordered list would inject alphabetical noise into fusion at full
+    # channel weight (US6's pack lab caught exactly that). Abstain instead —
+    # an empty channel is honest and FR-07 already prices it into confidence.
+    if len(set(coverage.values())) <= 1:
+        return ()
+
     ranked = sorted(coverage.items(), key=lambda item: (-item[1], item[0]))
     return tuple((entity_id, float(count)) for entity_id, count in ranked[:top_k])
 

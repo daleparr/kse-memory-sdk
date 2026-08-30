@@ -126,7 +126,12 @@ async def test_all_three_channels_against_the_real_model(no_network):
     )
 
     assert result.errors == {}
-    assert result.vector and result.conceptual and result.graph
+    assert result.vector and result.conceptual
+    # The graph channel ABSTAINS on this corpus: every entity connects to the
+    # query's top dimensions, so coverage is uniform — a constant function
+    # carries no rank information, and emitting id-order would be fabricated
+    # evidence (the US6 abstention fix). Empty, with no error, is correct.
+    assert result.graph == ()
 
     # channels agree on the corpus: every id is a real ingested entity
     ingested = {r.entity.id for r in await pipeline.ingest_many([])} or None
@@ -193,3 +198,18 @@ async def test_dead_graph_store_degrades_with_receipts(no_network):
     assert "graph" in verdict.degraded
     assert verdict.items  # still answered
     assert verdict.confidence <= 2 / 3  # a dead channel corroborates nothing
+
+
+
+@pytest.mark.parametrize("pack_name", ["retail", "finance", "documents"])
+async def test_pack_showcase_beats_dense_with_the_real_model(no_network, pack_name):
+    """TC-06's heart: each pack's query is one pure vector search handles
+    WORSE — the target must rank strictly better under hybrid, genuine model,
+    no network. The mechanism (anchor vocabulary bridging) is stated in each
+    pack's corpus.json."""
+    from examples.packs import load_pack, run_showcase
+
+    outcome = await run_showcase(load_pack(pack_name), OnnxEmbedder())
+    assert outcome.hybrid_rank < outcome.dense_rank, (
+        pack_name, outcome.dense_rank, outcome.hybrid_rank)
+    assert outcome.dense_top != outcome.target_id  # dense actually takes the bait

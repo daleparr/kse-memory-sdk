@@ -81,13 +81,13 @@ _As a sceptical evaluator, I reproduce every published number._  · FR: — · A
 ## Phase 8 — US6: Domain packs (P2)
 
 _As a developer, I start from worked examples, not blank schemas._  · FR: FR-02, FR-03, FR-04, FR-05, FR-06 · AR: AR-01
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US6
-- [ ] T-035 US6 × FR-02: implement/extend for this story
-- [ ] T-036 US6 × FR-03: implement/extend for this story
-- [ ] T-037 US6 × FR-04: implement/extend for this story
-- [ ] T-038 US6 × FR-05: implement/extend for this story
-- [ ] T-039 US6 × FR-06: implement/extend for this story
-- [ ] T-040 US6: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US6 — structural suite (13, component) + per-pack showcase assertions (integration, real model), RED first
+- [X] T-035 US6 × FR-02: implement/extend for this story — three pack schemas score their corpora (Session 28-CC)
+- [X] T-036 US6 × FR-03: implement/extend for this story — showcase queries parse to pack vocabulary targets
+- [X] T-037 US6 × FR-04: implement/extend for this story — plus the abstention fix: uniform-coverage graph channel no longer fabricates id-order evidence
+- [X] T-038 US6 × FR-05: implement/extend for this story — RRF lifts each pack's target above its dense rank, real model
+- [X] T-039 US6 × FR-06: implement/extend for this story — notebooks surface ranks and the stated mechanism
+- [X] T-040 US6: verify green, mark BD4 TCs [X], journal in BD6 — TC-06 verified clause-by-clause (BD4 record)
 
 ## Phase 9 — US7: Local scorer parity (P2)
 

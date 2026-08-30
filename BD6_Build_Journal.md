@@ -353,3 +353,11 @@ Template:
 **US5 closes** — the fifth completed user story, first of the P2s. The project's first published numbers are a literature-parity dense baseline and two hybrid losses, stated in that order.
 **Remaining stories:** US6 domain packs, US7 scorer parity (both now motivated by the published losses), US8 mapping, US9 backends, US10/US11 (P3). ESCI pinning tracked via D-103.
 
+## 2026-08-30 — Session 28-CC (Claude Code, parallel track) — US6: packs that win honestly, and the defect they exposed
+**Method:** pack designs iterated against the GENUINE model in a scratch lab before freezing — no corpus was committed until its showcase demonstrably worked, and no scoring was touched to make it work. The engineered mechanism is legitimate and stated in every pack: anchors carry both the query's register and the document's register, bridging a vocabulary gap dense search falls into (each pack's dense top-1 is the lexical bait, by design and by assertion).
+**The defect the lab exposed (fixed RED-first):** finance tied because the graph channel, with every doc coverage-tied on a small corpus, emitted id-ALPHABETICAL order at full channel weight — fabricated evidence corrupting fusion (crypto topped hybrid purely by name). _graph_channel now abstains when coverage cannot discriminate; a constant function carries no rank information. Ripple handled honestly: the quickstart integration expectation flipped to assert the abstention (its corpus is uniform-coverage), and FR-07 already prices the missing channel into confidence (2/3 — still hybrid).
+**After the fix, all three packs win with the real model:** retail dense 5 → hybrid 3, finance 3 → 2, documents 4 → 2.
+**Shipped:** examples/packs/{retail,finance,documents}/ (schema.yaml + corpus.json with stated mechanism + runnable .ipynb that is a thin caller over the tested library — green tests mean runnable notebooks). 13 structural tests + 3 real-model showcase assertions.
+**US6 closes** — sixth story. **State (printed):** 286 tests collected in 0.49s; 277 passed, 12 skipped, 72 warnings in 10.36s.
+**Remaining:** US7 scorer parity, US8 mapping, US9 backends, P3 stories, ESCI (D-103).
+

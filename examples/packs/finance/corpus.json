@@ -1,0 +1,57 @@
+{
+  "records": [
+    {
+      "id": "t-bills",
+      "title": "Short-dated Treasury bills",
+      "description": "Trades in a deep secondary market with tight bid-ask spreads; converts to cash the same day at face value.",
+      "tags": [
+        "fixed-income"
+      ]
+    },
+    {
+      "id": "venture",
+      "title": "Quick-exit venture fund",
+      "description": "Targets companies to exit quickly at high value; investor capital is locked for ten years.",
+      "tags": [
+        "private"
+      ]
+    },
+    {
+      "id": "gold-bar",
+      "title": "Allocated gold bars",
+      "description": "Vaulted physical bullion with quarterly audit statements.",
+      "tags": [
+        "commodities"
+      ]
+    },
+    {
+      "id": "art-fund",
+      "title": "Fine art fund",
+      "description": "Fractional stakes in blue-chip paintings held for a decade.",
+      "tags": [
+        "alternative"
+      ]
+    },
+    {
+      "id": "reit",
+      "title": "Commercial property REIT",
+      "description": "Income from office leases, distributed quarterly.",
+      "tags": [
+        "property"
+      ]
+    },
+    {
+      "id": "crypto",
+      "title": "Micro-cap token basket",
+      "description": "Early-stage digital assets with extreme price swings.",
+      "tags": [
+        "digital"
+      ]
+    }
+  ],
+  "showcase": {
+    "query": "an investment I can exit quickly without losing value",
+    "target_id": "t-bills",
+    "why": "The illiquid venture fund literally contains 'exit quickly', so dense search prefers it. The liquidity anchors bridge the lay phrasing ('exit quickly without losing value') to the instrument described in market-microstructure terms ('deep secondary market, tight spreads, converts to cash same day')."
+  }
+}

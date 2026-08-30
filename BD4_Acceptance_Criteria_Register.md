@@ -13,7 +13,7 @@ Test-first per GOV-04: every TC below is written and failing (red) before its FR
 | TC-03 [X] | US3 | Given results from >=2 channels with incompatible score scales, when fused, then RRF is applied by default and every result retains per-channel rank/score provenance. | FR-04, FR-05, FR-06, AR-05 |
 | TC-04 [X] | US4 | Given a YAML schema of named dimensions with anchors, when items are ingested, then dimensions are scored and queryable, and no hardcoded fashion vocabulary remains in the default path. | FR-02, FR-03, AR-01 |
 | TC-05 [X] | US5 | Given pinned BEIR/ESCI datasets, when I run make bench, then the full results table including losses regenerates in one command on documented CPU hardware. | AR-03, AR-04 |
-| TC-06 | US6 | Given the examples directory, when I open the retail, finance, or documents pack, then each ships a dimension schema plus a runnable notebook demonstrating a query pure vector search handles worse. | FR-02, FR-03, FR-04, FR-05, FR-06, AR-01 |
+| TC-06 [X] | US6 | Given the examples directory, when I open the retail, finance, or documents pack, then each ships a dimension schema plus a runnable notebook demonstrating a query pure vector search handles worse. | FR-02, FR-03, FR-04, FR-05, FR-06, AR-01 |
 | TC-07 | US7 | Given no API key, when dimension scoring runs, then the local scorer produces schema-conformant scores and quickstart parity is maintained. | FR-02, AR-01, AR-04 |
 | TC-08 | US8 | Given source and target domain profiles, when map_dimensions runs, then values are transformed per the mapping definition (replacing the identity stub), with tests proving non-identity behaviour. | FR-02, FR-03, AR-05 |
 | TC-09 | US9 | Given the tiered backend policy, when I configure Neo4j (T1) or ArangoDB/TypeDB (T2), then the same GraphStoreInterface contract passes the shared conformance suite. | FR-02, FR-04, AR-05 |
@@ -91,4 +91,10 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *pinned BEIR/ESCI datasets*: BEIR ✓ (scifact + nfcorpus, checksum-enforced; a
   tampered pin refuses to run — negative-tested at closing). ESCI deferred by
   **D-103**. At closing, the pin gate and metric suite were re-verified live.
+
+**TC-06 [X]** — verified 2026-08-30 (Session 28-CC), clause by clause:
+- *retail, finance, documents packs in examples/*: `examples/packs/{retail,finance,documents}/` — each ships `schema.yaml` (validated by `load_schema` in the structural suite) plus `corpus.json` with the showcase and its stated mechanism.
+- *runnable notebook*: each pack ships `<name>_pack.ipynb`, a thin caller over `examples.packs.run_showcase` — the identical code the tests execute, so green tests mean runnable notebooks. Offline per AR-01 (cached model only).
+- *a query pure vector search handles worse*: asserted with the genuine MiniLM under `no_network`, per pack: retail dense 5 → hybrid 3, finance 3 → 2, documents 4 → 2, and in every pack dense's top-1 is the engineered lexical bait, not the target. Mechanism stated in each corpus ("why"): anchors bridging the query's register to the document's register.
+- Product defect found by this story and fixed RED-first: the graph channel emitted id-alphabetical order under uniform coverage — fabricated evidence at full channel weight, which was corrupting fusion. It now abstains; FR-07 prices abstention into confidence.
 
