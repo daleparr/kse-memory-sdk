@@ -84,3 +84,16 @@ async def test_deterministic_across_runs(stub_embedder):
     b = await run_quickstart(embedder=StubEmbedder())
     for query in a.searches:
         assert [h.entity_id for h in a.searches[query]] == [h.entity_id for h in b.searches[query]]
+
+
+async def test_every_result_carries_a_full_explanation(stub_embedder):
+    """FR-06's contract, end to end through the quickstart path."""
+    result = await run_quickstart(embedder=stub_embedder)
+    for query, hits in result.searches.items():
+        explanations = result.explanations[query]
+        assert [e.entity_id for e in explanations] == [h.entity_id for h in hits]
+        for explanation in explanations:
+            assert explanation.query == query
+            assert set(explanation.ranks) == {"vector", "conceptual", "graph"}
+            assert explanation.dimensions  # every ingested entity has scores
+            assert explanation.degraded == {}

@@ -246,3 +246,14 @@ Template:
 **State (printed):** 219 tests collected in 0.28s; lanes green: 167 passed, 9 warnings in 3.86s.
 **Next:** FR-06 explanations from the collected receipts; FR-07 confidence; or T-067 completion.
 
+## 2026-08-30 — Session 17-CC (Claude Code, parallel track) — FR-06 explanations
+**Phase/tasks:** TC-first (9 unit tests, RED first); FR-06 implemented; D-14's CLI inspection layer (kse explain) landed.
+**Delivered:**
+- kse_memory/core/explain.py — explain_results() assembles what already existed into one attachable receipt per result: channel ranks and raw scores (from FusedItem), per-dimension breakdown pairing query target with item score plus alignment = 1 - |target - score| (bounded, symmetric, needs no explaining itself), replay identity (schema+version+model), and degraded channels (from RetrievalResult.errors). Pure function: caller fetches scores, explanation does no I/O — unit lane.
+- Graceful by construction: an entity the concept store cannot score gets an empty breakdown but keeps every other part of its receipt; a result that cannot be fully explained is explained as far as the evidence goes.
+- run_quickstart attaches explanations to every query's results; a component test asserts one-per-hit in fused order with complete channel coverage.
+- kse explain "<query>" — the D-14 layer-1 CLI: channels table (rank + raw score, "absent" stated), target-vs-score-vs-alignment table, replay identity line, degraded-channel warning. Live output verified with the genuine MiniLM; integration test asserts the receipt is internally consistent with the displayed result (same ids, fused score, ranks, dimension scores).
+**Scope honesty:** the D-11 chip strip (colour-coded braid) is a visual-design task on top of this data — not attempted here. FR-07 (fused-confidence threshold + explicit dense-only flag) remains the last open FR of the retrieval spine; `degraded` is its input. v2 SearchService still unrewired; T-067's hash/schema properties still open.
+**State (printed):** 230 tests collected in 0.39s; lanes green: 178 passed, 9 warnings in 4.72s.
+**Next:** FR-07 to complete the spine, then the v2 SearchService rewire can retire the last of the legacy path.
+

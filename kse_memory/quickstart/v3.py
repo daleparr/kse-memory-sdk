@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
 from ..core.pipeline import IngestPipeline
+from ..core.explain import Explanation, explain_results
 from ..core.fusion import FusedItem, fuse_rrf
 from ..core.query import ParsedQuery, parse_query
 from ..core.retrieval import retrieve
@@ -108,6 +109,7 @@ class QuickstartResult:
     written: int
     searches: Dict[str, List[Hit]]
     parses: Dict[str, ParsedQuery]
+    explanations: Dict[str, Tuple[Explanation, ...]]
     pipeline: IngestPipeline
 
 
@@ -210,6 +212,7 @@ async def run_quickstart(
 
     searches: Dict[str, List[Hit]] = {}
     parses: Dict[str, ParsedQuery] = {}
+    explanations: Dict[str, Tuple[Explanation, ...]] = {}
     index: _VectorIndex = pipeline.vector_store
     concept_store = pipeline.concept_store
     for query in queries or DEFAULT_QUERIES:
@@ -232,24 +235,30 @@ async def run_quickstart(
             top_k=top_k,
         )
         hits: List[Hit] = []
+        per_entity_scores: Dict[str, Mapping[str, float]] = {}
         for item in fused:
             stored = await concept_store.get_dimensions(item.entity_id)
+            if stored:
+                per_entity_scores[item.entity_id] = dict(stored.scores)
             _, metadata = index.rows.get(item.entity_id, (None, {}))
             hits.append(
                 Hit(
                     entity_id=item.entity_id,
                     title=metadata.get("title", item.entity_id),
                     similarity=round(item.fused, 6),
-                    scores=dict(stored.scores) if stored else {},
+                    scores=per_entity_scores.get(item.entity_id, {}),
                     channel_ranks=dict(item.ranks),
                 )
             )
         searches[query] = hits
+        # FR-06: the full receipt, attached to every result.
+        explanations[query] = explain_results(parsed, channels, fused, per_entity_scores)
 
     return QuickstartResult(
         ingested=len(results),
         written=written,
         searches=searches,
         parses=parses,
+        explanations=explanations,
         pipeline=pipeline,
     )

@@ -137,3 +137,21 @@ async def test_all_three_channels_against_the_real_model(no_network):
     top_vector_id = result.vector[0][0]
     stored = pipeline.vector_store.rows[top_vector_id][1]
     assert stored["title"] == "HNSW index tuning guide"
+
+
+async def test_explanations_against_the_real_model(no_network):
+    """FR-06 with the genuine MiniLM: the top hit's receipt is complete and
+    internally consistent with the displayed result."""
+    from kse_memory.quickstart.v3 import run_quickstart
+
+    result = await run_quickstart(OnnxEmbedder(), queries=["how do I tune a vector index"])
+    (explanations,) = result.explanations.values()
+    top = explanations[0]
+    top_hit = result.searches["how do I tune a vector index"][0]
+
+    assert top.entity_id == top_hit.entity_id
+    assert top.fused == pytest.approx(top_hit.similarity, abs=1e-6)
+    assert top.ranks == dict(top_hit.channel_ranks)
+    assert {r.name: r.score for r in top.dimensions} == dict(top_hit.scores)
+    assert top.model_id == "onnx-minilm-l6-v2"
+    assert all(0.0 <= r.alignment <= 1.0 for r in top.dimensions)

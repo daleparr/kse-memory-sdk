@@ -134,6 +134,73 @@ def quickstart(queries, top_k: int, output: Optional[str]):
 
 
 @cli.command()
+@click.argument("query")
+@click.option("--top", default=1, show_default=True, help="How many results to explain")
+def explain(query: str, top: int):
+    """
+    🔍 Explain a query's results — the D-14 inspection layer over FR-06.
+
+    Runs the quickstart corpus, then shows the full receipt for the top
+    result(s): per-channel ranks and raw scores, the per-dimension breakdown
+    of query target vs item score, and the replay identity that produced it.
+    """
+    import asyncio
+
+    from .core.projection import ModelNotAvailableError, OnnxEmbedder
+    from .quickstart.v3 import run_quickstart
+
+    try:
+        embedder = OnnxEmbedder()
+    except ModelNotAvailableError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise SystemExit(1)
+
+    result = asyncio.run(run_quickstart(embedder, queries=[query]))
+    explanations = result.explanations[query][:top]
+    if not explanations:
+        console.print("[yellow]No results to explain.[/yellow]")
+        return
+
+    titles = {h.entity_id: h.title for h in result.searches[query]}
+    for explanation in explanations:
+        console.print(Panel.fit(
+            f'[bold]{titles.get(explanation.entity_id, explanation.entity_id)}[/bold]\n'
+            f'fused (RRF): {explanation.fused:.4f}   query: "{explanation.query}"',
+            border_style="blue",
+        ))
+
+        channels = Table(title="channels", show_header=True)
+        channels.add_column("channel")
+        channels.add_column("rank", justify="right")
+        channels.add_column("raw score", justify="right")
+        for name in ("vector", "conceptual", "graph"):
+            rank = explanation.ranks.get(name)
+            raw = explanation.channel_scores.get(name)
+            channels.add_row(
+                name,
+                str(rank) if rank else "absent",
+                f"{raw:.4f}" if raw is not None else "—",
+            )
+        console.print(channels)
+
+        dims = Table(title="dimensions: what the query asked vs what the item carries")
+        dims.add_column("dimension")
+        dims.add_column("query target", justify="right")
+        dims.add_column("item score", justify="right")
+        dims.add_column("alignment", justify="right")
+        for row in explanation.dimensions:
+            dims.add_row(row.name, f"{row.target:.2f}", f"{row.score:.2f}", f"{row.alignment:.2f}")
+        console.print(dims)
+
+        console.print(
+            f"[dim]replay identity: schema {explanation.schema_name} "
+            f"v{explanation.schema_version} · model {explanation.model_id}[/dim]"
+        )
+        if explanation.degraded:
+            console.print(f"[yellow]degraded channels: {dict(explanation.degraded)}[/yellow]")
+
+
+@cli.command()
 @click.option(
     "--interactive",
     is_flag=True,
