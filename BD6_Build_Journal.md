@@ -152,3 +152,18 @@ Template:
 **State:** 105/105 new suites green, 1 skipped; 162 tests collect clean CPU-only; AR-04 gate clean.
 **Next:** Postgres remains unmigrated (fashion vocabulary in its DDL — a data-migration decision). Then quickstart onto IngestPipeline once a model is cached.
 
+## 2026-08-30 — Session 10-CC (Claude Code, parallel track) — PostgreSQLBackend migrated
+**Phase/tasks:** the last backend on the legacy surface. TC-first (13 tests, verified RED first).
+**Why this one was different from MongoDB:** nothing here was broken. The legacy methods work, and `conceptual_dimensions` carries the fashion vocabulary in its DDL as literal REAL columns, so deployments may hold real rows. Repointing the legacy methods at a new table would have been tidier and would have silently orphaned that data.
+**Approach — strictly additive:**
+- New `entity_dimensions` table: entity_id PK, schema_name, schema_version, scores JSONB, timestamps. Index on (schema_name, schema_version); GIN on scores.
+- The legacy table and every legacy method are untouched. Verified by test: the new DDL contains no DROP TABLE, DROP COLUMN, TRUNCATE, or ALTER of the legacy table, and `store_conceptual_dimensions` still references only `conceptual_dimensions`. Zero destructive DDL statements exist anywhere in the file.
+- `migrate_legacy_dimensions()` copies legacy rows forward. Read-only against the legacy table, idempotent via ON CONFLICT, and never called automatically — moving a deployment's data is an operator decision, not an upgrade side effect.
+**Defect caught during implementation:** `_create_dimension_tables` was written but never invoked. `connect()` called `_create_tables` and `_create_indexes` only, so the new table would never have existed in a real deployment and every schema-driven call would have failed on a missing relation. All 12 tests passed at that point because the fake pool does not care whether a table exists. Wired into `connect()`, with a test that asserts the call site by inspecting `connect`'s source, not just the DDL text.
+**Verification:** InMemoryDimensionStore, MongoDBBackend and PostgreSQLBackend driven through identical operations all agree exactly — same rankings (1.0, 0.499569), same delete semantics, same None after delete. Three implementations, one contract.
+**NOT verified:** no PostgreSQL server was involved. asyncpg is exercised through a fake pool, so this covers SQL construction, parameter binding and result mapping. Real-server behaviour — JSONB codec choice, GIN index usage, ON CONFLICT under concurrency, migration on a large table — is unproven.
+**Known limitation:** find_similar_dimensions filters by schema in SQL (using the index) but computes cosine in Python, for the same reason as MongoDB: dimension names come from the user's schema and cannot be baked into fixed SQL. Large schemas want a materialised vector column.
+**Also unchanged:** get_dimension_statistics still reports the legacy columns only. It already satisfied the interface, it works, and extending it was outside what these tests could cover.
+**State:** 118/118 new suites green, 1 skipped; 175 tests collect clean CPU-only.
+**Next:** TC-04 can now close once ConceptualDimensions itself is removed from models.py and the ~10 files still referencing it. Then quickstart onto IngestPipeline, which still needs a cached model.
+
