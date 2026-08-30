@@ -67,6 +67,23 @@ Quickstart retrieval is hybrid: RRF fusion over concurrent vector,
 conceptual and graph channels, with per-dimension scores and per-channel
 ranks shown as receipts on every result.
 
+## Benchmarks
+
+Every published number regenerates with `make bench` (pinned BEIR bundles,
+checksum-enforced; CPU only; the same locally cached ONNX MiniLM the SDK
+serves by default). Full table with hardware and timings:
+[benchmarks/RESULTS.md](benchmarks/RESULTS.md).
+
+What the current table says, plainly: the **dense baseline matches the
+published MiniLM BEIR figures** (scifact nDCG@10 0.645), and **hybrid with
+the generic demo schema loses to dense on both datasets**. That loss is
+expected and stays published: a three-dimension general-purpose schema
+carries no signal about scientific abstracts, and rank fusion weights a
+noise channel equally with a good one. Hybrid's case rests on schemas that
+fit the domain (US4) and scorer quality (US7) — claims we will only make
+when this table shows them.
+
+
 ```python
 from kse_memory import KSEMemory, SearchQuery
 

@@ -173,9 +173,12 @@ async def test_channels_run_concurrently(parsed):
     one has started, so sequential execution would deadlock (timeout)."""
     barrier = Barrier(expected=3)
     store = SlowStore(barrier, [("a", 1.0, {})])
+    # 30s, not 5: a genuine deadlock never completes at any timeout, but a
+    # loaded machine (e.g. make bench running) can stall the scheduler past
+    # 5s and turn this into the suite's only flake. D-16: zero flakes.
     result = await asyncio.wait_for(
         retrieve(parsed, vector_store=store, concept_store=store, graph_store=store),
-        timeout=5.0,
+        timeout=30.0,
     )
     assert result.vector == (("a", 1.0),)
 

@@ -79,3 +79,16 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *and queryable*: `find_similar_dimensions` answers in the same schema, and FR-03 query targets are keyed by the developer's vocabulary — live with the genuine model, "something easy to sell fast" targets liquidity 0.71.
 - *no hardcoded fashion vocabulary in the default path*: the TC-04 scan now covers all 14 public-surface modules, not 2; clean. (The v2 `search.py` legacy list survives for legacy stored data only, per the retirement map.)
 
+**TC-05 (open — partial verification, 2026-08-30, Session 26-CC):**
+- *make bench, one command, documented CPU hardware*: ✓ — Makefile target;
+  fetch is checksum-enforced (benchmarks/PINS.sha256; a mismatch refuses to
+  run); benchmarks/RESULTS.md records hardware, model, dataset sizes, timings.
+- *full results table including losses*: ✓✓ — hybrid loses to dense on both
+  datasets (scifact nDCG@10 Δ -0.306, nfcorpus Δ -0.158) and the table
+  publishes it at full prominence. The formatter's loss-display behaviour is
+  itself unit-tested. Dense baseline hits literature parity (scifact 0.645 =
+  the published MiniLM figure), validating the tokeniser/pooling stack.
+- *pinned BEIR/ESCI datasets*: **BEIR ✓ (scifact + nfcorpus); ESCI ✗** — the
+  ESCI corpus is multi-GB and choosing a pinned slice is a decision, not a
+  download. TC-05 stays unmarked until ESCI lands or a ruling narrows it.
+

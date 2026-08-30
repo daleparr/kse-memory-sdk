@@ -206,3 +206,4 @@ docs/_build/
 # macOS AppleDouble sidecars (exFAT/NTFS volumes lack native xattr support)
 ._*
 upload_to_pypi.py
+benchmarks/data/

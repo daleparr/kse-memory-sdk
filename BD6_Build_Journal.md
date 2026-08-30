@@ -335,3 +335,15 @@ Template:
 **State (printed):** 261 tests collected in 0.51s; 252 passed, 12 skipped, 72 warnings in 10.77s.
 **Remaining stories:** US5 benchmarks (P2), US6 domain packs, US7 scorer parity, US8 domain mapping, US9 backends, US10/US11 (P3). Next BD patch reconciliation pending.
 
+## 2026-08-30 — Session 26-CC (Claude Code, parallel track) — US5: the numbers land, losses first
+**Delivered (TC-first: 8 metric tests pinned to hand-computed values, RED before benchmarks/harness.py existed):**
+- benchmarks/harness.py + Makefile: `make bench` fetches pinned BEIR bundles (checksums ENFORCED via PINS.sha256 — a mismatch refuses to benchmark), embeds with the genuine cached MiniLM, and writes benchmarks/RESULTS.md with hardware, timings and signed deltas.
+- The run itself, on this machine (arm64, CPU-only): scifact 239s, nfcorpus 182s.
+**The two findings:**
+1. **Dense baseline = literature parity.** scifact nDCG@10 0.645 is exactly the published all-MiniLM-L6-v2 BEIR figure; nfcorpus 0.317 within a point. The hand-written WordPiece + pooling stack is thereby validated against the reference implementation on a standard benchmark — the strongest evidence yet that the T-008 tokeniser is correct.
+2. **Hybrid loses to dense on both datasets** (scifact Δ -0.306 nDCG@10, nfcorpus Δ -0.158) and is published at full prominence, per TC-05's losses clause. Cause, stated: the generic quickstart schema carries no signal about scientific abstracts, and RRF weights the noise channel equally. This is TC-04's premise proven empirically — dimensions must fit the domain — and it hands US6 (domain packs) and US7 (scorer quality) their motivating numbers. README's benchmarks section leads with the loss.
+**Graph channel omitted from the benchmark, stated in the artefact: BEIR corpora carry no ingest-time graph, and faking one would benchmark the fake.**
+**Scope honesty:** TC-05's ESCI clause is unmet — the corpus is multi-GB and a pinned slice is a decision, not a download. TC-05 stays unmarked; T-033 stays open on that one item; T-034 (verify ceremony) waits. Flagged for a ruling, like the fetch clause was (D-102's pattern).
+**Also:** the FR-04 concurrency test de-flaked on principle (5s→30s wait_for: a real deadlock never completes at any timeout; a benchmark-loaded CPU stalls schedulers past 5s — it was the suite's only intermittent red, twice, both under load).
+**State (printed):** 260 passed, 12 skipped, 72 warnings in 10.18s.
+

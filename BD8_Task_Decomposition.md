@@ -74,8 +74,8 @@ _As a developer in any domain, I define my own conceptual dimensions._  · FR: F
 ## Phase 7 — US5: Real benchmarks (P2)
 
 _As a sceptical evaluator, I reproduce every published number._  · FR: — · AR: AR-03, AR-04
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US5
-- [ ] T-033 US5: execute story deliverables
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US5 — tests/unit/test_bench_harness.py (metric arithmetic pinned to hand-computed values; loss-display tested), RED first
+- [ ] T-033 US5: execute story deliverables — BEIR DELIVERED (harness, enforced pins, make bench, RESULTS.md artefact with losses published); ESCI slice remains — needs a pinning decision (multi-GB corpus)
 - [ ] T-034 US5: verify green, mark BD4 TCs [X], journal in BD6
 
 ## Phase 8 — US6: Domain packs (P2)
