@@ -9,8 +9,8 @@ Test-first per GOV-04: every TC below is written and failing (red) before its FR
 | TC | Traces to | Criterion (BDD / assertion) | FR/AR refs |
 |---|---|---|---|
 | TC-01 | US1 | Given the current repo, when README v3 lands, then no unvalidated numeric claim remains, the placeholder arXiv badge is removed, status markdowns are consolidated into docs/, and simulation code lives under simulations/ with explicit labelling. | AR-02, AR-03 |
-| TC-02 | US2 | Given a fresh venv on CPU-only hardware, when I run pip install kse-memory-sdk && kse quickstart, then hybrid results return in <60s with no external service, no API key, no network call, and no CUDA dependency installed. | FR-01, FR-02, FR-03, FR-04, FR-05, FR-06, FR-07, AR-01, AR-04 |
-| TC-03 | US3 | Given results from >=2 channels with incompatible score scales, when fused, then RRF is applied by default and every result retains per-channel rank/score provenance. | FR-04, FR-05, FR-06, AR-05 |
+| TC-02 [X] | US2 | Given a fresh venv on CPU-only hardware, when I run pip install kse-memory-sdk && kse quickstart, then hybrid results return in <60s with no external service, no API key, no network call, and no CUDA dependency installed. | FR-01, FR-02, FR-03, FR-04, FR-05, FR-06, FR-07, AR-01, AR-04 |
+| TC-03 [X] | US3 | Given results from >=2 channels with incompatible score scales, when fused, then RRF is applied by default and every result retains per-channel rank/score provenance. | FR-04, FR-05, FR-06, AR-05 |
 | TC-04 | US4 | Given a YAML schema of named dimensions with anchors, when items are ingested, then dimensions are scored and queryable, and no hardcoded fashion vocabulary remains in the default path. | FR-02, FR-03, AR-01 |
 | TC-05 | US5 | Given pinned BEIR/ESCI datasets, when I run make bench, then the full results table including losses regenerates in one command on documented CPU hardware. | AR-03, AR-04 |
 | TC-06 | US6 | Given the examples directory, when I open the retail, finance, or documents pack, then each ships a dimension schema plus a runnable notebook demonstrating a query pure vector search handles worse. | FR-02, FR-03, FR-04, FR-05, FR-06, AR-01 |
@@ -58,3 +58,18 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 
 <!-- manual-start -->
 <!-- manual-end -->
+
+## Verification record
+
+**TC-02 [X]** — verified 2026-08-30 (Session 22-CC), clause by clause:
+- *hybrid results*: `tests/integration/test_onnx_minilm.py::test_healthy_corpus_yields_confident_hybrid_answers` — every demo query returns `hybrid=True`, confidence ≥ 0.5, genuine MiniLM.
+- *<60s*: `test_quickstart_end_to_end_offline` asserts the budget; observed ~0.2s.
+- *no external service / no API key*: all three default backends are in-process (`memory`) since T-068; `KSEConfig().validate()` demands no key of any kind (unit-tested).
+- *no network call*: the full path runs under the `no_network` fixture (any socket connect fails the test). The one-time out-of-band model fetch is ruled compliant — **D-102**.
+- *no CUDA dependency*: the AR-04 `pip list` gate, green on every CI run.
+
+**TC-03 [X]** — verified 2026-08-30, clause by clause:
+- *RRF by default*: `answer()` fuses via `fuse_rrf` unconditionally (`core/answer.py`); D-07.
+- *incompatible score scales*: the Hypothesis scale-invariance suite proves fusion is unchanged under positive rescaling of any channel (~200 generated examples).
+- *per-channel rank/score provenance*: `FusedItem.ranks`/`.scores` carry both, `None` for absence; asserted in `test_fr05_fusion.py` and surfaced end to end by FR-06 (`test_fr06_explain.py`).
+

@@ -302,3 +302,9 @@ Template:
 **State:** all four hard lanes green (234 passed, 9 skipped at last full run before these commits — re-verified in CI).
 **Next:** D-16 fully adopted (T-064..T-068 all closed). T-025/T-029 await the TC-02 fetch ruling; the salvage-then-delete passes follow it.
 
+## 2026-08-30 — Session 22-CC (Claude Code, parallel track) — US2 and US3 close
+**Ruling received (maintainer):** the one-time out-of-band model fetch satisfies TC-02's "no network call" clause — recorded as **D-102**. The clause binds runs; the fetch is setup, never performed by KSE code (AR-01 has no download path by construction).
+**Ceremony performed, not recited:** every TC-02 and TC-03 clause re-verified live before marking — integration lane 10/10 with the genuine model (hybrid verdicts, <60s at ~0.2s observed, no_network throughout), AR-04 pip-list gate 0, fusion/property/explain/answer suites 40/40, fuse_rrf confirmed unconditional in answer(). Evidence per clause recorded in BD4's new verification section.
+**Closed:** T-025, T-029. **US2 (zero-dependency CPU quickstart) and US3 (RRF fusion) are the first user stories completed end to end** — every FR they trace to landed TC-first on this branch, and their acceptance criteria are marked with named executable evidence rather than assertion.
+**Next:** the retirement map's salvage-then-delete passes are now unblocked (most triggers were T-025); P1 remainder is US4's story tasks (schema machinery already largely landed).
+
