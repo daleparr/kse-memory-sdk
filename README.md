@@ -53,8 +53,18 @@ a public spec: see `BD_INDEX.md` for the full engineering documentation set
 
 ```bash
 pip install kse-memory-sdk
-kse quickstart          # local demo corpus, CPU-only, no API key
+
+# one-time: cache the embedding model locally (KSE never downloads on the
+# default path — AR-01)
+D=~/.cache/kse/models/onnx-minilm-l6-v2 && mkdir -p "$D"
+curl -L -o "$D/model.onnx" https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx
+curl -L -o "$D/vocab.txt"  https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt
+
+kse quickstart          # local demo corpus, CPU-only, no API key, offline
 ```
+
+Retrieval in the quickstart is dense-only for now; hybrid fusion lands with
+FR-05, and results already carry per-dimension scores as receipts.
 
 ```python
 from kse_memory import KSEMemory, SearchQuery

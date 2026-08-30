@@ -20,7 +20,6 @@ from rich.prompt import Prompt, Confirm
 from .core.memory import KSEMemory
 from .core.config import KSEConfig
 from .core.models import Product, SearchQuery, SearchType
-from .quickstart.demo import QuickstartDemo
 from .quickstart.datasets import SampleDatasets
 
 console = Console()
@@ -39,73 +38,90 @@ def cli():
 
 
 @cli.command()
-@click.option(
-    "--demo-type",
-    type=click.Choice(["retail", "finance", "healthcare"]),
-    default="retail",
-    help="Type of demo to run"
-)
-@click.option(
-    "--backend",
-    type=click.Choice(["chromadb", "weaviate", "qdrant", "memory", "auto"]),
-    default="auto",
-    help="Backend to use (auto-detects if not specified)"
-)
-@click.option(
-    "--no-browser",
-    is_flag=True,
-    help="Skip opening web interface"
-)
-@click.option(
-    "--output",
-    type=click.Path(),
-    help="Save results to JSON file"
-)
-def quickstart(demo_type: str, backend: str, no_browser: bool, output: Optional[str]):
+@click.option("--query", "queries", multiple=True,
+              help="Query to run (repeatable). Defaults to the demo queries.")
+@click.option("--top-k", default=5, show_default=True, help="Results per query")
+@click.option("--output", type=click.Path(), help="Save results to JSON file")
+def quickstart(queries, top_k: int, output: Optional[str]):
     """
-    🚀 Run zero-configuration quickstart demo
-    
-    Experience hybrid AI search with instant "wow" moments.
-    Automatically detects and sets up the best available backend.
-    
-    Examples:
-        kse quickstart                          # Auto-detect best backend
-        kse quickstart --backend chromadb       # Use ChromaDB (local, free)
-        kse quickstart --backend weaviate       # Use Weaviate (cloud, free tier)
-        kse quickstart --demo-type finance      # Run finance demo
-        kse quickstart --no-browser             # Skip web interface
+    🚀 Ingest a demo corpus and search it — offline, CPU-only, no API key.
+
+    Runs FR-01/FR-02 for real: records are normalised, projected under a
+    dimension schema by the locally cached ONNX MiniLM, and stored
+    incrementally. Retrieval is dense-only until fusion lands (FR-03..FR-05);
+    every result shows its per-dimension scores.
+
+    First run needs the embedding model cached locally (KSE never downloads
+    on the default path):
+
+    \b
+        D=~/.cache/kse/models/onnx-minilm-l6-v2 && mkdir -p "$D"
+        curl -L -o "$D/model.onnx" https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx
+        curl -L -o "$D/vocab.txt"  https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt
     """
+    import asyncio
+    import json as _json
+    import time as _time
+
+    from .core.projection import ModelNotAvailableError, OnnxEmbedder
+    from .quickstart.v3 import DEFAULT_QUERIES, run_quickstart
+
     console.print(Panel.fit(
-        "[bold blue]🚀 KSE Memory SDK Quickstart[/bold blue]\n"
-        "Smart backend detection + zero-configuration demo",
-        border_style="blue"
+        "[bold blue]KSE Memory — quickstart[/bold blue]\n"
+        "ingest → project → dense search with dimension receipts",
+        border_style="blue",
     ))
-    
-    async def run_demo():
-        demo = QuickstartDemo()
-        try:
-            # Pass backend preference to demo
-            backend_choice = None if backend == "auto" else backend
-            
-            results = await demo.run(
-                demo_type=demo_type,
-                open_browser=not no_browser,
-                backend=backend_choice
+
+    try:
+        embedder = OnnxEmbedder()
+    except ModelNotAvailableError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print("[dim]See `kse quickstart --help` for the fetch commands.[/dim]")
+        raise SystemExit(1)
+
+    started = _time.perf_counter()
+    result = asyncio.run(run_quickstart(
+        embedder,
+        queries=list(queries) or None,
+        top_k=top_k,
+    ))
+    elapsed = _time.perf_counter() - started
+
+    console.print(f"\nIngested [bold]{result.ingested}[/bold] records "
+                  f"([bold]{result.written}[/bold] written — rerun writes 0) "
+                  f"in {elapsed:.1f}s\n")
+
+    for query, hits in result.searches.items():
+        table = Table(title=f'"{query}"', show_lines=False)
+        table.add_column("similarity", justify="right")
+        table.add_column("title")
+        for dimension in (hits[0].scores if hits else {}):
+            table.add_column(dimension, justify="right")
+        for hit in hits:
+            table.add_row(
+                f"{hit.similarity:.3f}",
+                hit.title,
+                *(f"{hit.scores[d]:.2f}" for d in hit.scores),
             )
-            
-            if output:
-                with open(output, 'w') as f:
-                    json.dump(results, f, indent=2, default=str)
-                console.print(f"[green]✓[/green] Results saved to {output}")
-            
-            console.print("\n[bold green]Quickstart demo completed![/bold green]")
-            console.print("Ready to integrate KSE Memory into your application.")
-            
-        except Exception as e:
-            console.print(f"[red]❌ Demo failed: {str(e)}[/red]")
-            sys.exit(1)
-    
-    asyncio.run(run_demo())
+        console.print(table)
+
+    console.print("[dim]Dense-only ranking; hybrid fusion lands with FR-05.[/dim]")
+
+    if output:
+        payload = {
+            "ingested": result.ingested,
+            "written": result.written,
+            "elapsed_seconds": round(elapsed, 3),
+            "searches": {
+                q: [{"entity_id": h.entity_id, "title": h.title,
+                     "similarity": h.similarity, "scores": dict(h.scores)} for h in hits]
+                for q, hits in result.searches.items()
+            },
+        }
+        pathlib_path = output
+        with open(pathlib_path, "w", encoding="utf-8") as handle:
+            _json.dump(payload, handle, indent=2)
+        console.print(f"[green]Saved to {output}[/green]")
 
 
 @cli.command()

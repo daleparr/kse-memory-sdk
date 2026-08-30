@@ -196,3 +196,15 @@ Template:
 **State:** 171 collect; unit+component+integration+guardrails all green locally including the real model. CI onnx lane unproven until first run.
 **Next:** T-066 conformance skeleton; T-067 Hypothesis suites; quickstart onto IngestPipeline (model now cached locally — unblocked).
 
+## 2026-08-30 — Session 13-CC (Claude Code, parallel track) — quickstart onto IngestPipeline
+**Phase/tasks:** TC-02's executable core. TC-first (7 component tests, verified RED first).
+**Delivered:**
+- kse_memory/quickstart/v3.py — run_quickstart(): ingest DEFAULT_RECORDS through IngestPipeline (real FR-01/FR-02), then dense cosine retrieval with per-dimension receipts on every hit. Demo schema is domain-neutral (technical_depth/practicality/novelty) — a test asserts the retired retail vocabulary cannot re-enter through the demo door.
+- CLI `kse quickstart` rewritten onto it: rich tables with a receipts column per dimension; --query/--top-k/--output; a missing model exits 1 with the actionable AR-01 message. Old options (--demo-type/--backend/--no-browser) removed with the broken path they configured; QuickstartDemo left in place for Phase-2 deletion, no longer reachable from the CLI.
+- Integration: quickstart e2e under no_network with the genuine MiniLM — 6 records ingested and projected, ranking semantically correct (HNSW guide tops the tuning query), rerun writes 0, all inside TC-02's 60s budget (~0.2s actual). README documents the one-time model fetch.
+**Honesty ledger:**
+- Retrieval is DENSE-ONLY and labelled so in the CLI output, the module docstring and the README. TC-02's "hybrid results" clause stays open until FR-03..FR-05; what closed today: no key, no network, no CUDA, results with receipts, incremental rerun.
+- Dimension score spread on the demo corpus is narrow (~0.50-0.60): anchor-centroid cosine over mean-pooled short texts discriminates weakly. Directionally sane, visibly undramatic — scoring refinement belongs with FR-05/US7 work, noted rather than hidden.
+**State:** 187 tests collect; unit+component+integration+guardrails 134 green locally with the real model.
+**Next:** T-066 conformance skeleton, T-067 Hypothesis suites, FR-03 (query→dimension mapping) to start earning "hybrid".
+

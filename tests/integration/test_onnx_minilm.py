@@ -16,6 +16,7 @@ import pytest
 from kse_memory.core.projection import OnnxEmbedder, default_model_dir
 
 pytestmark = [
+    pytest.mark.asyncio,
     pytest.mark.integration,
     pytest.mark.skipif(
         not (default_model_dir() / "model.onnx").exists(),
@@ -56,3 +57,29 @@ def test_real_model_similarity_sanity():
     ])
     dot = lambda x, y: sum(p * q for p, q in zip(x, y))
     assert dot(a, b) > dot(a, c)
+
+
+async def test_quickstart_end_to_end_offline(no_network):
+    """TC-02's executable core: the whole quickstart path — real model,
+    real projection, real retrieval — under the no-network fixture."""
+    import time
+
+    from kse_memory.quickstart.v3 import DEFAULT_RECORDS, run_quickstart
+
+    started = time.perf_counter()
+    result = await run_quickstart(OnnxEmbedder())
+    elapsed = time.perf_counter() - started
+
+    assert result.ingested == len(DEFAULT_RECORDS)
+    assert result.written == len(DEFAULT_RECORDS)
+    assert elapsed < 60.0  # TC-02's budget, with two orders of margin
+
+    # the semantic sanity that makes the demo a demo: the tuning guide tops
+    # the tuning query
+    hits = result.searches["how do I tune a vector index"]
+    assert hits[0].title == "HNSW index tuning guide"
+    assert all(h.scores for h in hits)
+
+    # incrementality survives the real model too
+    again = await run_quickstart(OnnxEmbedder(), pipeline=result.pipeline)
+    assert again.written == 0
