@@ -280,3 +280,14 @@ Template:
 **State (printed):** 254 tests collected in 0.30s; lanes green: 202 passed, 33 warnings in 3.50s.
 **Next:** T-025/T-029 pending the TC-02 fetch ruling; T-066/T-067 remainder; next BD cumulative patch reconciliation.
 
+## 2026-08-30 — Session 20-CC (Claude Code, parallel track) — T-066 + T-067 complete
+**T-066 (conformance skeleton):**
+- tests/conformance/: parametrised suites for the vector contract (core: ranked-by-similarity, top_k, upsert-overwrite, metadata; extended: get/delete where the full interface exists) and the graph contract-as-used (node CRUD, undirected get_neighbors — the FR-04 semantics — type filter, edge delete). Registries wire in-process backends live; neo4j is registered with requires_backend semantics and skips until a live instance is configured.
+- **The suite caught a real defect within minutes — then I caught the suite.** First run passed 19/19 because my seed order coincided with similarity order. Inverting the seed exposed MockVectorStore returning insertion order with invented decreasing scores — it never computed similarity at all. Fixed to true cosine ranking via the public vector_cosine (D-16: a real local implementation, not a fake). Both lessons stand: conformance suites find non-conforming backends, and a suite that can pass by coincidence isn't testing yet.
+**T-067 (complete):**
+- test_content_hash_properties.py — 7 suites, 200 examples each: determinism, metadata-key-order invariance at depth, tag-permutation invariance, absent==empty, id-never-affects-hash, changed-content-changes-hash, unicode hygiene. The Session 3 defect class, generalised over the input space.
+- test_schema_properties.py — 5 suites: deterministic loading, YAML round-trip, order+anchor preservation, non-semver rejection, duplicate rejection.
+- **Hypothesis found a genuine boundary:** anchor "0\x85" (NEL) round-trips through YAML as "0 " — YAML normalises the Unicode line-break class in scalars. A property of YAML, not of load_schema; the round-trip property is now explicitly scoped to YAML-representable text, with the boundary documented in the strategy. Found in anchors first, then again in descriptions — the same fix applied to both.
+**State (printed):** 294 tests collected in 0.40s; lanes green: 233 passed, 9 skipped, 33 warnings in 9.62s. All D-16 adoption tasks (T-064..T-068 except T-068) now closed.
+**Next:** T-068 (legacy retirement map) is the last D-16 task; T-025/T-029 still await the TC-02 fetch ruling.
+

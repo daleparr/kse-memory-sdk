@@ -75,26 +75,23 @@ class MockVectorStore(VectorStoreInterface):
         if not self._connected:
             raise BackendError("Not connected to mock store", "mock")
         
-        # Simple mock search - return stored vectors with mock scores
+        # Real cosine ranking (D-16: a real local implementation, not a
+        # fake). The previous version returned insertion order with invented
+        # decreasing scores — the T-066 conformance suite caught it.
+        from ..core.projection import vector_cosine
+
         results = []
-        for vector_id, vector in list(self._vectors.items())[:top_k]:
-            # Mock similarity score
-            score = 0.8 - (len(results) * 0.1)  # Decreasing scores
+        for vector_id, vector in self._vectors.items():
             metadata = self._metadata.get(vector_id, {})
-            
-            # Apply simple filters if provided
-            if filters:
-                match = True
-                for key, value in filters.items():
-                    if key in metadata and metadata[key] != value:
-                        match = False
-                        break
-                if not match:
-                    continue
-            
-            results.append((vector_id, score, metadata))
-        
-        return results
+            if filters and any(
+                key in metadata and metadata[key] != value
+                for key, value in filters.items()
+            ):
+                continue
+            results.append((vector_id, vector_cosine(query_vector, vector), metadata))
+
+        results.sort(key=lambda row: (-row[1], row[0]))
+        return results[:top_k]
     
     async def get_vector(self, vector_id: str) -> Optional[Tuple[List[float], Dict[str, Any]]]:
         """Get a specific vector by ID."""
