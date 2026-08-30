@@ -5,10 +5,10 @@ What this demonstrates, honestly:
 - FR-01/FR-02 for real: records normalised, projected under a user schema by a
   local embedder, written incrementally to in-memory stores. Re-running against
   the same pipeline writes nothing — the replay identity at work.
-- DENSE retrieval only. FR-03..FR-05 (query parse, concurrent channels, RRF
-  fusion) are unbuilt; ranking here is plain cosine against the entity vectors,
-  and every result carries its per-dimension scores as receipts. The word
-  "hybrid" is earned when fusion lands, not before.
+- HYBRID retrieval, earned: FR-03 parses the query, FR-04 runs the vector,
+  conceptual and graph channels concurrently, FR-05 fuses their rankings with
+  RRF. Every result carries its per-dimension scores and its per-channel
+  ranks as receipts.
 
 No API key, no network call, no CUDA — the default path promises of TC-02.
 
@@ -21,7 +21,9 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
 from ..core.pipeline import IngestPipeline
+from ..core.fusion import FusedItem, fuse_rrf
 from ..core.query import ParsedQuery, parse_query
+from ..core.retrieval import retrieve
 from ..core.schema import DimensionSchema, load_schema
 
 __all__ = [
@@ -86,12 +88,18 @@ DEFAULT_QUERIES: Tuple[str, ...] = (
 
 @dataclass(frozen=True)
 class Hit:
-    """One ranked result with its receipts."""
+    """One fused result with its receipts.
+
+    ``similarity`` is the fused RRF score; ``channel_ranks`` shows where each
+    channel placed the entity (None = channel did not return it) — the FR-06
+    explanation surface, collected at fusion time.
+    """
 
     entity_id: str
     title: str
     similarity: float
     scores: Mapping[str, float] = field(default_factory=dict)
+    channel_ranks: Mapping[str, Optional[int]] = field(default_factory=dict)
 
 
 @dataclass
@@ -209,15 +217,31 @@ async def run_quickstart(
         parsed = parse_query(query, pipeline.schema, pipeline.embedder,
                              centroids=pipeline.centroids)
         parses[query] = parsed
+        # FR-04: three concurrent channels; FR-05: rank-based fusion. This is
+        # the point where "hybrid" stops being a roadmap word.
+        channels = await retrieve(
+            parsed,
+            vector_store=index,
+            concept_store=concept_store,
+            graph_store=pipeline.graph_store,
+            top_k=top_k,
+        )
+        fused = fuse_rrf(
+            {"vector": channels.vector, "conceptual": channels.conceptual,
+             "graph": channels.graph},
+            top_k=top_k,
+        )
         hits: List[Hit] = []
-        for entity_id, similarity, metadata in await index.search_vectors(list(parsed.vector), top_k):
-            stored = await concept_store.get_dimensions(entity_id)
+        for item in fused:
+            stored = await concept_store.get_dimensions(item.entity_id)
+            _, metadata = index.rows.get(item.entity_id, (None, {}))
             hits.append(
                 Hit(
-                    entity_id=entity_id,
-                    title=metadata.get("title", entity_id),
-                    similarity=round(similarity, 6),
+                    entity_id=item.entity_id,
+                    title=metadata.get("title", item.entity_id),
+                    similarity=round(item.fused, 6),
                     scores=dict(stored.scores) if stored else {},
+                    channel_ranks=dict(item.ranks),
                 )
             )
         searches[query] = hits

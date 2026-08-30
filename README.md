@@ -63,8 +63,9 @@ curl -L -o "$D/vocab.txt"  https://huggingface.co/sentence-transformers/all-Mini
 kse quickstart          # local demo corpus, CPU-only, no API key, offline
 ```
 
-Retrieval in the quickstart is dense-only for now; hybrid fusion lands with
-FR-05, and results already carry per-dimension scores as receipts.
+Quickstart retrieval is hybrid: RRF fusion over concurrent vector,
+conceptual and graph channels, with per-dimension scores and per-channel
+ranks shown as receipts on every result.
 
 ```python
 from kse_memory import KSEMemory, SearchQuery

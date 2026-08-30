@@ -18,7 +18,7 @@ jobs:
       - name: Install (CPU-only image — AR-04 asserted by absence of NVIDIA deps)
         run: |
           python -m pip install --upgrade pip
-          pip install -e . pytest pytest-asyncio
+          pip install -e . pytest pytest-asyncio hypothesis
           # AR-04: fail if any NVIDIA/CUDA package landed in the environment
           if pip list | grep -iE "nvidia|cuda|faiss-gpu"; then
             echo "::error::AR-04 violated — GPU package in default dependency tree"; exit 1;
@@ -47,7 +47,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: |
           python -m pip install --upgrade pip
-          pip install -e . pytest pytest-asyncio
+          pip install -e . pytest pytest-asyncio hypothesis
       - run: pytest tests/ -q --ignore=tests/test_repo_hygiene.py
         continue-on-error: true  # legacy mocked suite; hard-fail restored as Phase 2 replaces mocks (GOV-04)
       - name: Changed-line coverage (D-16 diff-cover ratchet — report-only until T-015)
@@ -86,6 +86,6 @@ jobs:
             "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt"
       - run: |
           python -m pip install --upgrade pip
-          pip install -e . pytest pytest-asyncio
+          pip install -e . pytest pytest-asyncio hypothesis
       - name: Integration lane against the genuine model
         run: pytest tests/integration -q -m integration

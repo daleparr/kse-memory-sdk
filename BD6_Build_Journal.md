@@ -233,3 +233,16 @@ Template:
 **State (printed):** 200 tests collected in 0.21s; lanes green: 148 passed, 9 warnings in 1.84s.
 **Next:** FR-05 RRF fusion (D-07 confirms rank-based default; Hypothesis properties per T-067 belong in the same session), then FR-06 explanations, FR-07 confidence threshold.
 
+## 2026-08-30 — Session 16-CC (Claude Code, parallel track) — FR-05 fusion; quickstart earns "hybrid"
+**Phase/tasks:** TC-first (13 example tests + 6 Hypothesis property suites, RED first); FR-05 implemented; T-067 RRF portion done.
+**Delivered:**
+- kse_memory/core/fusion.py — fuse_rrf (D-07 default: rank-based, k=60, optional per-channel weights, deterministic id tiebreak per BD4 "fusion seedable") and fuse_weighted (optional min-max path). Every FusedItem carries per-channel ranks AND raw scores — FR-06's receipts are collected at fusion time or never.
+- Property suites (Hypothesis, ~200 examples each): scale invariance under positive rescaling, rank monotonicity, fused-score bounds (0, C/(k+1)], channel-order irrelevance, single-channel order preservation, exactly-once membership.
+- Quickstart rewired: parse → three concurrent channels → RRF. The CLI now shows the fused score and each hit's channel ranks (v·c·g), the dense-only label is replaced, and README updated. Live: the HNSW guide wins the tuning query at ranks 1·2·2; second place shows –·3·1 — found by conceptual+graph, invisible to dense. The receipts make the fusion inspectable, which is D-12's promise.
+- Hypothesis added to CI installs (it was dev-extra only; the property lane would have been red on CI otherwise).
+**Test correction during RED->GREEN:** my weighted-fusion expectation was wrong, not the code — min-max maps a channel's minimum to 0.0, indistinguishable from absence. Pinned as an explicit test documenting the wart; it is part of why RRF is the default.
+**Empirical note:** fused top-1 for the tuning query remained the right answer despite the narrow conceptual/graph spread — the concern that noise channels would outvote dense did not materialise on this corpus.
+**Scope honesty:** FR-06 (explanation objects) and FR-07 (fused-confidence threshold + dense-only flag) remain open; the receipts and the errors channel are their groundwork. v2 SearchService still unrewired. T-067's content_hash and schema round-trip properties remain.
+**State (printed):** 219 tests collected in 0.28s; lanes green: 167 passed, 9 warnings in 3.86s.
+**Next:** FR-06 explanations from the collected receipts; FR-07 confidence; or T-067 completion.
+

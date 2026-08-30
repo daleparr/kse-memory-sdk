@@ -68,7 +68,7 @@ def quickstart(queries, top_k: int, output: Optional[str]):
 
     console.print(Panel.fit(
         "[bold blue]KSE Memory — quickstart[/bold blue]\n"
-        "ingest → project → dense search with dimension receipts",
+        "ingest → project → hybrid search (RRF over vector · conceptual · graph)",
         border_style="blue",
     ))
 
@@ -96,19 +96,25 @@ def quickstart(queries, top_k: int, output: Optional[str]):
         focus = "  ".join(f"{name} {value:.2f}" for name, value in targets.items())
         console.print(f"[dim]query targets (FR-03): {focus}[/dim]")
         table = Table(title=f'"{query}"', show_lines=False)
-        table.add_column("similarity", justify="right")
+        table.add_column("rrf", justify="right")
+        table.add_column("channels v·c·g", justify="center")
         table.add_column("title")
         for dimension in (hits[0].scores if hits else {}):
             table.add_column(dimension, justify="right")
         for hit in hits:
+            ranks = "·".join(
+                str(hit.channel_ranks.get(ch)) if hit.channel_ranks.get(ch) else "–"
+                for ch in ("vector", "conceptual", "graph")
+            )
             table.add_row(
-                f"{hit.similarity:.3f}",
+                f"{hit.similarity:.4f}",
+                ranks,
                 hit.title,
                 *(f"{hit.scores[d]:.2f}" for d in hit.scores),
             )
         console.print(table)
 
-    console.print("[dim]Dense-only ranking; hybrid fusion lands with FR-05.[/dim]")
+    console.print("[dim]RRF fusion over three channels; per-channel ranks shown as v·c·g.[/dim]")
 
     if output:
         payload = {
