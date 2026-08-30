@@ -122,3 +122,16 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *only recommended where it wins*: strict inequality. The tie scenario (all channels agreeing — nothing to learn) is asserted `recommended=False`; the oracle-vs-adversarial scenario (a construction equal-weight RRF cannot win) is asserted `recommended=True`, with the learner's vector weight demonstrably dominant.
 - D-07 honoured: opt-in only — nothing touches the RRF default; `answer()` is unchanged.
 
+**TC-12 (open — drafts complete, 2026-08-30, Session 33-CC):**
+- The kit is drafted in `docs/launch/` — checklist encoding TC-12's exact
+  sequence with preflight gates, Show HN, blog outline with the defect
+  ledger, arXiv skeleton (with a hard gate: do not submit before D-103's
+  ESCI lands or the framing covers its absence; the simulated-numbers
+  legacy preprint is explicitly off-limits), awesome-list targets.
+- "Real numbers only" is EXECUTABLE: `tests/unit/test_us11_launch_kit.py`
+  fails if any draft cites a metric absent from `benchmarks/RESULTS.md`,
+  applies the AR-03 banned-pattern regexes to launch copy, and asserts the
+  losses are stated in every outward draft.
+- TC-12's clause is *published in sequence* — publishing is the
+  maintainer's act. The box closes when the maintainer ships.
+

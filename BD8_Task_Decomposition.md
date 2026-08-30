@@ -122,9 +122,9 @@ _As an advanced user, I train fusion weights on my own relevance data._  · FR: 
 ## Phase 13 — US11: Launch kit (P3)
 
 _As the maintainer, I launch deliberately once the substance is real._  · FR: — · AR: AR-03
-- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US1 (tests/test_repo_hygiene.py, AR-03 red→green)1
-- [ ] T-051 US11: execute story deliverables
-- [ ] T-052 US11: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US11 — tests/unit/test_us11_launch_kit.py, RED first. [Line was session-9-mangle-corrupted and spuriously pre-checked, like US10's; repaired Session 33-CC]
+- [X] T-051 US11: execute story deliverables — docs/launch/ kit drafted, number-traceability guardrail live (Session 33-CC)
+- [ ] T-052 US11: verify green, mark BD4 TCs [X], journal in BD6 — OPEN: TC-12 closes on the maintainer actually publishing the sequence
 
 ## Phase 14 — Polish
 

@@ -393,3 +393,11 @@ Template:
 **US10 closes** — ninth story. **State (printed):** 331 tests collected in 0.62s; 316 passed, 18 skipped, 72 warnings in 12.53s.
 **Remaining:** T-048 (live graph server or ruling), TC-10 (Rainbird), US11 launch kit, ESCI (D-103).
 
+## 2026-08-30 — Session 33-CC (Claude Code, parallel track) — US11: the launch kit, drafted and guarded
+**TC-first:** tests/unit/test_us11_launch_kit.py, RED before docs/launch/ existed. The suite makes AR-03 executable for launch copy itself: any metric-shaped number in a draft must exist verbatim in benchmarks/RESULTS.md; the banned-claim regexes apply; the losses (-0.306 scifact) must be stated in every outward draft; the checklist must encode TC-12's exact sequence. Editing a draft to invent a number turns CI red.
+**Drafted:** CHECKLIST (preflight gates + sequence + arXiv submission gate on D-103), show_hn (the hook IS the loss table), blog_post (the defect ledger: every v3 defect and the unmocked test that caught it), arxiv_outline (negative results as a headline section, incl. the 1.4×-below-bar contrastive experiment; the simulated-numbers legacy preprint declared off-limits), awesome_lists (one canonical one-liner, etiquette rules).
+**One more sidecar bite:** the guardrail's glob read exFAT AppleDouble forks and died on 0xb0 — the T-066 filter applied to its globs.
+**Also repaired:** US11's TC-first line, the third victim of the session-9 patch mangle, spuriously pre-checked.
+**Boundary held:** T-051 closes (the kit exists, guarded); T-052 and TC-12 stay OPEN because publishing is the maintainer's act — the drafts have no send button and I am not the one to press it.
+**State (printed):** 336 tests collected in 0.39s; 321 passed, 18 skipped, 72 warnings in 12.70s.
+
