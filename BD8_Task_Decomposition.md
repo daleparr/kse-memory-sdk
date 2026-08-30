@@ -44,23 +44,23 @@ _As the maintainer, I remove all unvalidated claims so the repo can be scrutinis
 ## Phase 4 — US2: Zero-dependency CPU quickstart (P1)
 
 _As a new developer on CPU-only hardware, I get hybrid results with nothing but pip._  · FR: FR-01, FR-02, FR-03, FR-04, FR-05, FR-06, FR-07 · AR: AR-01, AR-04
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US2
-- [ ] T-018 US2 × FR-01: implement/extend for this story
-- [ ] T-019 US2 × FR-02: implement/extend for this story
-- [ ] T-020 US2 × FR-03: implement/extend for this story
-- [ ] T-021 US2 × FR-04: implement/extend for this story
-- [ ] T-022 US2 × FR-05: implement/extend for this story
-- [ ] T-023 US2 × FR-06: implement/extend for this story
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US2 — tests/component/test_quickstart_v3.py (RED first) + tests/integration quickstart e2e under no_network
+- [X] T-018 US2 × FR-01: implement/extend for this story — quickstart ingests via IngestPipeline/normalise_record (Session 13-CC)
+- [X] T-019 US2 × FR-02: implement/extend for this story — projection + receipts on every hit (Session 13-CC)
+- [X] T-020 US2 × FR-03: implement/extend for this story — query targets parsed and displayed (Session 14-CC)
+- [X] T-021 US2 × FR-04: implement/extend for this story — three concurrent channels (Session 15-CC)
+- [X] T-022 US2 × FR-05: implement/extend for this story — RRF fusion; quickstart hybrid (Session 16-CC)
+- [X] T-023 US2 × FR-06: implement/extend for this story — explanations attached; kse explain (Session 17-CC)
 - [ ] T-024 US2 × FR-07: implement/extend for this story
 - [ ] T-025 US2: verify green, mark BD4 TCs [X], journal in BD6
 
 ## Phase 5 — US3: RRF fusion (P1)
 
 _As a developer, I get scale-free fusion by default._  · FR: FR-04, FR-05, FR-06 · AR: AR-05
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US3
-- [ ] T-026 US3 × FR-04: implement/extend for this story
-- [ ] T-027 US3 × FR-05: implement/extend for this story
-- [ ] T-028 US3 × FR-06: implement/extend for this story
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US3 — tests/unit/test_fr05_fusion.py + property suites, RED first
+- [X] T-026 US3 × FR-04: implement/extend for this story — core/retrieval.py (Session 15-CC)
+- [X] T-027 US3 × FR-05: implement/extend for this story — core/fusion.py, RRF default per D-07 (Session 16-CC)
+- [X] T-028 US3 × FR-06: implement/extend for this story — FusedItem receipts -> explain_results (Session 17-CC)
 - [ ] T-029 US3: verify green, mark BD4 TCs [X], journal in BD6
 
 ## Phase 6 — US4: Custom dimension schema (P1)
