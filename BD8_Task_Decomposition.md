@@ -115,9 +115,9 @@ _As a user with an existing graph DB, I plug in my preferred store without forki
 ## Phase 12 — US10: Learned fusion (P3)
 
 _As an advanced user, I train fusion weights on my own relevance data._  · FR: FR-05 · AR: AR-03
-- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US1 (tests/test_repo_hygiene.py, AR-03 red→green)0
-- [ ] T-049 US10 × FR-05: implement/extend for this story
-- [ ] T-050 US10: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US10 — tests/unit/test_us10_learned_fusion.py (13), verified RED (ModuleNotFoundError) first. [Line was corrupted by the session-9 patch mangle — same artefact as T-068's — and spuriously pre-checked; repaired Session 32-CC]
+- [X] T-049 US10 × FR-05: implement/extend for this story — core/learned_fusion.py + core/metrics.py layering move (Session 32-CC)
+- [X] T-050 US10: verify green, mark BD4 TCs [X], journal in BD6 — TC-11 verified clause-by-clause (BD4 record)
 
 ## Phase 13 — US11: Launch kit (P3)
 

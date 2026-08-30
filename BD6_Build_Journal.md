@@ -384,3 +384,12 @@ Template:
 **Ceremony withheld where evidence is short:** T-046/T-047 closed; T-048 OPEN — TC-09 needs a live-server behavioural pass or a ruling; TC-10 needs Rainbird. Recorded in BD4 as partial verification, per the TC-05 precedent.
 **State (printed):** 321 tests collected in 0.59s; 306 passed, 18 skipped, 72 warnings in 12.29s.
 
+## 2026-08-30 — Session 32-CC (Claude Code, parallel track) — US10: fusion that must earn its recommendation
+**TC-first (13 tests, RED on ModuleNotFoundError):** core/learned_fusion.py. The design choice that matters: features are per-channel reciprocal ranks — the exact quantity RRF sums with equal weights — so the learned model IS RRF-with-trained-weights, the mandated comparison is apples to apples, and the weights read directly ("trust vector 4×"). Seeded batch gradient descent, no new dependencies, model carries seed/examples/weights as its receipt.
+**The honesty clause is executable:** evaluate_vs_rrf recommends on STRICT win only. The symmetric scenario (channels agree; nothing to learn) asserts recommended=False; the oracle-vs-adversarial scenario — two channels ranking the relevant doc last, a construction equal-weight RRF cannot win — asserts recommended=True with the oracle weight dominant. Parity is not a win.
+**Layering move:** ndcg/recall now live in kse_memory/core/metrics.py (packaged, hand-value-pinned tests unchanged); benchmarks/harness.py re-exports. The package never depends on the unpackaged benchmarks tree.
+**Also repaired:** BD8's US10 TC-first line — corrupted by the same session-9 patch mangle as T-068 and spuriously pre-checked; now states its real evidence.
+**D-07 honoured:** opt-in only; the RRF default and answer() untouched.
+**US10 closes** — ninth story. **State (printed):** 331 tests collected in 0.62s; 316 passed, 18 skipped, 72 warnings in 12.53s.
+**Remaining:** T-048 (live graph server or ruling), TC-10 (Rainbird), US11 launch kit, ESCI (D-103).
+

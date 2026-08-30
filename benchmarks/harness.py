@@ -30,24 +30,9 @@ DATASETS = {
 
 
 # ------------------------------------------------------------------ metrics
-def ndcg_at_k(ranking: Sequence[str], qrels: Mapping[str, int], k: int) -> float:
-    """nDCG@k with exponential gain (2^rel - 1), the BEIR convention."""
-    ideal = sorted((r for r in qrels.values() if r > 0), reverse=True)[:k]
-    if not ideal:
-        return 0.0
-    idcg = sum((2**rel - 1) / math.log2(i + 2) for i, rel in enumerate(ideal))
-    dcg = sum(
-        (2 ** qrels.get(doc_id, 0) - 1) / math.log2(i + 2)
-        for i, doc_id in enumerate(ranking[:k])
-    )
-    return dcg / idcg
-
-
-def recall_at_k(ranking: Sequence[str], qrels: Mapping[str, int], k: int) -> float:
-    relevant = {doc_id for doc_id, rel in qrels.items() if rel > 0}
-    if not relevant:
-        return 0.0
-    return len(relevant & set(ranking[:k])) / len(relevant)
+# Single implementation lives in the package (US10 layering: benchmarks
+# depends on kse_memory, never the reverse). Re-exported for callers here.
+from kse_memory.core.metrics import ndcg_at_k, recall_at_k  # noqa: E402,F401
 
 
 # ------------------------------------------------------------------- table

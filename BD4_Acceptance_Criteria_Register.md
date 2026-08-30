@@ -18,7 +18,7 @@ Test-first per GOV-04: every TC below is written and failing (red) before its FR
 | TC-08 [X] | US8 | Given source and target domain profiles, when map_dimensions runs, then values are transformed per the mapping definition (replacing the identity stub), with tests proving non-identity behaviour. | FR-02, FR-03, AR-05 |
 | TC-09 | US9 | Given the tiered backend policy, when I configure Neo4j (T1) or ArangoDB/TypeDB (T2), then the same GraphStoreInterface contract passes the shared conformance suite. | FR-02, FR-04, AR-05 |
 | TC-10 | US9 | Given a Rainbird connector (T3), when enabled, then it contributes a reasoning channel to fusion without acting as the graph store of record. | FR-02, FR-04, AR-05 |
-| TC-11 | US10 | Given labelled query-result pairs, when learned fusion is enabled, then a logistic model over channel features is trained, evaluated against RRF, and only recommended where it wins. | FR-05, AR-03 |
+| TC-11 [X] | US10 | Given labelled query-result pairs, when learned fusion is enabled, then a logistic model over channel features is trained, evaluated against RRF, and only recommended where it wins. | FR-05, AR-03 |
 | TC-12 | US11 | Given Phases 0-2 complete, when v3.0 ships, then Show HN post, technical blog, awesome-list PRs, and the arXiv preprint (real numbers only) are published in sequence. | AR-03 |
 | TC-13 | AR-01 | Default path makes zero network calls; quickstart requires no API key (verifiable: network-mocked CI test asserts no socket use) | AR-01 |
 | TC-14 | AR-02 | Simulation code isolated under simulations/ with warning headers; import from benchmarks/ is a CI failure | AR-02 |
@@ -115,4 +115,10 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *Neo4j (T1)*: passes static conformance; registered in the behavioural suite, skipping until a live instance is configured (`requires_backend`).
 - *ArangoDB (T2)*: was IMPOSSIBLE TO INSTANTIATE — nine abstract methods unimplemented, the same wrong-names defect family as MongoDBBackend, caught by the new static suite. The generic surface is now implemented natively (nodes/node_edges collections, deterministic edge keys for upsert, either-direction AQL neighbours per the FR-04 contract); static conformance green; behavioural registered and skipping until live. Driver-level behaviour against a real server remains unproven.
 - TC-09 stays unmarked until a live Neo4j or ArangoDB passes the behavioural suite, or a ruling narrows the clause. **TC-10 (Rainbird T3)** is untouched: it requires a proprietary service.
+
+**TC-11 [X]** — verified 2026-08-30 (Session 32-CC), clause by clause:
+- *a logistic model over channel features is trained*: `core/learned_fusion.py` — features are per-channel reciprocal ranks (the exact quantity RRF sums with equal weights, so learned fusion IS RRF-with-trained-weights and the comparison is apples to apples); seeded deterministic gradient descent, no new dependencies; the model carries seed/examples/weights as its receipt.
+- *evaluated against RRF*: `evaluate_vs_rrf` scores both on held-out labelled queries with the package's own hand-value-pinned nDCG (`core/metrics.py` — moved from benchmarks/ so the package never depends on the unpackaged tree; harness re-exports).
+- *only recommended where it wins*: strict inequality. The tie scenario (all channels agreeing — nothing to learn) is asserted `recommended=False`; the oracle-vs-adversarial scenario (a construction equal-weight RRF cannot win) is asserted `recommended=True`, with the learner's vector weight demonstrably dominant.
+- D-07 honoured: opt-in only — nothing touches the RRF default; `answer()` is unchanged.
 
