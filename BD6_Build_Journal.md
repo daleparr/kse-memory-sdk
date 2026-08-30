@@ -308,3 +308,11 @@ Template:
 **Closed:** T-025, T-029. **US2 (zero-dependency CPU quickstart) and US3 (RRF fusion) are the first user stories completed end to end** — every FR they trace to landed TC-first on this branch, and their acceptance criteria are marked with named executable evidence rather than assertion.
 **Next:** the retirement map's salvage-then-delete passes are now unblocked (most triggers were T-025); P1 remainder is US4's story tasks (schema machinery already largely landed).
 
+## 2026-08-30 — Session 23-CC (Claude Code, parallel track) — the T-025 deletion pass
+**Salvaged before deleting (the map's discipline):**
+- tests/unit/test_models.py — 6 genuine unit tests out of test_core.py (SearchQuery, SearchType, config round-trip, KSEMemory construction), plus a new one pinning the all-local default config.
+- tests/unit/test_backend_factory.py — fresh coverage of the factory contract as it stands (defaults resolve in-process, memory/mock aliases, unsupported names raise naming the backend, BackendError shape). One of my own assertions was wrong on first run (backend_type is stored in details, not as an attribute) — fixed to the actual API rather than the imagined one.
+**Deleted:** test_core.py, test_integration.py, test_incremental_updates_analysis.py, test_backends.py, and the root test_universal_model.py.
+**One deviation from the map, stated:** test_backends.py went ahead of per-backend conformance wiring. Every cloud-backend interface test in it errored at setup on fixture rot — it provided zero working cloud coverage to preserve. Cloud conformance wiring remains scheduled (TC-09).
+**Result:** soft-fail lane 14F/23E → **1F/3E**, all in test_integrations.py (framework-story fixtures, pre-v3 adapter config shape — story-gated, as mapped). Collection 261; hard lanes 244 passed / 9 skipped. The T-015 flip criterion (0F/0E, two consecutive runs) is now exactly one story away.
+

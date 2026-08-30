@@ -23,15 +23,15 @@ and `memory` backends now exist for all three stores.
 
 | File | Now | Covers | Replaced by | Delete when |
 |---|---|---|---|---|
-| `tests/test_core.py` | 1F 6P 10E | Mocked KSEMemory CRUD/search; model unit tests | Component pipeline suites; unit model tests | **T-025** (US2 verify). Salvage first: the SearchQuery/Entity model tests are real unit tests — migrate keepers to `tests/unit/` |
-| `tests/test_backends.py` | 11F 2P 4E | Mocked backend behaviour; config-shape assertions (old cloud defaults, `uri` kwarg) | Conformance lane (`tests/conformance/`) | Per backend, as each is wired into conformance. The default-backend assertions are already wrong by decision — deletable now |
-| `tests/test_integration.py` | 1F 2P 1S 6E | Mocked end-to-end workflows | `tests/integration/` (genuine model, `no_network`) | **T-025** |
+| `tests/test_core.py` | **DELETED** 2026-08-30 | — | Salvaged: 6 model/config unit tests → `tests/unit/test_models.py` | done |
+| `tests/test_backends.py` | **DELETED** 2026-08-30 | — | Fresh factory unit tests → `tests/unit/test_backend_factory.py`; per-backend behaviour → conformance lane | done — deleted ahead of per-backend wiring because every cloud-backend test errored at setup on fixture rot and provided zero working coverage; cloud conformance wiring remains scheduled (TC-09) |
+| `tests/test_integration.py` | **DELETED** 2026-08-30 | — | `tests/integration/` (genuine model, `no_network`) | done |
 | `tests/test_integrations.py` | 1F 4S 3E | LangChain/LlamaIndex adapters (extras-gated) | Extras-gated conformance, with the framework-integration story | That story's TC cycle — not Phase 2 |
 | `tests/test_temporal_reasoning.py` | torch-gated skip | v2 temporal subsystem | Its own TC cycle | P3 temporal story |
 | `tests/test_federated_learning.py` | torch-gated skip | v2 federated subsystem | Its own TC cycle | P3 federated story |
 | `tests/test_comprehensive_benchmark.py` | torch-gated skip | arXiv benchmark harness | `benchmarks/` (US5 — benchmarks are NOT tests) | **US5**, per AR-03 |
-| `tests/test_incremental_updates_analysis.py` | torch-gated skip | v2 incremental analysis | FR-01/FR-02 incremental suites (exist) | Deletable at T-025; nothing depends on it |
-| `test_universal_model.py` (repo root) | not collected | v2 model smoke script | `tests/unit/` model coverage | **T-025** |
+| `tests/test_incremental_updates_analysis.py` | **DELETED** 2026-08-30 | — | FR-01/FR-02 incremental suites | done |
+| `test_universal_model.py` (repo root) | **DELETED** 2026-08-30 | — | `tests/unit/` model coverage | done |
 
 ## T-015 hard-fail flip criteria
 
@@ -43,3 +43,11 @@ The concession is temporary by construction. Flip when ALL of:
 3. Then remove `continue-on-error: true` from the unit job's legacy step.
 
 Gate: criterion 1 held for two consecutive CI runs before flipping 2 and 3.
+
+## Status after the T-025 deletion pass (2026-08-30)
+
+Soft-fail lane: **14F/23E → 1F/3E**. Everything remaining lives in
+`tests/test_integrations.py` (framework-story fixtures using the pre-v3
+generic-adapter config shape) and the three torch-gated subsystem files.
+The T-015 flip is one story away from its 0F/0E criterion.
+
