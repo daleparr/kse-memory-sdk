@@ -220,3 +220,16 @@ Template:
 **State (printed, not predicted):** 189 tests collected in 0.20s; lanes green: 137 passed, 9 warnings in 1.58s.
 **Next:** FR-04 — concurrent retrieval consuming ParsedQuery (vector top-k, conceptual top-k via find_similar_dimensions, graph traversal), then FR-05 RRF to earn "hybrid".
 
+## 2026-08-30 — Session 15-CC (Claude Code, parallel track) — FR-04 concurrent retrieval
+**Phase/tasks:** TC-first (10 component tests, RED first) + T-010 implemented.
+**Delivered:**
+- kse_memory/core/retrieval.py — retrieve(ParsedQuery) runs vector, conceptual and graph channels under asyncio.gather. Concurrency is *proved*, not assumed: the test's stores block until all three channels have started, so sequential execution deadlocks the test.
+- Conceptual channel is find_similar_dimensions on the query targets directly — FR-03's shared geometry means the targets ARE a valid DimensionScores. No translation layer exists because none is needed.
+- Graph channel traverses from the query's strongest target dimensions to entities via the SCORED_AS edges FR-02 wrote, ranked by dimension coverage, ties by id. Uses only the portable get_neighbors contract, defined as connected-in-either-direction; quickstart's in-memory store updated to match.
+- FR-07 groundwork built in: missing store = empty channel; raising store = empty channel + errors entry; healthy channels undisturbed. RetrievalResult notes channel scores are NOT cross-comparable — the argument for rank-based fusion (D-07).
+- Integration: all three channels produce results against the genuine MiniLM over the quickstart corpus, errors empty, dense channel still ranks the HNSW guide first.
+**The degradation design caught its first real bug in-session:** quickstart's _VectorIndex had a sync search() but not the interface's search_vectors — the vector channel came back empty with errors={'vector': ...} while the others ran. Fixed by unifying on one interface-shaped implementation (also retiring a duplicated cosine in favour of the public vector_cosine).
+**Scope honesty:** channels return separate rankings; nothing fuses them yet. The quickstart still shows dense-only results and still says so — the label comes off at FR-05, not today. The v2 SearchService remains unrewired until fusion exists to rewire it onto.
+**State (printed):** 200 tests collected in 0.21s; lanes green: 148 passed, 9 warnings in 1.84s.
+**Next:** FR-05 RRF fusion (D-07 confirms rank-based default; Hypothesis properties per T-067 belong in the same session), then FR-06 explanations, FR-07 confidence threshold.
+

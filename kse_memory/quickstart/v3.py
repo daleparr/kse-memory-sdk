@@ -114,15 +114,13 @@ class _VectorIndex:
             self.rows[entity_id] = (list(vector), dict(metadata))
         return True
 
-    def search(self, query_vector: Sequence[float], top_k: int) -> List[Tuple[str, float, Dict[str, Any]]]:
-        def cosine(a, b):
-            dot = sum(x * y for x, y in zip(a, b))
-            na = sum(x * x for x in a) ** 0.5
-            nb = sum(y * y for y in b) ** 0.5
-            return dot / (na * nb) if na and nb else 0.0
+    async def search_vectors(self, query_vector, top_k: int = 10, filters=None):
+        """The VectorStoreInterface search contract, over in-memory rows."""
+        from ..core.projection import vector_cosine
 
         ranked = sorted(
-            ((eid, cosine(query_vector, vec), meta) for eid, (vec, meta) in self.rows.items()),
+            ((eid, vector_cosine(query_vector, vec), meta)
+             for eid, (vec, meta) in self.rows.items()),
             key=lambda r: r[1],
             reverse=True,
         )
@@ -149,11 +147,18 @@ class _GraphStore:
         return self.nodes.get(node_id)
 
     async def get_neighbors(self, node_id, relationship_types=None):
-        return [
-            {"id": target}
-            for (source, target, rel) in self.relationships
-            if source == node_id and (relationship_types is None or rel in relationship_types)
-        ]
+        # Neighbours are connected-in-either-direction, matching every graph
+        # backend's own traversal semantics — FR-04's graph channel walks
+        # dimension -> entity against edges written entity -> dimension.
+        out = []
+        for (source, target, rel) in self.relationships:
+            if relationship_types is not None and rel not in relationship_types:
+                continue
+            if source == node_id:
+                out.append({"id": target})
+            elif target == node_id:
+                out.append({"id": source})
+        return out
 
     async def create_relationship(self, source_id, target_id, relationship_type, properties=None) -> bool:
         self.relationships[(source_id, target_id, relationship_type)] = dict(properties or {})
@@ -204,9 +209,8 @@ async def run_quickstart(
         parsed = parse_query(query, pipeline.schema, pipeline.embedder,
                              centroids=pipeline.centroids)
         parses[query] = parsed
-        query_vector = list(parsed.vector)
         hits: List[Hit] = []
-        for entity_id, similarity, metadata in index.search(query_vector, top_k):
+        for entity_id, similarity, metadata in await index.search_vectors(list(parsed.vector), top_k):
             stored = await concept_store.get_dimensions(entity_id)
             hits.append(
                 Hit(

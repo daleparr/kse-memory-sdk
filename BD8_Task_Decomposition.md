@@ -26,8 +26,8 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 - [X] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental — all three limbs implemented; embedding verified against a real onnxruntime session but NOT yet against an actual MiniLM export (no model cached; AR-01 forbids fetching one in tests)
 - [X] TC first: failing test for FR-03 (GOV-04) — tests/unit/test_fr03_query.py, 9 tests, verified RED (ModuleNotFoundError) before implementation
 - [X] T-009 Implement FR-03: Query parse: embed query; map to dimension targets via embedding similarity against each dimension's anchor descriptions — core/query.py; the v2 SearchService keyword path is retired when FR-04 rewires retrieval
-- [ ] TC first: failing test for FR-04 (GOV-04)
-- [ ] T-010 Implement FR-04: Retrieve concurrently: vector top-k · conceptual top-k over feature store · graph traversal top-k
+- [X] TC first: failing test for FR-04 (GOV-04) — tests/component/test_fr04_retrieval.py, 10 tests, verified RED (ModuleNotFoundError) first
+- [X] T-010 Implement FR-04: Retrieve concurrently: vector top-k · conceptual top-k over feature store · graph traversal top-k — core/retrieval.py; degradation (FR-07 groundwork) built in; all three channels verified against the real model
 - [ ] T-011 Enforce AR-01 in CI: Default path makes zero network calls; quickstart requires no API key (verifiabl...
 - [ ] T-012 Enforce AR-02 in CI: Simulation code isolated under simulations/ with warning headers; import from be...
 - [ ] T-013 Enforce AR-03 in CI: README performance claims must reference a benchmark artefact regenerable by mak...

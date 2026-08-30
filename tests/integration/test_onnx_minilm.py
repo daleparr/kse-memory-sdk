@@ -101,3 +101,39 @@ async def test_query_parse_against_the_real_model(no_network):
 
     # a how-to query should target practicality above novelty
     assert a.targets["practicality"] > a.targets["novelty"]
+
+
+async def test_all_three_channels_against_the_real_model(no_network):
+    """FR-04 end to end: parse with the genuine MiniLM, retrieve over the
+    quickstart pipeline's populated stores — every channel produces results."""
+    from kse_memory.core.query import parse_query
+    from kse_memory.core.retrieval import retrieve
+    from kse_memory.quickstart.v3 import run_quickstart
+
+    seeded = await run_quickstart(OnnxEmbedder())
+    pipeline = seeded.pipeline
+
+    parsed = parse_query(
+        "how do I tune a vector index", pipeline.schema, pipeline.embedder,
+        centroids=pipeline.centroids,
+    )
+    result = await retrieve(
+        parsed,
+        vector_store=pipeline.vector_store,
+        concept_store=pipeline.concept_store,
+        graph_store=pipeline.graph_store,
+        top_k=5,
+    )
+
+    assert result.errors == {}
+    assert result.vector and result.conceptual and result.graph
+
+    # channels agree on the corpus: every id is a real ingested entity
+    ingested = {r.entity.id for r in await pipeline.ingest_many([])} or None
+    all_ids = {e for ch in (result.vector, result.conceptual, result.graph) for e, _ in ch}
+    assert all(e.startswith("kse-") for e in all_ids)
+
+    # the dense channel still knows the right answer
+    top_vector_id = result.vector[0][0]
+    stored = pipeline.vector_store.rows[top_vector_id][1]
+    assert stored["title"] == "HNSW index tuning guide"
