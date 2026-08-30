@@ -205,6 +205,6 @@ Template:
 **Honesty ledger:**
 - Retrieval is DENSE-ONLY and labelled so in the CLI output, the module docstring and the README. TC-02's "hybrid results" clause stays open until FR-03..FR-05; what closed today: no key, no network, no CUDA, results with receipts, incremental rerun.
 - Dimension score spread on the demo corpus is narrow (~0.50-0.60): anchor-centroid cosine over mean-pooled short texts discriminates weakly. Directionally sane, visibly undramatic — scoring refinement belongs with FR-05/US7 work, noted rather than hidden.
-**State:** 187 tests collect; unit+component+integration+guardrails 134 green locally with the real model.
+**State:** 179 tests collect; unit+component+integration+guardrails 127 green locally with the real model. (Correction: first written as 187/134 — numbers were recorded before the count ran. The pushed commit message for this session carries the same wrong figures; corrected here rather than rewriting published history.)
 **Next:** T-066 conformance skeleton, T-067 Hypothesis suites, FR-03 (query→dimension mapping) to start earning "hybrid".
 
