@@ -208,3 +208,15 @@ Template:
 **State:** 179 tests collect; unit+component+integration+guardrails 127 green locally with the real model. (Correction: first written as 187/134 — numbers were recorded before the count ran. The pushed commit message for this session carries the same wrong figures; corrected here rather than rewriting published history.)
 **Next:** T-066 conformance skeleton, T-067 Hypothesis suites, FR-03 (query→dimension mapping) to start earning "hybrid".
 
+## 2026-08-30 — Session 14-CC (Claude Code, parallel track) — FR-03 query parse
+**Phase/tasks:** TC-first for FR-03 (9 unit tests, verified RED) + T-009 implemented.
+**Delivered:**
+- kse_memory/core/query.py — parse_query(): one embed call per query; similarity to each dimension's anchor centroid becomes the target weight, mapped onto [0,1] exactly as FR-02 item scores are. Queries and items share one geometry by construction. ParsedQuery carries replay identity (schema name+version, model id) and is value-comparable.
+- Accepts precomputed centroids (an IngestPipeline's cache) — a test asserts only the query embeds on that path, and that fresh and cached paths agree.
+- Wired into quickstart: run_quickstart parses each query through the pipeline's cached centroids and the CLI prints "query targets (FR-03)" above each result table. Live with the real model: a how-to query targets practicality (0.53) above novelty (0.47).
+- Integration lane: parse under no_network with the genuine MiniLM — deterministic, bounded, and discriminating (practicality > novelty asserted for an instructions query).
+- Cleaned my own private-import smell before commit: projection's _cosine/_PRECISION promoted to public vector_cosine/SCORE_PRECISION; query.py uses those. Third instance of this pattern this branch; now the shared geometry is public API.
+**Scope honesty:** the v2 SearchService keyword extraction (the debt item FR-03 exists to replace) still stands — it is retired when FR-04 rewires retrieval, since ripping it out now would leave v2 search with no conceptual path at all. Target spread with the real model is narrow (0.47-0.53), consistent with the known scoring-spread note; ordering is correct.
+**State (printed, not predicted):** 189 tests collected in 0.20s; lanes green: 137 passed, 9 warnings in 1.58s.
+**Next:** FR-04 — concurrent retrieval consuming ParsedQuery (vector top-k, conceptual top-k via find_similar_dimensions, graph traversal), then FR-05 RRF to earn "hybrid".
+

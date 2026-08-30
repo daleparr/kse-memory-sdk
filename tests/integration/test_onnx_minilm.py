@@ -83,3 +83,21 @@ async def test_quickstart_end_to_end_offline(no_network):
     # incrementality survives the real model too
     again = await run_quickstart(OnnxEmbedder(), pipeline=result.pipeline)
     assert again.written == 0
+
+
+async def test_query_parse_against_the_real_model(no_network):
+    """FR-03 with the genuine MiniLM: bounded, deterministic, discriminating."""
+    from kse_memory.core.query import parse_query
+    from kse_memory.core.schema import load_schema
+    from kse_memory.quickstart.v3 import DEFAULT_SCHEMA
+
+    schema = load_schema(DEFAULT_SCHEMA)
+    e = OnnxEmbedder()
+
+    a = parse_query("step by step deployment instructions to follow", schema, e)
+    b = parse_query("step by step deployment instructions to follow", schema, e)
+    assert a == b
+    assert all(0.0 <= v <= 1.0 for v in a.targets.values())
+
+    # a how-to query should target practicality above novelty
+    assert a.targets["practicality"] > a.targets["novelty"]

@@ -12,7 +12,7 @@ Design (BD2/BD3, criteria TC-02, TC-04, TC-07; decisions D-03, D-04):
 - A projection carries its own replay identity: content hash, schema name and
   version, and embedding model id. Per BD4 those three reproduce any
   projection; if any changes, the projection is a different artefact.
-- Scores are rounded to ``_PRECISION`` decimals so replay is stable across
+- Scores are rounded to ``SCORE_PRECISION`` decimals so replay is stable across
   platforms whose float reductions differ in the last bits.
 
 Scope: FR-02's incremental graph-edge upsert is specified separately (TC-09)
@@ -35,6 +35,8 @@ from .schema import DimensionSchema
 
 __all__ = [
     "DEFAULT_MODEL_ID",
+    "SCORE_PRECISION",
+    "vector_cosine",
     "ModelNotAvailableError",
     "OnnxEmbedder",
     "Projection",
@@ -58,7 +60,9 @@ DEFAULT_MODEL_ID = "onnx-minilm-l6-v2"
 #: metadata are content for *hashing* but noise for *meaning*.
 TEXT_FIELDS = ("title", "description", "entity_type", "category", "source", "tags")
 
-_PRECISION = 6
+#: Decimal places for scores and targets: replay must be stable across
+#: platforms whose float reductions differ in the last bits.
+SCORE_PRECISION = 6
 
 
 def default_cache_dir() -> Path:
@@ -228,7 +232,13 @@ def _entity_text(entity: Entity) -> str:
     return "\n".join(parts)
 
 
-def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
+def vector_cosine(a: Sequence[float], b: Sequence[float]) -> float:
+    """Cosine similarity between two dense vectors.
+
+    Public because query parsing (FR-03) must rank with exactly the geometry
+    scoring (FR-02) uses; a private import across modules is how the two
+    quietly diverge.
+    """
     dot = sum(x * y for x, y in zip(a, b))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(y * y for y in b))
@@ -269,8 +279,8 @@ def score_from_vectors(
     """Score one entity vector against precomputed dimension centroids."""
     scores: Dict[str, float] = {}
     for name, centroid in centroids.items():
-        unit = (_cosine(entity_vector, centroid) + 1.0) / 2.0
-        scores[name] = round(min(1.0, max(0.0, unit)), _PRECISION)
+        unit = (vector_cosine(entity_vector, centroid) + 1.0) / 2.0
+        scores[name] = round(min(1.0, max(0.0, unit)), SCORE_PRECISION)
     return scores
 
 
@@ -307,9 +317,9 @@ def score_dimensions(
     entity_vector = vectors[0]
     scores: Dict[str, float] = {}
     for dimension, (start, end) in zip(schema.dimensions, spans):
-        similarity = _cosine(entity_vector, _centroid(vectors[start:end]))
+        similarity = vector_cosine(entity_vector, _centroid(vectors[start:end]))
         unit = (similarity + 1.0) / 2.0
-        scores[dimension.name] = round(min(1.0, max(0.0, unit)), _PRECISION)
+        scores[dimension.name] = round(min(1.0, max(0.0, unit)), SCORE_PRECISION)
     return scores
 
 

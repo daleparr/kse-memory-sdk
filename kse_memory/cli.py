@@ -92,6 +92,9 @@ def quickstart(queries, top_k: int, output: Optional[str]):
                   f"in {elapsed:.1f}s\n")
 
     for query, hits in result.searches.items():
+        targets = result.parses[query].targets
+        focus = "  ".join(f"{name} {value:.2f}" for name, value in targets.items())
+        console.print(f"[dim]query targets (FR-03): {focus}[/dim]")
         table = Table(title=f'"{query}"', show_lines=False)
         table.add_column("similarity", justify="right")
         table.add_column("title")

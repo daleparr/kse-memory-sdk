@@ -24,8 +24,8 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 - [ ] T-068 D-16: legacy retirement map — mocked-test deletion per FR; hard-fail flip criteria recorded at T-015
 - [X] TC first: failing test for FR-02 (GOV-04) — tests/test_fr02_projection.py, 17 tests, verified RED (ModuleNotFoundError) before implementation
 - [X] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental — all three limbs implemented; embedding verified against a real onnxruntime session but NOT yet against an actual MiniLM export (no model cached; AR-01 forbids fetching one in tests)
-- [ ] TC first: failing test for FR-03 (GOV-04)
-- [ ] T-009 Implement FR-03: Query parse: embed query; map to dimension targets via embedding similarity against each dimension's anchor descriptions
+- [X] TC first: failing test for FR-03 (GOV-04) — tests/unit/test_fr03_query.py, 9 tests, verified RED (ModuleNotFoundError) before implementation
+- [X] T-009 Implement FR-03: Query parse: embed query; map to dimension targets via embedding similarity against each dimension's anchor descriptions — core/query.py; the v2 SearchService keyword path is retired when FR-04 rewires retrieval
 - [ ] TC first: failing test for FR-04 (GOV-04)
 - [ ] T-010 Implement FR-04: Retrieve concurrently: vector top-k · conceptual top-k over feature store · graph traversal top-k
 - [ ] T-011 Enforce AR-01 in CI: Default path makes zero network calls; quickstart requires no API key (verifiabl...

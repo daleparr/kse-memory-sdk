@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
 from ..core.pipeline import IngestPipeline
+from ..core.query import ParsedQuery, parse_query
 from ..core.schema import DimensionSchema, load_schema
 
 __all__ = [
@@ -98,6 +99,7 @@ class QuickstartResult:
     ingested: int
     written: int
     searches: Dict[str, List[Hit]]
+    parses: Dict[str, ParsedQuery]
     pipeline: IngestPipeline
 
 
@@ -194,10 +196,15 @@ async def run_quickstart(
     written = sum(1 for r in results if r.written)
 
     searches: Dict[str, List[Hit]] = {}
+    parses: Dict[str, ParsedQuery] = {}
     index: _VectorIndex = pipeline.vector_store
     concept_store = pipeline.concept_store
     for query in queries or DEFAULT_QUERIES:
-        query_vector = pipeline.embedder.embed([query])[0]
+        # FR-03: one embed call; targets share FR-02's anchor geometry.
+        parsed = parse_query(query, pipeline.schema, pipeline.embedder,
+                             centroids=pipeline.centroids)
+        parses[query] = parsed
+        query_vector = list(parsed.vector)
         hits: List[Hit] = []
         for entity_id, similarity, metadata in index.search(query_vector, top_k):
             stored = await concept_store.get_dimensions(entity_id)
@@ -215,5 +222,6 @@ async def run_quickstart(
         ingested=len(results),
         written=written,
         searches=searches,
+        parses=parses,
         pipeline=pipeline,
     )
