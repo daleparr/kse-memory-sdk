@@ -213,3 +213,23 @@ async def test_pack_showcase_beats_dense_with_the_real_model(no_network, pack_na
     assert outcome.hybrid_rank < outcome.dense_rank, (
         pack_name, outcome.dense_rank, outcome.hybrid_rank)
     assert outcome.dense_top != outcome.target_id  # dense actually takes the bait
+
+
+async def test_cross_schema_mapping_is_semantic_with_the_real_model(no_network):
+    """US8's semantic claim, where it belongs: with genuine embeddings, a
+    luxury score transfers to a premium-feel dimension far more than to an
+    unrelated portability dimension — and the weight matrix says why."""
+    from kse_memory.core.mapping import map_dimensions
+    from kse_memory.core.schema import load_schema
+
+    source = load_schema({"name": "shop", "version": "1.0.0", "dimensions": [
+        {"name": "opulence", "description": "", "anchors": ["opulent premium cashmere and silk"]},
+        {"name": "sturdiness", "description": "", "anchors": ["survives being dropped daily"]}]})
+    target = load_schema({"name": "catalogue", "version": "1.0.0", "dimensions": [
+        {"name": "premium_feel", "description": "", "anchors": ["feels luxurious, made from fine silk"]},
+        {"name": "portability", "description": "", "anchors": ["light enough to carry in one hand"]}]})
+
+    mapped = map_dimensions(source, target, {"opulence": 0.9, "sturdiness": 0.1}, OnnxEmbedder())
+    assert mapped.weights["premium_feel"]["opulence"] > mapped.weights["premium_feel"]["sturdiness"]
+    assert mapped.weights["portability"]["sturdiness"] > mapped.weights["portability"]["opulence"]
+    assert mapped.values["premium_feel"] > mapped.values["portability"]

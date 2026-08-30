@@ -367,3 +367,10 @@ Template:
 **US7 closes** — seventh story. **State (printed):** 290 tests collected in 0.56s; 281 passed, 12 skipped, 72 warnings in 12.16s.
 **Remaining:** US8 mapping, US9 backends, P3 stories, ESCI (D-103), next BD patch.
 
+## 2026-08-30 — Session 30-CC (Claude Code, parallel track) — US8: the identity stub dies
+**TC-first (10 unit tests, RED on ModuleNotFoundError):** core/mapping.py derives the cross-domain transform FROM the schemas: sharpened anchor-centroid cosines, row-normalised per target, value = weighted combination of source values. The weight matrix rides in the result — a transform that can explain itself, FR-06's receipts culture applied to mappings. Zero-similarity targets transfer nothing rather than inventing a uniform prior; same-schema mapping is the identity by definition and short-circuited as such.
+**BD3 debt item 2 closed:** the literal "For now, return the same values" is deleted. Legacy ConceptualSpaceMapper.map_dimensions builds ad-hoc schemas from its own profiles (descriptions + examples become anchors) and delegates to the engine — v2 callers get real transformation, one implementation.
+**Two of my test designs were degenerate and the failures taught it:** cross-dimension VALUE comparisons under a hash embedder are random noise (moved to the integration lane where the genuine model asserts them both directions), and a uniform 0.5 input is a fixed point of every convex combination (the legacy non-identity test now uses non-uniform values and says why).
+**US8 closes** — eighth story, last P2 with pure in-tree scope. **State (printed):** 301 tests collected in 0.59s; 292 passed, 12 skipped, 72 warnings in 12.14s.
+**Remaining:** US9 backends (needs live services / TC-09), P3 stories, ESCI (D-103), next BD patch.
+

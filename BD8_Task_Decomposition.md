@@ -99,10 +99,10 @@ _As an offline user, I score dimensions without an API key._  · FR: FR-02 · AR
 ## Phase 10 — US8: Real domain mapping (P2)
 
 _As a multi-domain user, cross-domain dimension mapping actually transforms values._  · FR: FR-02, FR-03 · AR: AR-05
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US8
-- [ ] T-043 US8 × FR-02: implement/extend for this story
-- [ ] T-044 US8 × FR-03: implement/extend for this story
-- [ ] T-045 US8: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US8 — tests/unit/test_us8_mapping.py (10), verified RED (ModuleNotFoundError) first
+- [X] T-043 US8 × FR-02: implement/extend for this story — core/mapping.py: anchor-geometry weight transfer with self-explaining weight matrix (Session 30-CC)
+- [X] T-044 US8 × FR-03: implement/extend for this story — same centroid machinery as query parsing; legacy DomainMapper delegates (BD3 debt item 2 closed)
+- [X] T-045 US8: verify green, mark BD4 TCs [X], journal in BD6 — TC-08 verified clause-by-clause (BD4 record)
 
 ## Phase 11 — US9: Graph backend choice (P2)
 

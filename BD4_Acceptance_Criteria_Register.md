@@ -15,7 +15,7 @@ Test-first per GOV-04: every TC below is written and failing (red) before its FR
 | TC-05 [X] | US5 | Given pinned BEIR/ESCI datasets, when I run make bench, then the full results table including losses regenerates in one command on documented CPU hardware. | AR-03, AR-04 |
 | TC-06 [X] | US6 | Given the examples directory, when I open the retail, finance, or documents pack, then each ships a dimension schema plus a runnable notebook demonstrating a query pure vector search handles worse. | FR-02, FR-03, FR-04, FR-05, FR-06, AR-01 |
 | TC-07 [X] | US7 | Given no API key, when dimension scoring runs, then the local scorer produces schema-conformant scores and quickstart parity is maintained. | FR-02, AR-01, AR-04 |
-| TC-08 | US8 | Given source and target domain profiles, when map_dimensions runs, then values are transformed per the mapping definition (replacing the identity stub), with tests proving non-identity behaviour. | FR-02, FR-03, AR-05 |
+| TC-08 [X] | US8 | Given source and target domain profiles, when map_dimensions runs, then values are transformed per the mapping definition (replacing the identity stub), with tests proving non-identity behaviour. | FR-02, FR-03, AR-05 |
 | TC-09 | US9 | Given the tiered backend policy, when I configure Neo4j (T1) or ArangoDB/TypeDB (T2), then the same GraphStoreInterface contract passes the shared conformance suite. | FR-02, FR-04, AR-05 |
 | TC-10 | US9 | Given a Rainbird connector (T3), when enabled, then it contributes a reasoning channel to fusion without acting as the graph store of record. | FR-02, FR-04, AR-05 |
 | TC-11 | US10 | Given labelled query-result pairs, when learned fusion is enabled, then a logistic model over channel features is trained, evaluated against RRF, and only recommended where it wins. | FR-05, AR-03 |
@@ -103,4 +103,10 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *schema-conformant scores*: proven for ARBITRARY schemas and entities via Hypothesis (150 generated cases: every dimension present, every value in [0,1] at `SCORE_PRECISION`; replay identity holds across 100 more), not three examples.
 - *quickstart parity is maintained*: API keys are inert on the default path — quickstart output is asserted identical with keys scrubbed vs present-but-bogus. (The LLM scorer this clause once compared against was removed under D-09; parity is therefore against key-presence, the strongest surviving reading.)
 - The suite passed on first run: FR-02's local scorer already satisfied the story — recorded as evidence, per the US4 precedent.
+
+**TC-08 [X]** — verified 2026-08-30 (Session 30-CC), clause by clause:
+- *values are transformed per the mapping definition*: `core/mapping.py` — the definition is derived from the schemas themselves: target value = similarity-weighted combination of source values over sharpened anchor-centroid cosines, rows normalised, weight matrix carried in the result so every transform can explain itself.
+- *(replacing the identity stub)*: the literal "For now, return the same values" in `domain_mapping.py` is gone — the legacy `ConceptualSpaceMapper.map_dimensions` now builds ad-hoc schemas from its profiles (descriptions + examples become anchors) and delegates to the same engine. BD3 debt item 2 closed.
+- *tests proving non-identity behaviour*: asserted twice — the v3 engine returns different keys AND different values, and the legacy path is asserted non-identity under a non-uniform input (a uniform vector being a fixed point of any convex combination, the test says so).
+- Semantic validity with the genuine model (integration, no_network): opulence→premium_feel and sturdiness→portability each dominate their weight rows, and the mapped values order accordingly.
 
