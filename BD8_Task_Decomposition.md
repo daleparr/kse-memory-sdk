@@ -92,9 +92,9 @@ _As a developer, I start from worked examples, not blank schemas._  · FR: FR-02
 ## Phase 9 — US7: Local scorer parity (P2)
 
 _As an offline user, I score dimensions without an API key._  · FR: FR-02 · AR: AR-01, AR-04
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US7
-- [ ] T-041 US7 × FR-02: implement/extend for this story
-- [ ] T-042 US7: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US7 — tests/unit/test_us7_scorer.py; passed on first run (FR-02 had delivered the clauses), recorded as evidence
+- [X] T-041 US7 × FR-02: implement/extend for this story — keyless/conformance/parity suite + the spread experiment (contrastive scoring): NEGATIVE RESULT, default unchanged (BD6 Session 29-CC)
+- [X] T-042 US7: verify green, mark BD4 TCs [X], journal in BD6 — TC-07 verified clause-by-clause (BD4 record)
 
 ## Phase 10 — US8: Real domain mapping (P2)
 

@@ -361,3 +361,9 @@ Template:
 **US6 closes** — sixth story. **State (printed):** 286 tests collected in 0.49s; 277 passed, 12 skipped, 72 warnings in 10.36s.
 **Remaining:** US7 scorer parity, US8 mapping, US9 backends, P3 stories, ESCI (D-103).
 
+## 2026-08-30 — Session 29-CC (Claude Code, parallel track) — US7: clauses proven, experiment reports a negative
+**TC-07 verified:** the local anchor-centroid scorer runs with every API key scrubbed and the network blocked; conformance proven for arbitrary generated schemas (Hypothesis, 150+100 cases); and keys are inert — quickstart output byte-identical with keys scrubbed vs present-but-bogus. The suite passed on first run: FR-02 had already delivered the story (US4 precedent: recorded as evidence, not re-manufactured as RED).
+**The spread experiment — negative result, recorded:** anisotropy-corrected (contrastive) scoring — subtract the mean anchor centroid from both sides before cosine — was trialled against criteria fixed BEFORE the run: (a) spread ≥2× wider, (b) packs 3/3, (c) nfcorpus no worse. Measured: spread 0.128 → 0.179 (1.4×, FAILS (a)); packs 3/3 (b ✓); (c) not run — already decided. Default unchanged. Conclusion: the compression is mostly intrinsic to mean-pooled MiniLM cosine geometry, not the shared-direction component; meaningful spread improvement likely needs a better scorer (cross-encoder per D-09's optional path, or contrastive anchor *training*), which is future work with its own decision, not a knob to turn quietly.
+**US7 closes** — seventh story. **State (printed):** 290 tests collected in 0.56s; 281 passed, 12 skipped, 72 warnings in 12.16s.
+**Remaining:** US8 mapping, US9 backends, P3 stories, ESCI (D-103), next BD patch.
+
