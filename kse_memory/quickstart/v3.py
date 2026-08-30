@@ -21,6 +21,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
+from ..backends.memory_graph import MemoryGraphStore as _GraphStore
 from ..core.pipeline import IngestPipeline
 from ..core.answer import HybridAnswer
 from ..core.explain import Explanation, explain_results
@@ -138,48 +139,6 @@ class _VectorIndex:
             reverse=True,
         )
         return ranked[:top_k]
-
-
-class _GraphStore:
-    """Minimal in-memory graph store for the incremental upsert."""
-
-    def __init__(self) -> None:
-        self.nodes: Dict[str, Dict[str, Any]] = {}
-        self.relationships: Dict[Tuple[str, str, str], Dict[str, Any]] = {}
-
-    async def create_node(self, node_id, labels, properties) -> bool:
-        self.nodes[node_id] = {"labels": list(labels), "properties": dict(properties)}
-        return True
-
-    async def update_node(self, node_id, properties) -> bool:
-        self.nodes.setdefault(node_id, {"labels": [], "properties": {}})
-        self.nodes[node_id]["properties"].update(properties)
-        return True
-
-    async def get_node(self, node_id):
-        return self.nodes.get(node_id)
-
-    async def get_neighbors(self, node_id, relationship_types=None):
-        # Neighbours are connected-in-either-direction, matching every graph
-        # backend's own traversal semantics — FR-04's graph channel walks
-        # dimension -> entity against edges written entity -> dimension.
-        out = []
-        for (source, target, rel) in self.relationships:
-            if relationship_types is not None and rel not in relationship_types:
-                continue
-            if source == node_id:
-                out.append({"id": target})
-            elif target == node_id:
-                out.append({"id": source})
-        return out
-
-    async def create_relationship(self, source_id, target_id, relationship_type, properties=None) -> bool:
-        self.relationships[(source_id, target_id, relationship_type)] = dict(properties or {})
-        return True
-
-    async def delete_relationship(self, source_id, target_id, relationship_type) -> bool:
-        self.relationships.pop((source_id, target_id, relationship_type), None)
-        return True
 
 
 def build_pipeline(embedder, schema: Optional[DimensionSchema] = None) -> IngestPipeline:

@@ -21,7 +21,7 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 - [X] T-065 D-16: shared fixtures — seeded RNG, frozen clock, deterministic stub embedder (real embed() contract impl); ONNX cached lane in CI — real-MiniLM integration lane green locally and wired in CI
 - [X] T-066 D-16: conformance suite skeleton for VectorStoreInterface + GraphStoreInterface (parametrised; T1 backends wired) — tests/conformance/; in-process backends wired live, neo4j registered and skipping until a live instance is configured; caught MockVectorStore returning fake scores on day one
 - [X] T-067 D-16: Hypothesis property suites — content_hash invariants, RRF properties (with FR-05), schema round-trip (with US4) — complete: 6 RRF + 7 content_hash + 5 schema suites in tests/unit/property/
-- [ ] T-068 D-16: legacy retirement map — mocked-test deletion per FR; hard-fail flip criteria recorded at T-015
+- [X] T-068 D-16: legacy retirement map — mocked-test deletion per FR; hard-fail flip criteria recorded at T-015 — docs/LEGACY_RETIREMENT.md; flip criteria: lane at 0F/0E for two consecutive runs, then mypy || true removed, then continue-on-error removed
 - [X] TC first: failing test for FR-02 (GOV-04) — tests/test_fr02_projection.py, 17 tests, verified RED (ModuleNotFoundError) before implementation
 - [X] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental — all three limbs implemented; embedding verified against a real onnxruntime session but NOT yet against an actual MiniLM export (no model cached; AR-01 forbids fetching one in tests)
 - [X] TC first: failing test for FR-03 (GOV-04) — tests/unit/test_fr03_query.py, 9 tests, verified RED (ModuleNotFoundError) before implementation
@@ -32,7 +32,7 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 - [ ] T-012 Enforce AR-02 in CI: Simulation code isolated under simulations/ with warning headers; import from be...
 - [ ] T-013 Enforce AR-03 in CI: README performance claims must reference a benchmark artefact regenerable by mak...
 - [ ] T-014 Enforce AR-04 in CI: No CUDA/GPU package in the default dependency tree (CI asserts pip install on CP...
-- [ ] T-015 Enforce AR-05 in CI: Public API fully typed; mypy clean on kse_memory public surface...
+- [ ] T-015 Enforce AR-05 in CI: Public API fully typed; mypy clean on kse_memory public surface — hard-fail flip criteria recorded in docs/LEGACY_RETIREMENT.md (T-068)...
 
 ## Phase 3 — US1: Credibility reset (P1)
 

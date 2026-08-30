@@ -291,3 +291,14 @@ Template:
 **State (printed):** 294 tests collected in 0.40s; lanes green: 233 passed, 9 skipped, 33 warnings in 9.62s. All D-16 adoption tasks (T-064..T-068 except T-068) now closed.
 **Next:** T-068 (legacy retirement map) is the last D-16 task; T-025/T-029 still await the TC-02 fetch ruling.
 
+## 2026-08-30 — Session 21-CC (Claude Code, parallel track) — T-068: retirement map, and the defects under it
+**The map:** docs/LEGACY_RETIREMENT.md — per-file: current state, what covers it now, and the deletion trigger (mostly T-025; conformance wiring for backends; P3 stories for torch-gated subsystems). T-015 flip criteria recorded: lane at 0F/0E two consecutive runs, then mypy hard-fail, then remove continue-on-error.
+**Drawing the map surfaced three live default-path defects, fixed RED-first:**
+- ConceptualConfig.auto_compute defaulted True and validate() demanded an LLM API key for a service deleted weeks ago — every default-config KSEMemory failed validation (D-09 violation at the config layer, outliving the service it guarded). Default now False; explicitly enabling it yields a clear "removed in v3" error.
+- The default vector backend was Pinecone — a cloud service demanding a key on the default path (TC-02 violation) — and the factory offered NO local backend at all. MockVectorStore (real cosine ranking since T-066) is registered as "memory" and is the default.
+- Same for graph and concept: quickstart's _GraphStore promoted to backends/memory_graph.MemoryGraphStore (conformance-pinned semantics, plus delete_node/find_path), InMemoryDimensionStore registered as "memory"; both defaults flipped. A default KSEMemory() now needs zero services and zero keys.
+- One replace silently no-opped on a trailing-space mismatch (concept factory) and was caught by the lane count not moving — the recurring lesson, again: verify by observed effect, not by script success.
+**Honesty:** the lane still reads ~14F/23E. What remains is superseded CONTENT (Product(price=...) fixtures, old cloud-default assertions, pre-v3 config kwargs) — mapped for deletion, not fixable by product code. The lane number is now a clean measure of retirement debt rather than a mix of debt and live defects.
+**State:** all four hard lanes green (234 passed, 9 skipped at last full run before these commits — re-verified in CI).
+**Next:** D-16 fully adopted (T-064..T-068 all closed). T-025/T-029 await the TC-02 fetch ruling; the salvage-then-delete passes follow it.
+

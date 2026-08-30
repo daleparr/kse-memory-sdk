@@ -23,7 +23,12 @@ def get_vector_store(config: VectorStoreConfig) -> VectorStoreInterface:
     """
     backend_type = config.backend.lower()
 
-    if backend_type == "pinecone":
+    if backend_type in ("memory", "mock"):
+        # In-process store: real cosine ranking, no service, no key (TC-02).
+        from .mock import MockVectorStore
+
+        return MockVectorStore(config)
+    elif backend_type == "pinecone":
         from .pinecone import PineconeBackend
         return PineconeBackend(config)
     elif backend_type == "weaviate":
@@ -57,7 +62,11 @@ def get_graph_store(config: GraphStoreConfig) -> GraphStoreInterface:
     """
     backend_type = config.backend.lower()
     
-    if backend_type == "neo4j":
+    if backend_type in ("memory", "mock"):
+        from .memory_graph import MemoryGraphStore
+
+        return MemoryGraphStore(config)
+    elif backend_type == "neo4j":
         from .neo4j import Neo4jBackend
         return Neo4jBackend(config)
     elif backend_type == "arangodb":
@@ -82,7 +91,11 @@ def get_concept_store(config: ConceptStoreConfig) -> ConceptStoreInterface:
     """
     backend_type = config.backend.lower()
     
-    if backend_type == "postgresql":
+    if backend_type in ("memory", "mock"):
+        from ..core.dimension_store import InMemoryDimensionStore
+
+        return InMemoryDimensionStore()
+    elif backend_type == "postgresql":
         from .postgresql import PostgreSQLBackend
         return PostgreSQLBackend(config)
     elif backend_type == "mongodb":

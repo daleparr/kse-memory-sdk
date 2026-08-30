@@ -122,3 +122,15 @@ def test_content_hash_rejects_non_serialisable_content():
     e = normalise_record({**RAW, "id": "sku-9", "gadget": Weird()})
     with pytest.raises(ValueError, match="not deterministically serialisable"):
         content_hash(e)
+
+
+# ---------------------------------------------------------------- D-09
+def test_default_config_validates_without_any_api_key():
+    """D-09: no LLM by default. The scorer service was deleted in v3, but
+    config validation still demanded its API key whenever auto_compute was
+    left at its default — so every default-config KSEMemory failed
+    validation. The default path must need no key of any kind."""
+    from kse_memory.core.config import KSEConfig
+
+    errors = KSEConfig().validate()
+    assert not [e for e in errors if "API key" in e], errors
