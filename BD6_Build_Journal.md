@@ -138,3 +138,17 @@ Template:
 **State:** 93/93 new suites green, 1 skipped; 150 tests collect clean CPU-only.
 **Next:** migrate a backend (Postgres JSONB or Mongo document) behind the generic surface; then point quickstart at IngestPipeline once a model is cached.
 
+## 2026-08-30 — Session 9-CC (Claude Code, parallel track) — MongoDBBackend fixed and migrated
+**Phase/tasks:** the instantiation defect found in Session 8-CC. TC-first (12 tests, verified RED first).
+**Root cause:** the class implemented the right behaviour under the wrong names — store_product_concepts rather than store_conceptual_dimensions, find_similar_products rather than find_similar_concepts, and so on. Five ConceptStoreInterface abstract methods were therefore never satisfied, so MongoDBBackend(config) raised TypeError. Nobody had ever successfully constructed it. The functionality was there; the contract was never met.
+**Delivered:**
+- The four generic schema-driven methods implemented natively. MongoDB's free-form documents hold arbitrary dimension names with no schema migration, which is why this backend could be migrated when Postgres cannot.
+- The five legacy ConceptualDimensions methods implemented as thin adapters over the generic surface, so there is one implementation rather than two drifting ones.
+- get_dimension_statistics returns per-dimension count/mean/min/max, which is what the interface asks for — distinct from the pre-existing get_concept_statistics, which reports collection-level counts.
+- cosine_similarity promoted to public in dimension_store. The first version imported the private _cosine across a module boundary, which is exactly how two implementations drift apart.
+**Verification:** both MongoDBBackend and PostgreSQLBackend now report zero unimplemented abstract methods. The Mongo backend and InMemoryDimensionStore were driven through identical operations and agree exactly — same similarity rankings (1.0, 0.499569), same per-dimension means, same round-trip equality.
+**NOT verified:** no MongoDB server was involved. Motor is exercised through a fake collection, so these tests cover document shape and query construction only. Behaviour against a real server — index usage, upsert semantics under concurrency, BSON coercion of floats — is unproven.
+**Known limitation:** find_similar_dimensions computes cosine in Python after narrowing by schema. Dimension names come from the user's schema, so the arithmetic cannot be baked into a fixed aggregation pipeline the way the legacy ten-column version was. For large collections this wants a server-side $function or a materialised vector — a performance change, not a correctness one.
+**State:** 105/105 new suites green, 1 skipped; 162 tests collect clean CPU-only; AR-04 gate clean.
+**Next:** Postgres remains unmigrated (fashion vocabulary in its DDL — a data-migration decision). Then quickstart onto IngestPipeline once a model is cached.
+

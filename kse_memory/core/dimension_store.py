@@ -21,7 +21,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Dict, List, Mapping, Optional, Tuple
 
-__all__ = ["DimensionScores", "InMemoryDimensionStore"]
+__all__ = ["ConceptStoreAdapter", "DimensionScores", "InMemoryDimensionStore", "cosine_similarity"]
 
 
 @dataclass(frozen=True)
@@ -64,7 +64,13 @@ class DimensionScores:
         return (self.schema_name, self.schema_version)
 
 
-def _cosine(a: Mapping[str, float], b: Mapping[str, float]) -> float:
+def cosine_similarity(a: Mapping[str, float], b: Mapping[str, float]) -> float:
+    """Cosine similarity over two sparse score mappings.
+
+    Public because backends need it to rank consistently with the reference
+    store; a private import across module boundaries is how implementations
+    drift apart.
+    """
     keys = set(a) | set(b)
     dot = sum(float(a.get(k, 0.0)) * float(b.get(k, 0.0)) for k in keys)
     na = math.sqrt(sum(float(v) ** 2 for v in a.values()))
@@ -111,7 +117,7 @@ class InMemoryDimensionStore:
         different schemas are not commensurable and are never compared.
         """
         hits = [
-            (entity_id, _cosine(scores.scores, stored.scores))
+            (entity_id, cosine_similarity(scores.scores, stored.scores))
             for entity_id, stored in self._scores.items()
             if stored.schema_key == scores.schema_key
         ]
