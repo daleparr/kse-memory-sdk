@@ -42,11 +42,33 @@ async def _arangodb_graph():
 
 
 async def _neo4j_graph():
+    """Connects to a live Neo4j when one is reachable; skips otherwise.
+    Password from KSE_NEO4J_PASSWORD (defaults to the CI/dev convention)."""
+    import os
+
     try:
         import neo4j  # noqa: F401
     except ImportError:
         pytest.skip("neo4j driver not installed (requires_backend: neo4j)")
-    pytest.skip("no live Neo4j configured (requires_backend: neo4j)")
+
+    from kse_memory.backends.neo4j import Neo4jBackend
+    from kse_memory.core.config import GraphStoreConfig
+
+    config = GraphStoreConfig(
+        backend="neo4j",
+        uri=os.environ.get("KSE_NEO4J_URI", "bolt://localhost:7687"),
+        username=os.environ.get("KSE_NEO4J_USER", "neo4j"),
+        password=os.environ.get("KSE_NEO4J_PASSWORD", "conformance"),
+    )
+    store = Neo4jBackend(config)
+    try:
+        await store.connect()
+    except Exception as exc:
+        pytest.skip(f"no live Neo4j reachable (requires_backend: neo4j): {exc}")
+    # isolate: wipe the conformance database before each parametrised test
+    async with store.driver.session() as session:
+        await session.run("MATCH (n) DETACH DELETE n")
+    return store
 
 
 #: name -> (factory, supports_full_interface)

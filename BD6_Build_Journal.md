@@ -401,3 +401,12 @@ Template:
 **Boundary held:** T-051 closes (the kit exists, guarded); T-052 and TC-12 stay OPEN because publishing is the maintainer's act — the drafts have no send button and I am not the one to press it.
 **State (printed):** 336 tests collected in 0.39s; 321 passed, 18 skipped, 72 warnings in 12.70s.
 
+## 2026-08-30 — Session 34-CC (Claude Code, parallel track) — T-048: the live Neo4j run
+**Setup:** Homebrew neo4j 2026.07.1 (+ OpenJDK), initial password set, server started; the conformance fixture now attempts bolt://localhost:7687 (KSE_NEO4J_PASSWORD, defaulting to the conformance convention), wipes the database per test for isolation, and skips cleanly where no server exists — CI unaffected.
+**RED first, live:** 4 failures on the first run against the real server. Two distinct defects, neither reachable by the static layer:
+1. get_node returned the driver's flat dict (properties splatted at top level, identity `id` mixed in) instead of the contract's nested {labels, properties} shape.
+2. **get_neighbors had never worked against a live server**: dict(record["relationship"]) raises ValueError under the modern driver's data() transform. Every live traversal would have crashed. Rewritten to return exactly the contract's shape (DISTINCT neighbor.id), which is also less wire traffic.
+**GREEN:** 6/6 live behavioural conformance for Neo4jBackend; full conformance lane 39 passed; whole suite 327 green. Server stopped after the run; it stays installed for future runs.
+**Ceremony:** TC-09 closed — the clause is a disjunction and Neo4j (T1) passed it live. T-048 closed; US9 complete. TC-10 (Rainbird) remains open on a proprietary service, tracked outside the gate.
+**The tally of the wrong-names/live-only defect family now stands at five backends** (Mongo, Arango uninstantiable; mock fake scores; neo4j flat shape + dead traversal) — every one found by a conformance layer, none by the legacy mocked suite.
+

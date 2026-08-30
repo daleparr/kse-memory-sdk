@@ -110,7 +110,7 @@ _As a user with an existing graph DB, I plug in my preferred store without forki
 - [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US9 — static interface-conformance suite, RED on ArangoDB's nine missing methods before any fix
 - [X] T-046 US9 × FR-02: implement/extend for this story — NetworkXGraphStore (D-06 T1) live in factory + behavioural conformance; ArangoDB generic surface implemented (Session 31-CC)
 - [X] T-047 US9 × FR-04: implement/extend for this story — either-direction neighbours + type filter conformance-pinned across all four registered graph backends (static; behavioural where live)
-- [ ] T-048 US9: verify green, mark BD4 TCs [X], journal in BD6 — OPEN: TC-09 needs a live Neo4j/ArangoDB behavioural run (no container runtime on this machine) or a ruling; TC-10 needs the Rainbird service
+- [X] T-048 US9: verify green, mark BD4 TCs [X], journal in BD6 — TC-09 closed on a live Neo4j behavioural pass (6/6; two live-only defects found and fixed). TC-10 remains open on the proprietary Rainbird service and is tracked outside this gate
 
 ## Phase 12 — US10: Learned fusion (P3)
 
