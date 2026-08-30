@@ -5,10 +5,11 @@ What this demonstrates, honestly:
 - FR-01/FR-02 for real: records normalised, projected under a user schema by a
   local embedder, written incrementally to in-memory stores. Re-running against
   the same pipeline writes nothing — the replay identity at work.
-- HYBRID retrieval, earned: FR-03 parses the query, FR-04 runs the vector,
-  conceptual and graph channels concurrently, FR-05 fuses their rankings with
-  RRF. Every result carries its per-dimension scores and its per-channel
-  ranks as receipts.
+- HYBRID retrieval, earned and honest about itself: FR-03 parses the query,
+  FR-04 runs the three channels concurrently, FR-05 fuses with RRF, and
+  FR-07 gates the fusion on corroboration — a low-confidence fusion falls
+  back to the dense ranking WITH an explicit flag. Every result carries its
+  per-dimension scores and per-channel ranks as receipts.
 
 No API key, no network call, no CUDA — the default path promises of TC-02.
 
@@ -21,8 +22,9 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
 from ..core.pipeline import IngestPipeline
+from ..core.answer import HybridAnswer, answer as build_answer
 from ..core.explain import Explanation, explain_results
-from ..core.fusion import FusedItem, fuse_rrf
+from ..core.fusion import FusedItem
 from ..core.query import ParsedQuery, parse_query
 from ..core.retrieval import retrieve
 from ..core.schema import DimensionSchema, load_schema
@@ -110,6 +112,7 @@ class QuickstartResult:
     searches: Dict[str, List[Hit]]
     parses: Dict[str, ParsedQuery]
     explanations: Dict[str, Tuple[Explanation, ...]]
+    answers: Dict[str, HybridAnswer]
     pipeline: IngestPipeline
 
 
@@ -213,6 +216,7 @@ async def run_quickstart(
     searches: Dict[str, List[Hit]] = {}
     parses: Dict[str, ParsedQuery] = {}
     explanations: Dict[str, Tuple[Explanation, ...]] = {}
+    answers: Dict[str, HybridAnswer] = {}
     index: _VectorIndex = pipeline.vector_store
     concept_store = pipeline.concept_store
     for query in queries or DEFAULT_QUERIES:
@@ -229,11 +233,10 @@ async def run_quickstart(
             graph_store=pipeline.graph_store,
             top_k=top_k,
         )
-        fused = fuse_rrf(
-            {"vector": channels.vector, "conceptual": channels.conceptual,
-             "graph": channels.graph},
-            top_k=top_k,
-        )
+        # FR-05 fusion gated by FR-07 confidence: the answer states what it is.
+        hybrid_answer = build_answer(channels, top_k=top_k)
+        answers[query] = hybrid_answer
+        fused = hybrid_answer.items
         hits: List[Hit] = []
         per_entity_scores: Dict[str, Mapping[str, float]] = {}
         for item in fused:
@@ -260,5 +263,6 @@ async def run_quickstart(
         searches=searches,
         parses=parses,
         explanations=explanations,
+        answers=answers,
         pipeline=pipeline,
     )

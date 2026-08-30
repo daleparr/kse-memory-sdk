@@ -92,6 +92,11 @@ def quickstart(queries, top_k: int, output: Optional[str]):
                   f"in {elapsed:.1f}s\n")
 
     for query, hits in result.searches.items():
+        verdict = result.answers[query]
+        state = "hybrid" if verdict.hybrid else ("dense-only" if verdict.dense_only else "fused, low confidence")
+        console.print(f"[dim]answer: {state} · confidence {verdict.confidence:.2f}[/dim]")
+        if verdict.fallback_reason:
+            console.print(f"[yellow]{verdict.fallback_reason}[/yellow]")
         targets = result.parses[query].targets
         focus = "  ".join(f"{name} {value:.2f}" for name, value in targets.items())
         console.print(f"[dim]query targets (FR-03): {focus}[/dim]")
@@ -114,7 +119,7 @@ def quickstart(queries, top_k: int, output: Optional[str]):
             )
         console.print(table)
 
-    console.print("[dim]RRF fusion over three channels; per-channel ranks shown as v·c·g.[/dim]")
+    console.print("[dim]RRF over three channels, confidence-gated (FR-07); ranks shown as v·c·g.[/dim]")
 
     if output:
         payload = {

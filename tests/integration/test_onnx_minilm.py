@@ -155,3 +155,41 @@ async def test_explanations_against_the_real_model(no_network):
     assert {r.name: r.score for r in top.dimensions} == dict(top_hit.scores)
     assert top.model_id == "onnx-minilm-l6-v2"
     assert all(0.0 <= r.alignment <= 1.0 for r in top.dimensions)
+
+
+async def test_healthy_corpus_yields_confident_hybrid_answers(no_network):
+    """FR-07 with the genuine MiniLM: all channels healthy, answers hybrid."""
+    from kse_memory.quickstart.v3 import run_quickstart
+
+    result = await run_quickstart(OnnxEmbedder())
+    for query, verdict in result.answers.items():
+        assert verdict.degraded == {}
+        assert verdict.hybrid is True, (query, verdict.confidence, verdict.fallback_reason)
+        assert verdict.confidence >= 0.5
+
+
+async def test_dead_graph_store_degrades_with_receipts(no_network):
+    """Kill one channel mid-flight: the answer survives, names the failure,
+    and the verdict reflects the reduced corroboration."""
+    from kse_memory.core.answer import answer as build_answer
+    from kse_memory.core.query import parse_query
+    from kse_memory.core.retrieval import retrieve
+    from kse_memory.quickstart.v3 import run_quickstart
+
+    seeded = await run_quickstart(OnnxEmbedder())
+    pipeline = seeded.pipeline
+
+    class DeadGraph:
+        async def get_neighbors(self, *a, **k):
+            raise RuntimeError("graph store unavailable")
+
+    parsed = parse_query("how do I tune a vector index", pipeline.schema,
+                         pipeline.embedder, centroids=pipeline.centroids)
+    channels = await retrieve(parsed, vector_store=pipeline.vector_store,
+                              concept_store=pipeline.concept_store,
+                              graph_store=DeadGraph(), top_k=5)
+    verdict = build_answer(channels, top_k=5)
+
+    assert "graph" in verdict.degraded
+    assert verdict.items  # still answered
+    assert verdict.confidence <= 2 / 3  # a dead channel corroborates nothing

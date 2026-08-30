@@ -97,3 +97,15 @@ async def test_every_result_carries_a_full_explanation(stub_embedder):
             assert set(explanation.ranks) == {"vector", "conceptual", "graph"}
             assert explanation.dimensions  # every ingested entity has scores
             assert explanation.degraded == {}
+
+
+async def test_answers_state_what_they_are(stub_embedder):
+    """FR-07 through the quickstart: every query gets a verdict."""
+    result = await run_quickstart(embedder=stub_embedder)
+    for query in result.searches:
+        verdict = result.answers[query]
+        assert 0.0 <= verdict.confidence <= 1.0
+        assert verdict.hybrid or verdict.dense_only or verdict.fallback_reason
+        # the displayed hits ARE the verdict's ranking
+        assert [h.entity_id for h in result.searches[query]] == \
+               [i.entity_id for i in verdict.items]

@@ -51,8 +51,8 @@ _As a new developer on CPU-only hardware, I get hybrid results with nothing but 
 - [X] T-021 US2 × FR-04: implement/extend for this story — three concurrent channels (Session 15-CC)
 - [X] T-022 US2 × FR-05: implement/extend for this story — RRF fusion; quickstart hybrid (Session 16-CC)
 - [X] T-023 US2 × FR-06: implement/extend for this story — explanations attached; kse explain (Session 17-CC)
-- [ ] T-024 US2 × FR-07: implement/extend for this story
-- [ ] T-025 US2: verify green, mark BD4 TCs [X], journal in BD6
+- [X] T-024 US2 × FR-07: implement/extend for this story — confidence-gated answers with explicit flags (Session 18-CC)
+- [ ] T-025 US2: verify green, mark BD4 TCs [X], journal in BD6 — all seven FRs landed; one ruling needed before closing TC-02: its "no network call" clause vs the documented one-time out-of-band model fetch (AR-01 holds inside every run; the fetch precedes them)
 
 ## Phase 5 — US3: RRF fusion (P1)
 
@@ -61,7 +61,7 @@ _As a developer, I get scale-free fusion by default._  · FR: FR-04, FR-05, FR-0
 - [X] T-026 US3 × FR-04: implement/extend for this story — core/retrieval.py (Session 15-CC)
 - [X] T-027 US3 × FR-05: implement/extend for this story — core/fusion.py, RRF default per D-07 (Session 16-CC)
 - [X] T-028 US3 × FR-06: implement/extend for this story — FusedItem receipts -> explain_results (Session 17-CC)
-- [ ] T-029 US3: verify green, mark BD4 TCs [X], journal in BD6
+- [ ] T-029 US3: verify green, mark BD4 TCs [X], journal in BD6 — FR-04/05/06 all landed; remaining work is the verification ceremony itself
 
 ## Phase 6 — US4: Custom dimension schema (P1)
 

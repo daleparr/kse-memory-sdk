@@ -257,3 +257,14 @@ Template:
 **State (printed):** 230 tests collected in 0.39s; lanes green: 178 passed, 9 warnings in 4.72s.
 **Next:** FR-07 to complete the spine, then the v2 SearchService rewire can retire the last of the legacy path.
 
+## 2026-08-30 — Session 18-CC (Claude Code, parallel track) — FR-07: the spine completes
+**Phase/tasks:** TC-first (12 unit tests, RED first); FR-07 implemented; T-024 checked. FR-01..FR-07 are now all landed.
+**Delivered:**
+- kse_memory/core/answer.py — assess_confidence(): mean corroboration of the fused top results (fraction of channels backing each, averaged; empty and failed channels corroborate nothing). One sentence explains it, per D-12. answer(): fuses, gates on the threshold (default 0.5), and returns a HybridAnswer that states what it is — hybrid, dense-only (by fallback WITH reason, or trivially so with one channel), or low-confidence-fused-retained when there is no dense channel to fall back to.
+- Fallback is a ranking choice, not an amnesty: dense-only items keep their FR-06 receipts. A test pins it.
+- Quickstart rewired onto answer(); the CLI prints the verdict line ("answer: hybrid · confidence 0.67") and the fallback reason in yellow when one exists. The hand-rolled fuse call is gone — the demo now runs the same orchestration a real caller would.
+- Integration with the genuine MiniLM: healthy corpus yields hybrid verdicts with confidence >= 0.5 on every demo query; a deliberately dead graph store degrades with the failure named, the answer still returned, and confidence capped at 2/3.
+**Verify gates:** T-025/T-029 remain open. All seven FRs exist; what remains is the ceremony — and one ruling: TC-02 says "no network call", and the model arrives by a documented one-time out-of-band fetch. AR-01 holds inside every run; whether the fetch step satisfies TC-02 as written is a BD4 interpretation call, flagged rather than assumed.
+**State (printed):** 245 tests collected in 0.40s; lanes green: 193 passed, 9 warnings in 4.85s.
+**Next:** the v2 SearchService rewire (its replacement now exists end to end), T-025/T-029 pending the ruling, T-067 completion.
+
