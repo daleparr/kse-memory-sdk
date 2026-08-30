@@ -17,6 +17,11 @@ Mark tasks `[X]` only when the paired TC is green. Sequence: P1 stories (US1–U
 
 - [X] TC first: failing test for FR-01 (GOV-04) — tests/test_fr01_ingest.py, 8 tests, verified red then green
 - [X] T-007 Implement FR-01: Ingest: adapter pulls item → normalise to universal record; SHA-256 content hash for dedupe/replay
+- [ ] T-064 D-16: adopt testing strategy — pytest markers (unit/component/integration/conformance), tests/ layout, diff-cover in CI
+- [ ] T-065 D-16: shared fixtures — seeded RNG, frozen clock, deterministic stub embedder (real EmbeddingServiceInterface impl); ONNX cached lane in CI
+- [ ] T-066 D-16: conformance suite skeleton for VectorStoreInterface + GraphStoreInterface (parametrised; T1 backends wired)
+- [ ] T-067 D-16: Hypothesis property suites — content_hash invariants, RRF properties (with FR-05), schema round-trip (with US4)
+- [ ] T-068 D-16: legacy retirement map — mocked-test deletion per FR; hard-fail flip criteria recorded at T-015
 - [X] TC first: failing test for FR-02 (GOV-04) — tests/test_fr02_projection.py, 17 tests, verified RED (ModuleNotFoundError) before implementation
 - [X] T-008 Implement FR-02: Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental — all three limbs implemented; embedding verified against a real onnxruntime session but NOT yet against an actual MiniLM export (no model cached; AR-01 forbids fetching one in tests)
 - [ ] TC first: failing test for FR-03 (GOV-04)

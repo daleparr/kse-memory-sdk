@@ -176,3 +176,8 @@ Template:
 **State:** 115/115 new suites green; 168 collect clean; hygiene test enforces the absence permanently; e2e pipeline against real onnxruntime unaffected.
 **Next:** quickstart onto IngestPipeline (needs a cached MiniLM); FR-03 replaces search.py's legacy query path.
 
+## 2026-08-29 — Session 9 (testing strategy)
+**Done:** D-16 + docs/TESTING.md — five lanes, real-locals-over-mocks, stub embedder policy (solves ONNX-under-no_network), Hypothesis mandates, zero-flake, diff-cover ratchet, legacy retirement with hard-fail flip at Phase 2. BD8 +T-064..T-068.
+**Next:** FR-02 TC-first + T-059, with T-064/T-065 folded in (markers, conftest fixtures, stub embedder land as part of the FR-02 session since its tests need them).
+**[Merge note, Session 11-CC]:** transcribed from the sessions1-9 patch. The "Next" above was already stale on arrival — FR-02/T-008 completed on this branch before session 9 was authored; open D-16 work is T-064..T-068.
+
