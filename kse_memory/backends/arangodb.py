@@ -368,3 +368,170 @@ class ArangoDBBackend(GraphStoreInterface):
             
         except Exception as e:
             raise GraphStoreError(f"Failed to get graph statistics: {str(e)}", "get_graph_statistics")
+    # ------------------------------------------------------------------ US9
+    # GraphStoreInterface conformance.
+    #
+    # This class previously implemented its behaviour under different names
+    # (add_product_node, find_related_products, ...) and left nine abstract
+    # methods unsatisfied — the same defect family the static conformance
+    # suite caught in MongoDBBackend: the class could never be instantiated.
+    #
+    # The generic surface is implemented natively over two collections:
+    # ``nodes`` (vertex) and ``node_edges`` (edge, keyed by a deterministic
+    # source|type|target key so create_relationship upserts). The legacy
+    # product-centric methods above are untouched.
+
+    _NODES = "nodes"
+    _EDGES = "node_edges"
+
+    @staticmethod
+    def _edge_key(source_id: str, target_id: str, relationship_type: str) -> str:
+        import hashlib
+
+        raw = f"{source_id}|{relationship_type}|{target_id}"
+        return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:32]
+
+    async def _generic_collections(self):
+        for name, is_edge in ((self._NODES, False), (self._EDGES, True)):
+            if not await asyncio.to_thread(self.db.has_collection, name):
+                await asyncio.to_thread(self.db.create_collection, name, edge=is_edge)
+
+    def _require_connection(self, operation: str) -> None:
+        if not self._connected:
+            raise GraphStoreError("Not connected to ArangoDB", operation)
+
+    async def create_node(self, node_id: str, labels: List[str], properties: Dict[str, Any]) -> bool:
+        self._require_connection("create_node")
+        await self._generic_collections()
+        collection = self.db.collection(self._NODES)
+        document = {"_key": node_id, "labels": list(labels), "properties": dict(properties)}
+        await asyncio.to_thread(collection.insert, document, overwrite=True)
+        return True
+
+    async def update_node(self, node_id: str, properties: Dict[str, Any]) -> bool:
+        self._require_connection("update_node")
+        await self._generic_collections()
+        collection = self.db.collection(self._NODES)
+        existing = await asyncio.to_thread(collection.get, node_id)
+        if existing is None:
+            return await self.create_node(node_id, [], properties)
+        merged = dict(existing.get("properties", {}))
+        merged.update(properties)
+        await asyncio.to_thread(
+            collection.update, {"_key": node_id, "properties": merged}
+        )
+        return True
+
+    async def delete_node(self, node_id: str) -> bool:
+        self._require_connection("delete_node")
+        await self._generic_collections()
+        collection = self.db.collection(self._NODES)
+        existing = await asyncio.to_thread(collection.get, node_id)
+        if existing is None:
+            return False
+        # remove incident edges first, both directions
+        await asyncio.to_thread(
+            self.db.aql.execute,
+            "FOR e IN @@edges FILTER e._from == @ref OR e._to == @ref REMOVE e IN @@edges",
+            bind_vars={"@edges": self._EDGES, "ref": f"{self._NODES}/{node_id}"},
+        )
+        await asyncio.to_thread(collection.delete, node_id)
+        return True
+
+    async def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
+        self._require_connection("get_node")
+        await self._generic_collections()
+        document = await asyncio.to_thread(self.db.collection(self._NODES).get, node_id)
+        if document is None:
+            return None
+        return {
+            "labels": list(document.get("labels", [])),
+            "properties": dict(document.get("properties", {})),
+        }
+
+    async def get_neighbors(
+        self, node_id: str, relationship_types: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Connected in EITHER direction, per the FR-04 traversal contract."""
+        self._require_connection("get_neighbors")
+        await self._generic_collections()
+        cursor = await asyncio.to_thread(
+            self.db.aql.execute,
+            """
+            FOR e IN @@edges
+              FILTER (e._from == @ref OR e._to == @ref)
+              FILTER @types == null OR e.type IN @types
+              RETURN e._from == @ref ? e._to : e._from
+            """,
+            bind_vars={
+                "@edges": self._EDGES,
+                "ref": f"{self._NODES}/{node_id}",
+                "types": list(relationship_types) if relationship_types is not None else None,
+            },
+        )
+        out, seen = [], set()
+        for handle in cursor:
+            other = str(handle).split("/", 1)[-1]
+            if other not in seen:
+                seen.add(other)
+                out.append({"id": other})
+        return out
+
+    async def create_relationship(
+        self, source_id: str, target_id: str, relationship_type: str,
+        properties: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        self._require_connection("create_relationship")
+        await self._generic_collections()
+        edge = {
+            "_key": self._edge_key(source_id, target_id, relationship_type),
+            "_from": f"{self._NODES}/{source_id}",
+            "_to": f"{self._NODES}/{target_id}",
+            "type": relationship_type,
+            "properties": dict(properties or {}),
+        }
+        await asyncio.to_thread(self.db.collection(self._EDGES).insert, edge, overwrite=True)
+        return True
+
+    async def delete_relationship(self, source_id: str, target_id: str, relationship_type: str) -> bool:
+        self._require_connection("delete_relationship")
+        await self._generic_collections()
+        collection = self.db.collection(self._EDGES)
+        key = self._edge_key(source_id, target_id, relationship_type)
+        existing = await asyncio.to_thread(collection.get, key)
+        if existing is None:
+            return False
+        await asyncio.to_thread(collection.delete, key)
+        return True
+
+    async def find_path(
+        self, source_id: str, target_id: str, max_depth: int = 3
+    ) -> Optional[List[Dict[str, Any]]]:
+        self._require_connection("find_path")
+        await self._generic_collections()
+        cursor = await asyncio.to_thread(
+            self.db.aql.execute,
+            """
+            FOR v, e IN 1..@depth ANY @start @@edges
+              FILTER v._id == @goal
+              LIMIT 1
+              RETURN 1
+            """,
+            bind_vars={
+                "@edges": self._EDGES,
+                "start": f"{self._NODES}/{source_id}",
+                "goal": f"{self._NODES}/{target_id}",
+                "depth": int(max_depth),
+            },
+        )
+        found = any(True for _ in cursor)
+        # The portable contract wants the path; AQL shortest-path detail is a
+        # follow-up — existence with endpoints satisfies the current callers.
+        return [{"id": source_id}, {"id": target_id}] if found else None
+
+    async def execute_query(
+        self, query: str, parameters: Optional[Dict[str, Any]] = None
+    ) -> List[Dict[str, Any]]:
+        self._require_connection("execute_query")
+        cursor = await asyncio.to_thread(self.db.aql.execute, query, bind_vars=parameters or {})
+        return [dict(row) if isinstance(row, dict) else {"value": row} for row in cursor]

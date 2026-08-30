@@ -107,10 +107,10 @@ _As a multi-domain user, cross-domain dimension mapping actually transforms valu
 ## Phase 11 — US9: Graph backend choice (P2)
 
 _As a user with an existing graph DB, I plug in my preferred store without forking._  · FR: FR-02, FR-04 · AR: AR-05
-- [ ] TC first: encode acceptance as failing test(s) — see BD4 rows for US9
-- [ ] T-046 US9 × FR-02: implement/extend for this story
-- [ ] T-047 US9 × FR-04: implement/extend for this story
-- [ ] T-048 US9: verify green, mark BD4 TCs [X], journal in BD6
+- [X] TC first: encode acceptance as failing test(s) — see BD4 rows for US9 — static interface-conformance suite, RED on ArangoDB's nine missing methods before any fix
+- [X] T-046 US9 × FR-02: implement/extend for this story — NetworkXGraphStore (D-06 T1) live in factory + behavioural conformance; ArangoDB generic surface implemented (Session 31-CC)
+- [X] T-047 US9 × FR-04: implement/extend for this story — either-direction neighbours + type filter conformance-pinned across all four registered graph backends (static; behavioural where live)
+- [ ] T-048 US9: verify green, mark BD4 TCs [X], journal in BD6 — OPEN: TC-09 needs a live Neo4j/ArangoDB behavioural run (no container runtime on this machine) or a ruling; TC-10 needs the Rainbird service
 
 ## Phase 12 — US10: Learned fusion (P3)
 

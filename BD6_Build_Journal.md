@@ -374,3 +374,13 @@ Template:
 **US8 closes** — eighth story, last P2 with pure in-tree scope. **State (printed):** 301 tests collected in 0.59s; 292 passed, 12 skipped, 72 warnings in 12.14s.
 **Remaining:** US9 backends (needs live services / TC-09), P3 stories, ESCI (D-103), next BD patch.
 
+## 2026-08-30 — Session 31-CC (Claude Code, parallel track) — US9: pluggability demonstrated, and the third instantiation corpse
+**TC-first:** a STATIC conformance layer (ABC satisfaction + async/arity per registered backend, serverless) — RED immediately on its target class.
+**The find:** ArangoDBBackend had NINE of eleven abstract methods unimplemented — add_product_node for create_node, find_related_products for get_neighbors, and so on. Impossible to instantiate, ever. Third member of the wrong-names defect family (MongoDB, the near-miss in Neo4j's favour, now Arango); the static suite now guards the whole registry permanently.
+**Delivered:**
+- backends/networkx_graph.py — the D-06 Tier-1 store: MultiDiGraph, type-keyed edges with upsert semantics, either-direction neighbours, nx shortest-path find_path with max_depth. Passes the full behavioural conformance suite LIVE — a second, genuinely different implementation under one contract, which is US9's pluggability story made executable. Registered as "networkx" in the factory.
+- ArangoDB generic surface implemented natively (nodes/node_edges collections, deterministic sha-keyed edges for upsert, AQL either-direction neighbours honouring the FR-04 contract, incident-edge cleanup on delete_node). Legacy product-centric methods untouched. NOT server-verified — no container runtime here; find_path currently proves existence with endpoints rather than the full AQL shortest path, noted in-code.
+- Conformance registries: networkx live; neo4j + arangodb registered, skipping until live.
+**Ceremony withheld where evidence is short:** T-046/T-047 closed; T-048 OPEN — TC-09 needs a live-server behavioural pass or a ruling; TC-10 needs Rainbird. Recorded in BD4 as partial verification, per the TC-05 precedent.
+**State (printed):** 321 tests collected in 0.59s; 306 passed, 18 skipped, 72 warnings in 12.29s.
+

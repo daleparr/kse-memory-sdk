@@ -66,6 +66,10 @@ def get_graph_store(config: GraphStoreConfig) -> GraphStoreInterface:
         from .memory_graph import MemoryGraphStore
 
         return MemoryGraphStore(config)
+    elif backend_type == "networkx":
+        from .networkx_graph import NetworkXGraphStore
+
+        return NetworkXGraphStore(config)
     elif backend_type == "neo4j":
         from .neo4j import Neo4jBackend
         return Neo4jBackend(config)

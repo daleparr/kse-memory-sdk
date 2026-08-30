@@ -110,3 +110,9 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - *tests proving non-identity behaviour*: asserted twice — the v3 engine returns different keys AND different values, and the legacy path is asserted non-identity under a non-uniform input (a uniform vector being a fixed point of any convex combination, the test says so).
 - Semantic validity with the genuine model (integration, no_network): opulence→premium_feel and sturdiness→portability each dominate their weight rows, and the mapped values order accordingly.
 
+**TC-09 (open — partial verification, 2026-08-30, Session 31-CC):**
+- *the same GraphStoreInterface contract passes the shared conformance suite*: the suite exists in two layers. Behavioural: `tests/conformance/test_graph_store_conformance.py`, passed LIVE by two genuinely different in-process implementations (MemoryGraphStore, and the new D-06 Tier-1 `NetworkXGraphStore` — real graph library, real traversal). Static: `test_interface_conformance.py` — ABC satisfaction + async/arity checks for every registered backend, no server needed.
+- *Neo4j (T1)*: passes static conformance; registered in the behavioural suite, skipping until a live instance is configured (`requires_backend`).
+- *ArangoDB (T2)*: was IMPOSSIBLE TO INSTANTIATE — nine abstract methods unimplemented, the same wrong-names defect family as MongoDBBackend, caught by the new static suite. The generic surface is now implemented natively (nodes/node_edges collections, deterministic edge keys for upsert, either-direction AQL neighbours per the FR-04 contract); static conformance green; behavioural registered and skipping until live. Driver-level behaviour against a real server remains unproven.
+- TC-09 stays unmarked until a live Neo4j or ArangoDB passes the behavioural suite, or a ruling narrows the clause. **TC-10 (Rainbird T3)** is untouched: it requires a proprietary service.
+

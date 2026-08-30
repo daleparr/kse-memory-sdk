@@ -29,6 +29,18 @@ async def _quickstart_graph():
     return _GraphStore()
 
 
+async def _networkx_graph():
+    from kse_memory.backends.networkx_graph import NetworkXGraphStore
+
+    store = NetworkXGraphStore()
+    await store.connect()
+    return store
+
+
+async def _arangodb_graph():
+    pytest.skip("no live ArangoDB configured (requires_backend: arangodb)")
+
+
 async def _neo4j_graph():
     try:
         import neo4j  # noqa: F401
@@ -45,7 +57,9 @@ VECTOR_BACKENDS = {
 
 GRAPH_BACKENDS = {
     "quickstart-memory": (_quickstart_graph, True),
+    "networkx": (_networkx_graph, True),
     "neo4j": (_neo4j_graph, True),
+    "arangodb": (_arangodb_graph, True),
 }
 
 
