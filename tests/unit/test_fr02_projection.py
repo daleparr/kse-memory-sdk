@@ -26,6 +26,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from kse_memory.core.ingest import content_hash, normalise_record
 from kse_memory.core.projection import (
     ModelNotAvailableError,
@@ -38,27 +40,9 @@ from kse_memory.core.projection import (
 from kse_memory.core.schema import DimensionSchema, SchemaError, load_schema
 
 
-# --------------------------------------------------------------------------
-# A deterministic stand-in for the ONNX embedder.
-#
-# The real default embedder resolves an ONNX MiniLM from a local cache path
-# (never the network — AR-01). Tests must not depend on a model artefact being
-# present, so the *contract* is exercised with this stub and the real loader is
-# tested separately for its no-download behaviour.
-# --------------------------------------------------------------------------
-class StubEmbedder:
-    model_id = "stub-minilm-v1"
-    dim = 16
-
-    def embed(self, texts):
-        out = []
-        for text in texts:
-            digest = hashlib.sha256(text.encode("utf-8")).digest()
-            vec = [(digest[i % len(digest)] / 255.0) - 0.5 for i in range(self.dim)]
-            norm = math.sqrt(sum(v * v for v in vec)) or 1.0
-            out.append([v / norm for v in vec])
-        return out
-
+# The deterministic stub embedder lives in conftest (D-16, T-065): a real
+# implementation of the embedder contract, shared by every offline lane.
+from tests.conftest import StubEmbedder
 
 SCHEMA_YAML = """
 name: generic-v1
@@ -245,7 +229,7 @@ _DOMAIN_VOCABULARY = (
 
 def test_default_path_has_no_hardcoded_domain_vocabulary():
     """TC-04: dimensions come from the user's schema, never from the library."""
-    root = Path(__file__).resolve().parents[1] / "kse_memory" / "core"
+    root = Path(__file__).resolve().parents[2] / "kse_memory" / "core"
     offenders = []
     for module in ("projection.py", "schema.py"):
         text = (root / module).read_text(encoding="utf-8").lower()

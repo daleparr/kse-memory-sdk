@@ -30,7 +30,7 @@ from kse_memory.core.dimension_store import DimensionScores
 
 pg = pytest.importorskip("kse_memory.backends.postgresql")
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [pytest.mark.asyncio, pytest.mark.component]
 
 
 class FakeConn:

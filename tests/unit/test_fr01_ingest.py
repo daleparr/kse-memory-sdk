@@ -10,6 +10,8 @@ import socket
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from kse_memory.core.ingest import content_hash, normalise_record
 from kse_memory.core.models import Entity
 

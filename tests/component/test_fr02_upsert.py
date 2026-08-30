@@ -17,7 +17,7 @@ from kse_memory.core.ingest import normalise_record
 from kse_memory.core.projection import project, upsert_projection
 from kse_memory.core.schema import load_schema
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [pytest.mark.asyncio, pytest.mark.component]
 
 
 class FakeGraphStore:

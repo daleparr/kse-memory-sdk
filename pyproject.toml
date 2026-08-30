@@ -194,8 +194,11 @@ addopts = [
     "--asyncio-mode=auto",
 ]
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
+    "unit: D-16 unit lane — pure logic, zero I/O, seeded",
+    "component: D-16 component lane — services against real local backends",
+    "conformance: D-16 conformance lane — shared interface suites per backend",
+    "requires_backend(name): conformance parametrisation — needs a live backend",
+    "integration: D-16 integration lane — full flows, cached real model",
     "e2e: End-to-end tests",
     "slow: Slow tests",
     "performance: Performance tests",

@@ -21,7 +21,7 @@ from kse_memory.core.dimension_store import DimensionScores
 
 motor_backend = pytest.importorskip("kse_memory.backends.mongodb")
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [pytest.mark.asyncio, pytest.mark.component]
 
 
 class FakeCursor:

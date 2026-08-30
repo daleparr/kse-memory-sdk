@@ -21,7 +21,7 @@ from kse_memory.core.dimension_store import (
 )
 from kse_memory.core.interfaces import ConceptStoreInterface
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [pytest.mark.asyncio, pytest.mark.component]
 
 
 SCORES = DimensionScores(

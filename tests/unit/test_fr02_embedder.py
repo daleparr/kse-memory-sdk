@@ -19,10 +19,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from kse_memory.core.projection import (
     ModelNotAvailableError,
     OnnxEmbedder,
-    default_model_dir,
 )
 from kse_memory.core.tokenizer import WordPieceTokenizer
 
@@ -180,17 +181,3 @@ def test_embed_feeds_only_the_inputs_the_session_declares(model_dir, monkeypatch
 
 def test_embed_makes_no_network_calls(no_network, embedder):
     assert embedder.embed(["hello world"])
-
-
-# ------------------------------------------------------------- integration
-@pytest.mark.skipif(
-    not (default_model_dir() / "model.onnx").exists(),
-    reason="no MiniLM cached at ~/.cache/kse; AR-01 forbids downloading one",
-)
-def test_real_model_produces_normalised_embeddings():
-    e = OnnxEmbedder()
-    vecs = e.embed(["a technical document", "a friendly greeting"])
-    assert len(vecs) == 2
-    for v in vecs:
-        assert abs(sum(x * x for x in v) ** 0.5 - 1.0) < 1e-4
-    assert vecs[0] != vecs[1]

@@ -181,3 +181,18 @@ Template:
 **Next:** FR-02 TC-first + T-059, with T-064/T-065 folded in (markers, conftest fixtures, stub embedder land as part of the FR-02 session since its tests need them).
 **[Merge note, Session 11-CC]:** transcribed from the sessions1-9 patch. The "Next" above was already stale on arrival — FR-02/T-008 completed on this branch before session 9 was authored; open D-16 work is T-064..T-068.
 
+## 2026-08-30 — Session 12-CC (Claude Code, parallel track) — T-064 + T-065
+**Phase/tasks:** D-16 adoption: lanes, fixtures, diff-cover, ONNX lane.
+**T-064:**
+- tests/ layout: unit/ (3 suites, 66 tests), component/ (5 suites, 57), integration/ (real-model lane), conformance/ (empty skeleton for T-066). Legacy mocked files stay at tests/ top level — they are slated for per-FR deletion, and placing them in lanes would misrepresent them.
+- Markers registered per D-16 (component, conformance, requires_backend added; unit/integration redescribed). --strict-markers already on.
+- diff-cover in CI on the 3.11 leg: pytest-cov over the hard-green lanes, diff vs origin/master. REPORT-ONLY — enforcement (--fail-under) flips with the other hard-fail flips at T-015, per "temporary by construction". Documented in the workflow itself.
+**T-065:**
+- conftest: autouse seeded RNG (random + numpy, seed 1337); frozen_clock pinning time.time; StubEmbedder promoted from a per-file copy to the shared D-16 stub (real embed() implementation, hash-projection onto the unit sphere). Doc/reality note: TESTING.md names EmbeddingServiceInterface; the FR-02 contract actually in use is the simpler embed() protocol, and the stub implements that.
+- Fetched the genuine all-MiniLM-L6-v2 ONNX export (90MB, 30522-line vocab, HF sentence-transformers repo) into ~/.cache/kse out of band, per AR-01.
+- **The hand-written WordPiece tokeniser passed against the real model on first contact: 4/4** — L2 normalisation, determinism, batch invariance on the real graph, and similarity sanity (ANN paraphrases rank above unrelated text). The longest-standing NOT-verified item on the branch closes.
+- CI onnx-integration job: actions/cache keyed onnx-minilm-l6-v2-v1; cache-miss warms it in a setup step (not a test — AR-01 holds inside tests); runs tests/integration hard-fail.
+**Still unproven:** numerical agreement with sentence-transformers reference vectors (needs torch, which AR-04 forbids in this environment). Semantic behaviour is verified; exact parity is not claimed.
+**State:** 171 collect; unit+component+integration+guardrails all green locally including the real model. CI onnx lane unproven until first run.
+**Next:** T-066 conformance skeleton; T-067 Hypothesis suites; quickstart onto IngestPipeline (model now cached locally — unblocked).
+

@@ -40,6 +40,8 @@ jobs:
         python-version: ["3.9", "3.11", "3.12"]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # diff-cover needs the master ref to diff against
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
@@ -48,3 +50,42 @@ jobs:
           pip install -e . pytest pytest-asyncio
       - run: pytest tests/ -q --ignore=tests/test_repo_hygiene.py
         continue-on-error: true  # legacy mocked suite; hard-fail restored as Phase 2 replaces mocks (GOV-04)
+      - name: Changed-line coverage (D-16 diff-cover ratchet — report-only until T-015)
+        if: matrix.python-version == '3.11'
+        run: |
+          pip install pytest-cov diff-cover
+          pytest tests/unit tests/component tests/test_repo_hygiene.py -q \
+            --cov=kse_memory --cov-report=xml
+          git fetch origin master --quiet
+          # Report-only: the enforcement flip (--fail-under) lands with the
+          # other hard-fail flips at T-015, per D-16 "temporary by construction".
+          diff-cover coverage.xml --compare-branch origin/master || true
+
+  onnx-integration:
+    name: Integration (cached ONNX MiniLM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Restore model cache
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/kse
+          key: onnx-minilm-l6-v2-v1
+      - name: Warm cache (setup step, NOT a test — AR-01 holds inside tests)
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          D=~/.cache/kse/models/onnx-minilm-l6-v2
+          mkdir -p "$D"
+          curl -sL --fail -o "$D/model.onnx" \
+            "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"
+          curl -sL --fail -o "$D/vocab.txt" \
+            "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio
+      - name: Integration lane against the genuine model
+        run: pytest tests/integration -q -m integration

@@ -21,7 +21,7 @@ import pytest
 from kse_memory.core.pipeline import IngestPipeline, IngestResult
 from kse_memory.core.schema import load_schema
 
-pytestmark = pytest.mark.asyncio
+pytestmark = [pytest.mark.asyncio, pytest.mark.component]
 
 
 class CountingEmbedder:
