@@ -31,6 +31,8 @@ Append new decisions below. Never delete — supersede with a new D-XX entry ref
 
 | D-102 | TC-02 "no network call" ruling | The one-time, documented, out-of-band model fetch satisfies TC-02. The clause binds every *run* of the default path — quickstart, ingest, query, scoring — all of which execute under the no_network fixture in CI with the genuine model. Fetching the model is setup, not a run, and is never performed by KSE code (AR-01 has no download path by construction). Ruled by the maintainer, 2026-08-30; unblocks T-025/T-029. | Confirmed 2026-08-30 |
 
+| D-103 | TC-05 dataset-scope ruling | The pinned BEIR pair (scifact + nfcorpus, checksum-enforced) satisfies TC-05 for now; the ESCI slice is deferred to its own task when a pinned slice of the multi-GB corpus is chosen. Any future ESCI work extends the same make bench command and RESULTS.md table. Ruled by the maintainer, 2026-08-30; unblocks T-033/T-034. | Confirmed 2026-08-30 |
+
 **Numbering:** the BD sessions own the sequential range (D-01…). Decisions originated on the Claude Code parallel track use **D-101+** so the two tracks cannot collide — D-11 and D-14 both collided before this was adopted.
 
 <!-- Append new entries below this line -->

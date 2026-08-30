@@ -347,3 +347,9 @@ Template:
 **Also:** the FR-04 concurrency test de-flaked on principle (5s→30s wait_for: a real deadlock never completes at any timeout; a benchmark-loaded CPU stalls schedulers past 5s — it was the suite's only intermittent red, twice, both under load).
 **State (printed):** 260 passed, 12 skipped, 72 warnings in 10.18s.
 
+## 2026-08-30 — Session 27-CC (Claude Code, parallel track) — US5 closes under D-103
+**Ruling received (maintainer):** the pinned BEIR pair satisfies TC-05 for now; ESCI is deferred until a pinned slice of the multi-GB corpus is chosen — recorded as **D-103**. Future ESCI work extends the same make bench command and table.
+**Ceremony performed:** artefacts confirmed committed (RESULTS.md, PINS.sha256, Makefile); metric suite 8/8 live; and the pin gate NEGATIVE-tested — a deliberately tampered checksum refused to benchmark, then the restored pin fetched and verified clean. A gate that has never been seen to refuse is a decoration.
+**US5 closes** — the fifth completed user story, first of the P2s. The project's first published numbers are a literature-parity dense baseline and two hybrid losses, stated in that order.
+**Remaining stories:** US6 domain packs, US7 scorer parity (both now motivated by the published losses), US8 mapping, US9 backends, US10/US11 (P3). ESCI pinning tracked via D-103.
+
