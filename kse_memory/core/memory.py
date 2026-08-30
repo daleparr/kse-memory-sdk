@@ -387,7 +387,7 @@ class KSEMemory:
                         similar_product = await self.get_product(similar_id)
                         if similar_product:
                             results.append(SearchResult(
-                                product=similar_product,
+                                entity=similar_product,
                                 score=similarity,
                                 conceptual_similarity=similarity,
                                 explanation=f"Similar conceptual profile to {product.title}"
@@ -407,7 +407,7 @@ class KSEMemory:
                     if vector_id != product_id:  # Exclude the source product
                         similar_product = Product.from_dict(metadata)
                         results.append(SearchResult(
-                            product=similar_product,
+                            entity=similar_product,
                             score=similarity,
                             embedding_similarity=similarity,
                             explanation=f"Similar semantic profile to {product.title}"

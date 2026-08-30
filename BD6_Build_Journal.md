@@ -268,3 +268,15 @@ Template:
 **State (printed):** 245 tests collected in 0.40s; lanes green: 193 passed, 9 warnings in 4.85s.
 **Next:** the v2 SearchService rewire (its replacement now exists end to end), T-025/T-029 pending the ruling, T-067 completion.
 
+## 2026-08-30 — Session 19-CC (Claude Code, parallel track) — v2 SearchService rewired
+**Phase/tasks:** TC-first (6 + 3 component tests, RED first). The FR-03 debt item ("replace keyword extraction") and the D-07 violation both close.
+**Delivered:**
+- kse_memory/services/hybrid.py — HybridSearchService: the FR-03..FR-07 spine as one app-facing object owning schema, embedder and cached centroids (a test asserts exactly one embed call per subsequent query). Missing stores degrade to an empty-but-verdicted answer.
+- Quickstart dogfoods it: run_quickstart now calls service.search() instead of hand-assembling the spine. All existing quickstart tests passed unchanged — behaviour preserved exactly.
+- v2 SearchService.conceptual_search repaired: it still called concept_store.find_similar_concepts, deleted in the ConceptualDimensions removal — broken at runtime ever since, unnoticed by the mocked legacy suite (GOV-04's argument, again). Now routes through ConceptStoreAdapter.to_generic -> find_similar_dimensions.
+- v2 hybrid_search now fuses by RRF (fuse_rrf) instead of weighted score-summing. The old mechanism added semantic cosines to graph heuristics — unlike quantities — and contradicted the confirmed D-07 default. hybrid_weights survive as RRF channel weights; explanations name per-channel ranks.
+- Found while testing: THREE more dead constructor calls — SearchResult(product=...) in search.py (x3) and memory.py (x2). The product field became a deprecated property in the entity rename; constructing with it raises TypeError. Every v2 result-producing path was broken. Fixed to entity=.
+**Honesty:** the soft-fail lane is unchanged at 13 failed / 24 errors — the legacy tests mock the very layers these fixes live in, so they neither noticed the breakage nor register the repair. The retail vocabulary list inside _extract_conceptual_dimensions survives for legacy stored data (LEGACY_SCHEMA path); schema-driven apps use HybridSearchService and never touch it.
+**State (printed):** 254 tests collected in 0.30s; lanes green: 202 passed, 33 warnings in 3.50s.
+**Next:** T-025/T-029 pending the TC-02 fetch ruling; T-066/T-067 remainder; next BD cumulative patch reconciliation.
+

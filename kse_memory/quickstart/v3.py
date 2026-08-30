@@ -22,11 +22,11 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 from ..core.dimension_store import InMemoryDimensionStore
 from ..core.pipeline import IngestPipeline
-from ..core.answer import HybridAnswer, answer as build_answer
+from ..core.answer import HybridAnswer
 from ..core.explain import Explanation, explain_results
 from ..core.fusion import FusedItem
-from ..core.query import ParsedQuery, parse_query
-from ..core.retrieval import retrieve
+from ..core.query import ParsedQuery
+from ..services.hybrid import HybridSearchService
 from ..core.schema import DimensionSchema, load_schema
 
 __all__ = [
@@ -219,43 +219,32 @@ async def run_quickstart(
     answers: Dict[str, HybridAnswer] = {}
     index: _VectorIndex = pipeline.vector_store
     concept_store = pipeline.concept_store
+
+    # The demo runs the object applications run — or it proves nothing.
+    service = HybridSearchService(
+        pipeline.schema, pipeline.embedder,
+        vector_store=index, concept_store=concept_store,
+        graph_store=pipeline.graph_store, centroids=pipeline.centroids,
+    )
+
     for query in queries or DEFAULT_QUERIES:
-        # FR-03: one embed call; targets share FR-02's anchor geometry.
-        parsed = parse_query(query, pipeline.schema, pipeline.embedder,
-                             centroids=pipeline.centroids)
-        parses[query] = parsed
-        # FR-04: three concurrent channels; FR-05: rank-based fusion. This is
-        # the point where "hybrid" stops being a roadmap word.
-        channels = await retrieve(
-            parsed,
-            vector_store=index,
-            concept_store=concept_store,
-            graph_store=pipeline.graph_store,
-            top_k=top_k,
-        )
-        # FR-05 fusion gated by FR-07 confidence: the answer states what it is.
-        hybrid_answer = build_answer(channels, top_k=top_k)
-        answers[query] = hybrid_answer
-        fused = hybrid_answer.items
+        response = await service.search(query, top_k=top_k)
+        parses[query] = response.parsed
+        answers[query] = response.answer
+        explanations[query] = response.explanations
+
         hits: List[Hit] = []
-        per_entity_scores: Dict[str, Mapping[str, float]] = {}
-        for item in fused:
-            stored = await concept_store.get_dimensions(item.entity_id)
-            if stored:
-                per_entity_scores[item.entity_id] = dict(stored.scores)
-            _, metadata = index.rows.get(item.entity_id, (None, {}))
+        for item, explanation in zip(response.answer.items, response.explanations):
             hits.append(
                 Hit(
                     entity_id=item.entity_id,
-                    title=metadata.get("title", item.entity_id),
+                    title=response.titles.get(item.entity_id, item.entity_id),
                     similarity=round(item.fused, 6),
-                    scores=per_entity_scores.get(item.entity_id, {}),
+                    scores={row.name: row.score for row in explanation.dimensions},
                     channel_ranks=dict(item.ranks),
                 )
             )
         searches[query] = hits
-        # FR-06: the full receipt, attached to every result.
-        explanations[query] = explain_results(parsed, channels, fused, per_entity_scores)
 
     return QuickstartResult(
         ingested=len(results),
