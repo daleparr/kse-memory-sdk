@@ -32,5 +32,7 @@ never be instantiated, and a CI lane that runs the genuine model. Losses
 print signed in the results table; a tampered dataset checksum refuses to
 benchmark.
 
-Repo: <link> · Results: <link to benchmarks/RESULTS.md> · Quickstart is
+Repo: https://github.com/daleparr/kse-memory-sdk · Results:
+https://github.com/daleparr/kse-memory-sdk/blob/master/benchmarks/RESULTS.md ·
+Quickstart is
 `pip install` + a one-time documented model fetch + `kse quickstart`.
