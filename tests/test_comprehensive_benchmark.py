@@ -1,3 +1,7 @@
+import pytest
+pytest.importorskip("torch", reason="requires [dev-heavy] extras — not part of CPU-only default suite (AR-04)")
+pytest.importorskip("matplotlib", reason="requires [dev-heavy] extras — not part of CPU-only default suite (AR-04)")
+pytest.importorskip("seaborn", reason="requires [dev-heavy] extras — not part of CPU-only default suite (AR-04)")
 """
 Comprehensive benchmark suite for KSE temporal and federated extensions
 Generates empirical findings for arXiv pre-print validation

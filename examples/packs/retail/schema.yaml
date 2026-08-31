@@ -1,0 +1,13 @@
+name: retail-qualities
+version: 1.0.0
+dimensions:
+- name: luxury
+  description: Premium materials and finish
+  anchors:
+  - opulent premium materials such as cashmere, silk and satin
+  - feels high-end and indulgent
+- name: practicality
+  description: Everyday usefulness
+  anchors:
+  - durable and easy to clean for daily use
+  - practical everyday essential

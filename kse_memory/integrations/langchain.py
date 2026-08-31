@@ -10,12 +10,24 @@ import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
 try:
-    from langchain.schema import Document
-    from langchain.vectorstores.base import VectorStore
-    from langchain.schema.retriever import BaseRetriever
-    from langchain.callbacks.manager import CallbackManagerForRetrieverRun
+    # Modern layout first (langchain-core >= 0.1, the current ecosystem).
+    from langchain_core.documents import Document
+    from langchain_core.vectorstores import VectorStore
+    from langchain_core.retrievers import BaseRetriever
+    from langchain_core.callbacks import CallbackManagerForRetrieverRun
     LANGCHAIN_AVAILABLE = True
 except ImportError:
+    try:
+        # Legacy pre-0.1 monolithic layout.
+        from langchain.schema import Document
+        from langchain.vectorstores.base import VectorStore
+        from langchain.schema.retriever import BaseRetriever
+        from langchain.callbacks.manager import CallbackManagerForRetrieverRun
+        LANGCHAIN_AVAILABLE = True
+    except ImportError:
+        LANGCHAIN_AVAILABLE = False
+
+if not LANGCHAIN_AVAILABLE:
     # Create mock classes if LangChain is not installed
     class Document:
         def __init__(self, page_content: str, metadata: Dict[str, Any] = None):
@@ -30,8 +42,6 @@ except ImportError:
     
     class CallbackManagerForRetrieverRun:
         pass
-    
-    LANGCHAIN_AVAILABLE = False
 
 from ..core.memory import KSEMemory
 from ..core.config import KSEConfig
@@ -82,7 +92,7 @@ class KSEVectorStore(VectorStore):
         
         self.kse_memory = kse_memory
         self.config = config or KSEConfig()
-        self.search_type = SearchType(search_type.upper())
+        self.search_type = SearchType(search_type.lower())
         self.adapter = adapter
         self._initialized = False
         self._executor = ThreadPoolExecutor(max_workers=4)
@@ -326,7 +336,7 @@ class KSELangChainRetriever(BaseRetriever):
         
         self.kse_memory = kse_memory
         self.config = config or KSEConfig()
-        self.search_type = SearchType(search_type.upper())
+        self.search_type = SearchType(search_type.lower())
         self.k = k
         self.adapter = adapter
         self._initialized = False

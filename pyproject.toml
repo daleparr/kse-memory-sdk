@@ -4,11 +4,11 @@ build-backend = "hatchling.build"
 
 [project]
 name = "kse-memory-sdk"
-version = "2.0.0"
+version = "3.0.0a1"
 description = "Industry-Agnostic Hybrid Knowledge Retrieval for Intelligent Applications"
 readme = "README.md"
 license = "MIT"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 authors = [
     {name = "KSE Memory Team", email = "team@kse-memory.com"},
 ]
@@ -38,10 +38,11 @@ dependencies = [
     "asyncio-mqtt>=0.11.0",
     "aiofiles>=23.0.0",
     "httpx>=0.24.0",
+    "onnxruntime>=1.16.0",
+    "hnswlib>=0.8.0",
     "rich>=13.0.0",
     "click>=8.0.0",
     "pyyaml>=6.0.0",
-    "sentence-transformers>=2.2.0",
     "scikit-learn>=1.3.0",
     "networkx>=3.0.0",
     "redis>=4.5.0",
@@ -58,6 +59,13 @@ llamaindex = [
     "llama-index>=0.9.0",
     "llama-index-core>=0.9.0",
 ]
+
+# Embedding backends
+# sentence-transformers requires torch, and the Linux PyPI torch wheel pulls
+# the full NVIDIA CUDA stack (~20 nvidia-* packages, cuda-toolkit, triton).
+# Kept out of the default tree per AR-04 / GOV-03; the import is already
+# guarded in kse_memory/services/embedding.py.
+embeddings = ["sentence-transformers>=2.2.0"]
 
 # Vector stores
 pinecone = ["pinecone-client>=3.0.0"]
@@ -104,7 +112,7 @@ dev = [
 
 # All optional dependencies
 all = [
-    "kse-memory-sdk[langchain,llamaindex,pinecone,weaviate,qdrant,chroma,milvus,neo4j,arangodb,mongodb,visual,shopify,woocommerce]"
+    "kse-memory-sdk[embeddings,langchain,llamaindex,pinecone,weaviate,qdrant,chroma,milvus,neo4j,arangodb,mongodb,visual,shopify,woocommerce]"
 ]
 
 [project.urls]
@@ -130,7 +138,7 @@ include = [
 
 [tool.black]
 line-length = 88
-target-version = ['py38']
+target-version = ['py39']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -147,7 +155,7 @@ extend-exclude = '''
 '''
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -186,8 +194,11 @@ addopts = [
     "--asyncio-mode=auto",
 ]
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
+    "unit: D-16 unit lane — pure logic, zero I/O, seeded",
+    "component: D-16 component lane — services against real local backends",
+    "conformance: D-16 conformance lane — shared interface suites per backend",
+    "requires_backend(name): conformance parametrisation — needs a live backend",
+    "integration: D-16 integration lane — full flows, cached real model",
     "e2e: End-to-end tests",
     "slow: Slow tests",
     "performance: Performance tests",

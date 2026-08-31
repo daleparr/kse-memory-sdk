@@ -4,7 +4,7 @@ Core interfaces for KSE Memory SDK components.
 
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Tuple
-from .models import Product, SearchQuery, SearchResult, ConceptualDimensions, EmbeddingVector, KnowledgeGraph
+from .models import Product, SearchQuery, SearchResult, EmbeddingVector, KnowledgeGraph
 
 
 class AdapterInterface(ABC):
@@ -168,35 +168,44 @@ class ConceptStoreInterface(ABC):
         """Disconnect from the concept store."""
         pass
     
-    @abstractmethod
-    async def store_conceptual_dimensions(self, product_id: str, dimensions: ConceptualDimensions) -> bool:
-        """Store conceptual dimensions for a product."""
-        pass
-    
-    @abstractmethod
-    async def get_conceptual_dimensions(self, product_id: str) -> Optional[ConceptualDimensions]:
-        """Get conceptual dimensions for a product."""
-        pass
-    
-    @abstractmethod
-    async def delete_conceptual_dimensions(self, product_id: str) -> bool:
-        """Delete conceptual dimensions for a product."""
-        pass
-    
-    @abstractmethod
-    async def find_similar_concepts(
-        self, 
-        dimensions: ConceptualDimensions, 
-        threshold: float = 0.8,
-        limit: int = 10
-    ) -> List[Tuple[str, float]]:
-        """Find products with similar conceptual dimensions."""
-        pass
-    
-    @abstractmethod
-    async def get_dimension_statistics(self) -> Dict[str, Dict[str, float]]:
-        """Get statistics for each conceptual dimension."""
-        pass
+    # ------------------------------------------------------------------ TC-04
+    # Schema-driven surface. The legacy fixed-dimension methods (removed in v3)
+    # hardcoded ten fashion axes, which cannot express a user's own schema.
+    # These methods are the generalisation that replaced them.
+    #
+    # They are concrete rather than abstract so the generalisation does not
+    # break backends that have not migrated yet: an unmigrated store keeps
+    # working through the legacy surface and fails loudly, naming itself, the
+    # moment schema-driven scores are asked of it. Silent no-ops would be far
+    # worse than an explicit error.
+
+    async def store_dimensions(self, entity_id: str, scores) -> bool:
+        """Store schema-driven dimension scores for an entity."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented store_dimensions; it "
+            "predates the schema-driven surface."
+        )
+
+    async def get_dimensions(self, entity_id: str):
+        """Get schema-driven dimension scores for an entity."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented get_dimensions; it "
+            "predates the schema-driven surface."
+        )
+
+    async def delete_dimensions(self, entity_id: str) -> bool:
+        """Delete schema-driven dimension scores for an entity."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented delete_dimensions; it "
+            "predates the schema-driven surface."
+        )
+
+    async def find_similar_dimensions(self, scores, threshold: float = 0.8, limit: int = 10):
+        """Find entities with similar scores, within the same schema."""
+        raise NotImplementedError(
+            f"{type(self).__name__} has not implemented find_similar_dimensions; "
+            "predates the schema-driven surface."
+        )
 
 
 class EmbeddingServiceInterface(ABC):
@@ -221,27 +230,6 @@ class EmbeddingServiceInterface(ABC):
     async def generate_batch_image_embeddings(self, image_urls: List[str]) -> List[EmbeddingVector]:
         """Generate embeddings for multiple images."""
         pass
-
-
-class ConceptualServiceInterface(ABC):
-    """Interface for conceptual dimension computation services."""
-    
-    @abstractmethod
-    async def compute_dimensions(self, product: Product) -> ConceptualDimensions:
-        """Compute conceptual dimensions for a product."""
-        pass
-    
-    @abstractmethod
-    async def compute_batch_dimensions(self, products: List[Product]) -> List[ConceptualDimensions]:
-        """Compute conceptual dimensions for multiple products."""
-        pass
-    
-    @abstractmethod
-    async def explain_dimensions(self, product: Product, dimensions: ConceptualDimensions) -> str:
-        """Explain why specific dimensions were assigned."""
-        pass
-
-
 class SearchServiceInterface(ABC):
     """Interface for search services."""
     
@@ -256,8 +244,8 @@ class SearchServiceInterface(ABC):
         pass
     
     @abstractmethod
-    async def conceptual_search(self, dimensions: ConceptualDimensions, limit: int = 10) -> List[SearchResult]:
-        """Perform conceptual search using conceptual dimensions."""
+    async def conceptual_search(self, dimensions: Dict[str, float], limit: int = 10) -> List[SearchResult]:
+        """Perform conceptual search over a flat mapping of dimension scores."""
         pass
     
     @abstractmethod

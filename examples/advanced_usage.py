@@ -16,7 +16,6 @@ from kse_memory import (
     Product,
     SearchQuery,
     SearchType,
-    ConceptualDimensions,
 )
 from kse_memory.adapters import GenericAdapter
 from kse_memory.core.config import (
@@ -220,7 +219,7 @@ async def advanced_search_example():
             category="Accessories",
             brand="LuxuryBrand",
             tags=["silk", "handcrafted", "elegant", "luxury"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 elegance=0.95,
                 luxury=0.9,
                 minimalism=0.3,
@@ -236,7 +235,7 @@ async def advanced_search_example():
             category="Lighting",
             brand="ModernDesign",
             tags=["minimalist", "modern", "adjustable", "workspace"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 minimalism=0.95,
                 modernity=0.9,
                 functionality=0.85,
@@ -252,7 +251,7 @@ async def advanced_search_example():
             category="Jewelry",
             brand="BoldFashion",
             tags=["bold", "statement", "jewelry", "fashion"],
-            conceptual_dimensions=ConceptualDimensions(
+            conceptual_dimensions=dict(
                 boldness=0.95,
                 elegance=0.6,
                 luxury=0.7,
@@ -359,7 +358,7 @@ async def performance_optimization_example():
                 category=categories[i % len(categories)],
                 brand=brands[i % len(brands)],
                 tags=[f"tag{i%10}", f"feature{i%5}", f"type{i%3}"],
-                conceptual_dimensions=ConceptualDimensions(
+                conceptual_dimensions=dict(
                     elegance=round((i % 100) / 100.0, 2),
                     comfort=round(((i + 10) % 100) / 100.0, 2),
                     luxury=round(((i + 20) % 100) / 100.0, 2),

@@ -9,7 +9,7 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 import random
 
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 
 
 class SampleDatasets:
@@ -41,7 +41,7 @@ class SampleDatasets:
                 "price": 129.99,
                 "category": "Athletic Footwear",
                 "tags": ["running", "athletic", "comfortable", "breathable", "lightweight"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.6, comfort=0.9, boldness=0.4, modernity=0.8,
                     minimalism=0.7, luxury=0.3, functionality=0.95, versatility=0.8,
                     seasonality=0.5, innovation=0.7
@@ -53,7 +53,7 @@ class SampleDatasets:
                 "price": 299.99,
                 "category": "Formal Wear",
                 "tags": ["elegant", "formal", "sophisticated", "silk", "evening"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.95, comfort=0.6, boldness=0.3, modernity=0.7,
                     minimalism=0.8, luxury=0.9, functionality=0.4, versatility=0.6,
                     seasonality=0.3, innovation=0.2
@@ -65,7 +65,7 @@ class SampleDatasets:
                 "price": 29.99,
                 "category": "Basics",
                 "tags": ["minimalist", "cotton", "basic", "versatile", "sustainable"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.5, comfort=0.8, boldness=0.2, modernity=0.6,
                     minimalism=0.95, luxury=0.2, functionality=0.9, versatility=0.95,
                     seasonality=0.5, innovation=0.3
@@ -77,7 +77,7 @@ class SampleDatasets:
                 "price": 189.99,
                 "category": "Outerwear",
                 "tags": ["bold", "geometric", "statement", "oversized", "technical"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.4, comfort=0.7, boldness=0.95, modernity=0.9,
                     minimalism=0.1, luxury=0.6, functionality=0.7, versatility=0.5,
                     seasonality=0.7, innovation=0.8
@@ -93,7 +93,7 @@ class SampleDatasets:
                 "price": 349.99,
                 "category": "Audio",
                 "tags": ["wireless", "noise-canceling", "premium", "audio", "battery"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.8, comfort=0.9, boldness=0.3, modernity=0.9,
                     minimalism=0.7, luxury=0.8, functionality=0.95, versatility=0.8,
                     seasonality=0.5, innovation=0.9
@@ -105,7 +105,7 @@ class SampleDatasets:
                 "price": 199.99,
                 "category": "Wearables",
                 "tags": ["smart", "fitness", "tracking", "GPS", "waterproof"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.6, comfort=0.8, boldness=0.4, modernity=0.95,
                     minimalism=0.8, luxury=0.5, functionality=0.95, versatility=0.9,
                     seasonality=0.5, innovation=0.9
@@ -121,7 +121,7 @@ class SampleDatasets:
                 "price": 899.99,
                 "category": "Furniture",
                 "tags": ["scandinavian", "oak", "handcrafted", "sustainable", "dining"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.9, comfort=0.7, boldness=0.2, modernity=0.6,
                     minimalism=0.9, luxury=0.7, functionality=0.9, versatility=0.6,
                     seasonality=0.3, innovation=0.3
@@ -133,7 +133,7 @@ class SampleDatasets:
                 "price": 159.99,
                 "category": "Lighting",
                 "tags": ["modern", "LED", "adjustable", "wireless", "minimalist"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.7, comfort=0.6, boldness=0.3, modernity=0.95,
                     minimalism=0.9, luxury=0.4, functionality=0.9, versatility=0.7,
                     seasonality=0.5, innovation=0.8
@@ -180,7 +180,7 @@ class SampleDatasets:
                 "price": 0.0,  # No cost product
                 "category": "Banking",
                 "tags": ["savings", "high-yield", "FDIC", "mobile", "no-minimum"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.6, comfort=0.9, boldness=0.2, modernity=0.8,
                     minimalism=0.8, luxury=0.3, functionality=0.9, versatility=0.7,
                     seasonality=0.5, innovation=0.6
@@ -192,7 +192,7 @@ class SampleDatasets:
                 "price": 25.0,  # Monthly fee
                 "category": "Investments",
                 "tags": ["ETF", "growth", "diversified", "automated", "tax-optimized"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.7, comfort=0.6, boldness=0.8, modernity=0.9,
                     minimalism=0.7, luxury=0.5, functionality=0.9, versatility=0.8,
                     seasonality=0.5, innovation=0.8
@@ -204,7 +204,7 @@ class SampleDatasets:
                 "price": 89.99,  # Monthly premium
                 "category": "Insurance",
                 "tags": ["life-insurance", "term", "flexible", "online", "instant-approval"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.5, comfort=0.8, boldness=0.3, modernity=0.7,
                     minimalism=0.6, luxury=0.4, functionality=0.95, versatility=0.6,
                     seasonality=0.5, innovation=0.5
@@ -248,7 +248,7 @@ class SampleDatasets:
                 "price": 79.99,
                 "category": "Monitoring Devices",
                 "tags": ["blood-pressure", "digital", "validated", "smartphone", "cloud"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.6, comfort=0.8, boldness=0.3, modernity=0.9,
                     minimalism=0.7, luxury=0.4, functionality=0.95, versatility=0.7,
                     seasonality=0.5, innovation=0.8
@@ -260,7 +260,7 @@ class SampleDatasets:
                 "price": 2500000.0,  # Enterprise equipment
                 "category": "Diagnostic Imaging",
                 "tags": ["MRI", "3T", "AI-enhanced", "high-resolution", "patient-comfort"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.8, comfort=0.7, boldness=0.6, modernity=0.95,
                     minimalism=0.5, luxury=0.9, functionality=0.95, versatility=0.8,
                     seasonality=0.5, innovation=0.95
@@ -272,7 +272,7 @@ class SampleDatasets:
                 "price": 1299.99,
                 "category": "Surgical Tools",
                 "tags": ["surgical", "titanium", "ergonomic", "autoclave-safe", "warranty"],
-                "concepts": ConceptualDimensions(
+                "concepts": dict(
                     elegance=0.9, comfort=0.8, boldness=0.4, modernity=0.8,
                     minimalism=0.8, luxury=0.8, functionality=0.95, versatility=0.9,
                     seasonality=0.5, innovation=0.7

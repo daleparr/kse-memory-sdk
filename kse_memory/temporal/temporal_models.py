@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass, field
 from enum import Enum
 
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 
 
 class TemporalRelationType(Enum):

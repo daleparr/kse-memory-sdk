@@ -1,0 +1,101 @@
+name: CI (CPU-only)
+
+# GOV-03: this workflow must never request GPU runners.
+on:
+  push:
+    branches: [master, main, "bd/**"]
+  pull_request:
+
+jobs:
+  guardrails:
+    name: Guardrails (AR-01..AR-05)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install (CPU-only image — AR-04 asserted by absence of NVIDIA deps)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio hypothesis
+          # AR-04: fail if any NVIDIA/CUDA package landed in the environment
+          if pip list | grep -iE "nvidia|cuda|faiss-gpu"; then
+            echo "::error::AR-04 violated — GPU package in default dependency tree"; exit 1;
+          fi
+      - name: Repo hygiene guardrails (AR-01, AR-02, AR-03, AR-04)
+        run: pytest tests/test_repo_hygiene.py -q
+      - name: Type check public API (AR-05) — HARD-FAIL on the v3 surface (T-015)
+        run: |
+          pip install mypy types-PyYAML
+          # The public surface, per docs/LEGACY_RETIREMENT.md: mypy-clean, enforced.
+          mypy kse_memory/core/ingest.py kse_memory/core/schema.py \
+               kse_memory/core/projection.py kse_memory/core/tokenizer.py \
+               kse_memory/core/query.py kse_memory/core/retrieval.py \
+               kse_memory/core/fusion.py kse_memory/core/answer.py \
+               kse_memory/core/explain.py kse_memory/core/pipeline.py \
+               kse_memory/core/dimension_store.py kse_memory/services/hybrid.py \
+               kse_memory/backends/memory_graph.py kse_memory/quickstart/v3.py \
+               --ignore-missing-imports --follow-imports=silent
+          # Advisory over the v2 remainder until its modules retire:
+          mypy kse_memory --ignore-missing-imports --no-error-summary || true
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # diff-cover needs the master ref to diff against
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio hypothesis
+      - run: pytest tests/ -q --ignore=tests/test_repo_hygiene.py
+        # T-015 FLIPPED 2026-08-30: the legacy mocked suite is retired; every
+        # remaining test is a real lane. A failure here is a failure.
+      - name: Changed-line coverage (D-16 diff-cover ratchet — report-only until T-015)
+        if: matrix.python-version == '3.11'
+        run: |
+          pip install pytest-cov diff-cover
+          pytest tests/unit tests/component tests/test_repo_hygiene.py -q \
+            --cov=kse_memory --cov-report=xml
+          git fetch origin master --quiet
+          # Report-only: the enforcement flip (--fail-under) lands with the
+          # other hard-fail flips at T-015, per D-16 "temporary by construction".
+          diff-cover coverage.xml --compare-branch origin/master || true
+
+  onnx-integration:
+    name: Integration (cached ONNX MiniLM)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Restore model cache
+        id: model-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/kse
+          key: onnx-minilm-l6-v2-v1
+      - name: Warm cache (setup step, NOT a test — AR-01 holds inside tests)
+        if: steps.model-cache.outputs.cache-hit != 'true'
+        run: |
+          D=~/.cache/kse/models/onnx-minilm-l6-v2
+          mkdir -p "$D"
+          curl -sL --fail -o "$D/model.onnx" \
+            "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"
+          curl -sL --fail -o "$D/vocab.txt" \
+            "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt"
+      - run: |
+          python -m pip install --upgrade pip
+          pip install -e . pytest pytest-asyncio hypothesis
+      - name: Integration lane against the genuine model
+        run: pytest tests/integration -q -m integration

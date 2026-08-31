@@ -19,16 +19,16 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from kse_memory.core.models import ConceptualDimensions
+from kse_memory.core.models import dict
 from kse_memory.core.domain_mapping import (
     Domain, get_mapper, map_to_domain, get_domain_dimensions, 
     get_cross_domain_mapping
 )
 
 
-def create_sample_product_dimensions() -> ConceptualDimensions:
+def create_sample_product_dimensions() -> dict:
     """Create sample product with conceptual dimensions."""
-    return ConceptualDimensions(
+    return dict(
         elegance=0.8,      # High sophistication
         comfort=0.9,       # Very comfortable
         boldness=0.3,      # Subtle, not attention-grabbing
@@ -206,18 +206,18 @@ def demonstrate_mathematical_consistency():
     console.print("\n[bold green]Mathematical Consistency Across Domains:[/bold green]")
     
     # Create two sample products
-    product_a = ConceptualDimensions(
+    product_a = dict(
         elegance=0.8, comfort=0.9, boldness=0.3, modernity=0.7, minimalism=0.9,
         luxury=0.6, functionality=0.8, versatility=0.7, seasonality=0.2, innovation=0.5
     )
     
-    product_b = ConceptualDimensions(
+    product_b = dict(
         elegance=0.4, comfort=0.6, boldness=0.8, modernity=0.9, minimalism=0.3,
         luxury=0.9, functionality=0.6, versatility=0.5, seasonality=0.7, innovation=0.8
     )
     
     # Calculate similarity in base space
-    def cosine_similarity(a: ConceptualDimensions, b: ConceptualDimensions) -> float:
+    def cosine_similarity(a: dict, b: dict) -> float:
         """Calculate cosine similarity between two conceptual dimension vectors."""
         vec_a = list(a.to_dict().values())
         vec_b = list(b.to_dict().values())

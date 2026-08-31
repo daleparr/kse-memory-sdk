@@ -332,9 +332,16 @@ class Neo4jBackend(GraphStoreInterface):
                 if records:
                     record = records[0]
                     node_data = dict(record["n"])
-                    node_data["labels"] = record["labels"]
-                    return node_data
-                
+                    # Contract shape (conformance-pinned): nested properties,
+                    # with the identity property excluded — `id` is how the
+                    # store addresses the node, not user data.
+                    return {
+                        "labels": list(record["labels"]),
+                        "properties": {
+                            key: value for key, value in node_data.items() if key != "id"
+                        },
+                    }
+
                 return None
                 
         except Exception as e:
@@ -358,31 +365,27 @@ class Neo4jBackend(GraphStoreInterface):
         self._ensure_connected()
         
         try:
+            # Return exactly the contract's shape. The previous version did
+            # dict(relationship) on the driver's Relationship object, which
+            # raises under the modern driver's data() transform — meaning
+            # this method had NEVER worked against a live server; only the
+            # live conformance run caught it.
             if relationship_types:
                 rel_filter = "|".join(relationship_types)
                 cypher = f"""
                 MATCH (n {{id: $node_id}})-[r:{rel_filter}]-(neighbor)
-                RETURN neighbor, labels(neighbor) as labels, type(r) as relationship_type, r as relationship
+                RETURN DISTINCT neighbor.id AS id
                 """
             else:
                 cypher = """
                 MATCH (n {id: $node_id})-[r]-(neighbor)
-                RETURN neighbor, labels(neighbor) as labels, type(r) as relationship_type, r as relationship
+                RETURN DISTINCT neighbor.id AS id
                 """
-            
+
             async with self.driver.session() as session:
                 result = await session.run(cypher, node_id=node_id)
                 records = await result.data()
-                
-                neighbors = []
-                for record in records:
-                    neighbor_data = dict(record["neighbor"])
-                    neighbor_data["labels"] = record["labels"]
-                    neighbor_data["relationship_type"] = record["relationship_type"]
-                    neighbor_data["relationship_properties"] = dict(record["relationship"])
-                    neighbors.append(neighbor_data)
-                
-                return neighbors
+                return [{"id": record["id"]} for record in records if record["id"] is not None]
                 
         except Exception as e:
             logger.error(f"Failed to get neighbors for node {node_id}: {str(e)}")

@@ -20,7 +20,6 @@ from rich.prompt import Prompt, Confirm
 from .core.memory import KSEMemory
 from .core.config import KSEConfig
 from .core.models import Product, SearchQuery, SearchType
-from .quickstart.demo import QuickstartDemo
 from .quickstart.datasets import SampleDatasets
 
 console = Console()
@@ -39,73 +38,176 @@ def cli():
 
 
 @cli.command()
-@click.option(
-    "--demo-type",
-    type=click.Choice(["retail", "finance", "healthcare"]),
-    default="retail",
-    help="Type of demo to run"
-)
-@click.option(
-    "--backend",
-    type=click.Choice(["chromadb", "weaviate", "qdrant", "memory", "auto"]),
-    default="auto",
-    help="Backend to use (auto-detects if not specified)"
-)
-@click.option(
-    "--no-browser",
-    is_flag=True,
-    help="Skip opening web interface"
-)
-@click.option(
-    "--output",
-    type=click.Path(),
-    help="Save results to JSON file"
-)
-def quickstart(demo_type: str, backend: str, no_browser: bool, output: Optional[str]):
+@click.option("--query", "queries", multiple=True,
+              help="Query to run (repeatable). Defaults to the demo queries.")
+@click.option("--top-k", default=5, show_default=True, help="Results per query")
+@click.option("--schema", "schema_path", type=click.Path(exists=True),
+              help="Your own dimension schema (YAML). Defaults to the demo schema.")
+@click.option("--output", type=click.Path(), help="Save results to JSON file")
+def quickstart(queries, top_k: int, schema_path: Optional[str], output: Optional[str]):
     """
-    🚀 Run zero-configuration quickstart demo
-    
-    Experience hybrid AI search with instant "wow" moments.
-    Automatically detects and sets up the best available backend.
-    
-    Examples:
-        kse quickstart                          # Auto-detect best backend
-        kse quickstart --backend chromadb       # Use ChromaDB (local, free)
-        kse quickstart --backend weaviate       # Use Weaviate (cloud, free tier)
-        kse quickstart --demo-type finance      # Run finance demo
-        kse quickstart --no-browser             # Skip web interface
+    🚀 Ingest a demo corpus and search it — offline, CPU-only, no API key.
+
+    Runs FR-01/FR-02 for real: records are normalised, projected under a
+    dimension schema by the locally cached ONNX MiniLM, and stored
+    incrementally. Retrieval is dense-only until fusion lands (FR-03..FR-05);
+    every result shows its per-dimension scores.
+
+    First run needs the embedding model cached locally (KSE never downloads
+    on the default path):
+
+    \b
+        D=~/.cache/kse/models/onnx-minilm-l6-v2 && mkdir -p "$D"
+        curl -L -o "$D/model.onnx" https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx
+        curl -L -o "$D/vocab.txt"  https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/vocab.txt
     """
+    import asyncio
+    import json as _json
+    import time as _time
+
+    from .core.projection import ModelNotAvailableError, OnnxEmbedder
+    from .quickstart.v3 import DEFAULT_QUERIES, run_quickstart
+
     console.print(Panel.fit(
-        "[bold blue]🚀 KSE Memory SDK Quickstart[/bold blue]\n"
-        "Smart backend detection + zero-configuration demo",
-        border_style="blue"
+        "[bold blue]KSE Memory — quickstart[/bold blue]\n"
+        "ingest → project → hybrid search (RRF over vector · conceptual · graph)",
+        border_style="blue",
     ))
-    
-    async def run_demo():
-        demo = QuickstartDemo()
-        try:
-            # Pass backend preference to demo
-            backend_choice = None if backend == "auto" else backend
-            
-            results = await demo.run(
-                demo_type=demo_type,
-                open_browser=not no_browser,
-                backend=backend_choice
+
+    try:
+        embedder = OnnxEmbedder()
+    except ModelNotAvailableError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print("[dim]See `kse quickstart --help` for the fetch commands.[/dim]")
+        raise SystemExit(1)
+
+    started = _time.perf_counter()
+    result = asyncio.run(run_quickstart(
+        embedder,
+        schema=schema_path,
+        queries=list(queries) or None,
+        top_k=top_k,
+    ))
+    elapsed = _time.perf_counter() - started
+
+    console.print(f"\nIngested [bold]{result.ingested}[/bold] records "
+                  f"([bold]{result.written}[/bold] written — rerun writes 0) "
+                  f"in {elapsed:.1f}s\n")
+
+    for query, hits in result.searches.items():
+        verdict = result.answers[query]
+        state = "hybrid" if verdict.hybrid else ("dense-only" if verdict.dense_only else "fused, low confidence")
+        console.print(f"[dim]answer: {state} · confidence {verdict.confidence:.2f}[/dim]")
+        if verdict.fallback_reason:
+            console.print(f"[yellow]{verdict.fallback_reason}[/yellow]")
+        targets = result.parses[query].targets
+        focus = "  ".join(f"{name} {value:.2f}" for name, value in targets.items())
+        console.print(f"[dim]query targets (FR-03): {focus}[/dim]")
+        table = Table(title=f'"{query}"', show_lines=False)
+        table.add_column("rrf", justify="right")
+        table.add_column("channels v·c·g", justify="center")
+        table.add_column("title")
+        for dimension in (hits[0].scores if hits else {}):
+            table.add_column(dimension, justify="right")
+        for hit in hits:
+            ranks = "·".join(
+                str(hit.channel_ranks.get(ch)) if hit.channel_ranks.get(ch) else "–"
+                for ch in ("vector", "conceptual", "graph")
             )
-            
-            if output:
-                with open(output, 'w') as f:
-                    json.dump(results, f, indent=2, default=str)
-                console.print(f"[green]✓[/green] Results saved to {output}")
-            
-            console.print("\n[bold green]Quickstart demo completed![/bold green]")
-            console.print("Ready to integrate KSE Memory into your application.")
-            
-        except Exception as e:
-            console.print(f"[red]❌ Demo failed: {str(e)}[/red]")
-            sys.exit(1)
-    
-    asyncio.run(run_demo())
+            table.add_row(
+                f"{hit.similarity:.4f}",
+                ranks,
+                hit.title,
+                *(f"{hit.scores[d]:.2f}" for d in hit.scores),
+            )
+        console.print(table)
+
+    console.print("[dim]RRF over three channels, confidence-gated (FR-07); ranks shown as v·c·g.[/dim]")
+
+    if output:
+        payload = {
+            "ingested": result.ingested,
+            "written": result.written,
+            "elapsed_seconds": round(elapsed, 3),
+            "searches": {
+                q: [{"entity_id": h.entity_id, "title": h.title,
+                     "similarity": h.similarity, "scores": dict(h.scores)} for h in hits]
+                for q, hits in result.searches.items()
+            },
+        }
+        pathlib_path = output
+        with open(pathlib_path, "w", encoding="utf-8") as handle:
+            _json.dump(payload, handle, indent=2)
+        console.print(f"[green]Saved to {output}[/green]")
+
+
+@cli.command()
+@click.argument("query")
+@click.option("--top", default=1, show_default=True, help="How many results to explain")
+@click.option("--schema", "schema_path", type=click.Path(exists=True),
+              help="Your own dimension schema (YAML). Defaults to the demo schema.")
+def explain(query: str, top: int, schema_path: Optional[str]):
+    """
+    🔍 Explain a query's results — the D-14 inspection layer over FR-06.
+
+    Runs the quickstart corpus, then shows the full receipt for the top
+    result(s): per-channel ranks and raw scores, the per-dimension breakdown
+    of query target vs item score, and the replay identity that produced it.
+    """
+    import asyncio
+
+    from .core.projection import ModelNotAvailableError, OnnxEmbedder
+    from .quickstart.v3 import run_quickstart
+
+    try:
+        embedder = OnnxEmbedder()
+    except ModelNotAvailableError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise SystemExit(1)
+
+    result = asyncio.run(run_quickstart(embedder, schema=schema_path, queries=[query]))
+    explanations = result.explanations[query][:top]
+    if not explanations:
+        console.print("[yellow]No results to explain.[/yellow]")
+        return
+
+    titles = {h.entity_id: h.title for h in result.searches[query]}
+    for explanation in explanations:
+        console.print(Panel.fit(
+            f'[bold]{titles.get(explanation.entity_id, explanation.entity_id)}[/bold]\n'
+            f'fused (RRF): {explanation.fused:.4f}   query: "{explanation.query}"',
+            border_style="blue",
+        ))
+
+        channels = Table(title="channels", show_header=True)
+        channels.add_column("channel")
+        channels.add_column("rank", justify="right")
+        channels.add_column("raw score", justify="right")
+        for name in ("vector", "conceptual", "graph"):
+            rank = explanation.ranks.get(name)
+            raw = explanation.channel_scores.get(name)
+            channels.add_row(
+                name,
+                str(rank) if rank else "absent",
+                f"{raw:.4f}" if raw is not None else "—",
+            )
+        console.print(channels)
+
+        dims = Table(title="dimensions: what the query asked vs what the item carries")
+        dims.add_column("dimension")
+        dims.add_column("query target", justify="right")
+        dims.add_column("item score", justify="right")
+        dims.add_column("alignment", justify="right")
+        for row in explanation.dimensions:
+            dims.add_row(row.name, f"{row.target:.2f}", f"{row.score:.2f}", f"{row.alignment:.2f}")
+        console.print(dims)
+
+        console.print(
+            f"[dim]replay identity: schema {explanation.schema_name} "
+            f"v{explanation.schema_version} · model {explanation.model_id}[/dim]"
+        )
+        if explanation.degraded:
+            console.print(f"[yellow]degraded channels: {dict(explanation.degraded)}[/yellow]")
 
 
 @cli.command()

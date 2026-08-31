@@ -17,9 +17,8 @@ from ..core.interfaces import (
     CacheInterface,
 )
 from ..core.config import SearchConfig
-from ..core.models import SearchQuery, SearchResult, Product, SearchType, ConceptualDimensions
+from ..core.models import SearchQuery, SearchResult, Product, SearchType
 from ..exceptions import SearchError
-from .conceptual import ConceptualService
 
 
 logger = logging.getLogger(__name__)
@@ -59,11 +58,6 @@ class SearchService(SearchServiceInterface):
         self.concept_store = concept_store
         self.embedding_service = embedding_service
         self.cache_service = cache_service
-        
-        # Initialize conceptual service for similarity computation
-        from ..core.config import ConceptualConfig
-        conceptual_config = ConceptualConfig(auto_compute=False)  # No LLM needed for similarity
-        self.conceptual_service = ConceptualService(conceptual_config)
         
         logger.info("Search service initialized")
     
@@ -155,7 +149,7 @@ class SearchService(SearchServiceInterface):
                 try:
                     product = Product.from_dict(metadata)
                     result = SearchResult(
-                        product=product,
+                        entity=product,
                         score=similarity,
                         embedding_similarity=similarity,
                         explanation=f"Semantic similarity to '{query}'"
@@ -175,7 +169,7 @@ class SearchService(SearchServiceInterface):
             logger.error(f"Semantic search failed: {str(e)}")
             raise SearchError(f"Semantic search failed: {str(e)}", query=query)
     
-    async def conceptual_search(self, dimensions: ConceptualDimensions, limit: int = 10) -> List[SearchResult]:
+    async def conceptual_search(self, dimensions: Dict[str, float], limit: int = 10) -> List[SearchResult]:
         """
         Perform conceptual search using conceptual dimensions.
         
@@ -187,11 +181,14 @@ class SearchService(SearchServiceInterface):
             List of search results
         """
         try:
-            # Find similar concepts
-            similar_concepts = await self.concept_store.find_similar_concepts(
-                dimensions,
+            # v3: the fixed-dimension surface is gone; route legacy-shaped
+            # dicts through the adapter onto the schema-driven interface.
+            from ..core.dimension_store import ConceptStoreAdapter
+
+            similar_concepts = await self.concept_store.find_similar_dimensions(
+                ConceptStoreAdapter.to_generic(dimensions),
                 threshold=self.config.similarity_threshold,
-                limit=limit * 2
+                limit=limit * 2,
             )
             
             # Convert to SearchResult objects
@@ -205,7 +202,7 @@ class SearchService(SearchServiceInterface):
                         product = Product.from_dict(metadata)
                         
                         result = SearchResult(
-                            product=product,
+                            entity=product,
                             score=similarity,
                             conceptual_similarity=similarity,
                             explanation=f"Conceptual similarity match"
@@ -275,7 +272,7 @@ class SearchService(SearchServiceInterface):
                                 score = self._calculate_graph_relevance(relationship, entity, related_entity)
                                 
                                 search_result = SearchResult(
-                                    product=product,
+                                    entity=product,
                                     score=score,
                                     knowledge_graph_similarity=score,
                                     explanation=f"Connected to '{related_entity}' via {relationship}"
@@ -327,46 +324,48 @@ class SearchService(SearchServiceInterface):
             # Execute searches concurrently
             search_results = await asyncio.gather(*[task[1] for task in search_tasks], return_exceptions=True)
             
-            # Combine results
-            all_results = {}
-            weights = self.config.hybrid_weights
-            
-            for i, (search_type, results) in enumerate(zip([task[0] for task in search_tasks], search_results)):
+            # Fuse by rank (FR-05 / D-07). Channel scores are not comparable
+            # across channels — semantic cosine, conceptual cosine over a
+            # different space, graph heuristics — so the weighted score-summing
+            # this replaced was combining unlike quantities. RRF uses only the
+            # per-channel order; hybrid_weights now bias channels within RRF.
+            from ..core.fusion import fuse_rrf
+
+            by_id = {}
+            channel_rows = {}
+            for search_type, results in zip([task[0] for task in search_tasks], search_results):
                 if isinstance(results, Exception):
                     logger.warning(f"{search_type} search failed: {str(results)}")
                     continue
-                
-                weight = weights.get(search_type, weights.get("embedding", 0.33))
-                
+                channel_rows[search_type] = tuple(
+                    (result.product.id, float(result.score)) for result in results
+                )
                 for result in results:
-                    product_id = result.product.id
-                    
-                    if product_id in all_results:
-                        # Combine scores
-                        existing = all_results[product_id]
-                        combined_score = existing.score + (result.score * weight)
-                        
-                        # Update individual similarity scores
-                        if search_type == "semantic":
-                            existing.embedding_similarity = result.score
-                        elif search_type == "conceptual":
-                            existing.conceptual_similarity = result.score
-                        elif search_type == "graph":
-                            existing.knowledge_graph_similarity = result.score
-                        
-                        existing.score = combined_score
-                        existing.explanation = self._combine_explanations(existing.explanation, result.explanation)
-                        
-                    else:
-                        # New result
-                        weighted_score = result.score * weight
-                        result.score = weighted_score
-                        all_results[product_id] = result
-            
-            # Convert to list and sort
-            final_results = list(all_results.values())
-            final_results.sort(key=lambda x: x.score, reverse=True)
-            
+                    by_id.setdefault(result.product.id, result)
+
+            weights = self.config.hybrid_weights
+            fused = fuse_rrf(
+                channel_rows,
+                weights={name: weights.get(name, weights.get("embedding", 1.0))
+                         for name in channel_rows},
+            )
+
+            final_results = []
+            for item in fused:
+                result = by_id[item.entity_id]
+                result.score = item.fused
+                if item.scores.get("semantic") is not None:
+                    result.embedding_similarity = item.scores["semantic"]
+                if item.scores.get("conceptual") is not None:
+                    result.conceptual_similarity = item.scores["conceptual"]
+                if item.scores.get("graph") is not None:
+                    result.knowledge_graph_similarity = item.scores["graph"]
+                ranks = ", ".join(
+                    f"{name} rank {rank}" for name, rank in item.ranks.items() if rank
+                )
+                result.explanation = f"RRF fusion ({ranks})"
+                final_results.append(result)
+
             # Apply reranking if enabled
             if self.config.enable_reranking and len(final_results) > 1:
                 final_results = await self._rerank_results(query, final_results)
@@ -377,24 +376,19 @@ class SearchService(SearchServiceInterface):
             logger.error(f"Hybrid search failed: {str(e)}")
             raise SearchError(f"Hybrid search failed: {str(e)}", query=query.query)
     
-    def _extract_conceptual_dimensions(self, query: SearchQuery) -> ConceptualDimensions:
+    def _extract_conceptual_dimensions(self, query: SearchQuery) -> Dict[str, float]:
         """Extract conceptual dimensions from search query."""
-        # Use provided weights or extract from query text
+        # Legacy retail vocabulary: replaced by schema-driven mapping in FR-03.
+        dimensions_list = ["elegance", "comfort", "boldness", "modernity", "minimalism",
+                           "luxury", "functionality", "versatility", "seasonality", "innovation"]
+        # Use provided weights or fall back to equal weighting
         if query.conceptual_weights:
-            dimensions_dict = {}
-            for dim in ["elegance", "comfort", "boldness", "modernity", "minimalism", 
-                       "luxury", "functionality", "versatility", "seasonality", "innovation"]:
-                dimensions_dict[dim] = query.conceptual_weights.get(dim, 0.5)
-            return ConceptualDimensions(**dimensions_dict)
+            return {dim: query.conceptual_weights.get(dim, 0.5) for dim in dimensions_list}
         else:
-            # Extract from query text using keyword matching
-            weights = self.conceptual_service.get_dimension_weights(query.query)
-            
-            # Normalize weights to 0-1 range
-            max_weight = max(weights.values()) if weights else 1.0
-            normalized_weights = {dim: weight / max_weight for dim, weight in weights.items()}
-            
-            return ConceptualDimensions(**normalized_weights)
+            # v3: the keyword-boost service is gone with the legacy conceptual
+            # layer. Without explicit weights, weight all dimensions equally;
+            # schema-driven query mapping arrives with FR-03.
+            return {dim: 0.5 for dim in dimensions_list}
     
     def _extract_entities(self, query: str) -> List[str]:
         """Extract entities from query text (simplified approach)."""

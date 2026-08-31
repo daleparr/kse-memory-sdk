@@ -1,0 +1,16 @@
+# Normalise line endings. Without this, editors writing CRLF into the working
+# tree surface as a whole-repo diff with zero content in it.
+* text=auto eol=lf
+
+# Windows batch files require CRLF to execute correctly.
+*.bat text eol=crlf
+
+# Binary assets: never diff, never convert.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.whl  binary

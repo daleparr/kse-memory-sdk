@@ -1,0 +1,544 @@
+{
+  "manifest_version": "2.0-prdbd",
+  "generated": "2026-08-29",
+  "agents": [
+    "claude",
+    "cursor",
+    "copilot",
+    "gemini",
+    "windsurf"
+  ],
+  "governance": {
+    "version": "1.0",
+    "principles": [
+      {
+        "id": "GOV-01",
+        "name": "Evidence-gated claims",
+        "rule": "No performance claim ships without a reproducible public benchmark artefact in-repo (make bench regenerates it).",
+        "authority": "NON-NEGOTIABLE"
+      },
+      {
+        "id": "GOV-02",
+        "name": "Zero-network default",
+        "rule": "The default install makes zero network calls and requires no API key. Telemetry is opt-in only, consent-prompted at first CLI run.",
+        "authority": "NON-NEGOTIABLE"
+      },
+      {
+        "id": "GOV-03",
+        "name": "CPU-first",
+        "rule": "The default install and all default-path SLOs run on CPU-only hardware. No CUDA dependency anywhere in the default dependency tree.",
+        "authority": "NON-NEGOTIABLE"
+      },
+      {
+        "id": "GOV-04",
+        "name": "Test-first",
+        "rule": "Write the failing test (TC-XX) before the implementation (FR/AR). Integration tests against local backends preferred over mocks.",
+        "authority": "SHOULD"
+      },
+      {
+        "id": "GOV-05",
+        "name": "Typed public API",
+        "rule": "All public API surfaces fully type-annotated; simulations physically separated from empirical benchmarks under simulations/.",
+        "authority": "SHOULD"
+      }
+    ],
+    "tech_stack": [
+      "Python >=3.9",
+      "pydantic v2",
+      "pytest + pytest-asyncio + pytest-cov",
+      "black",
+      "ONNX Runtime (int8 quantised embeddings)",
+      "hnswlib/usearch (CPU ANN)",
+      "SQLite (local metadata)",
+      "NetworkX (default graph)",
+      "MIT licence",
+      "PyPI: kse-memory-sdk"
+    ],
+    "code_style": [
+      "Library-first, interface-driven (retain core/interfaces.py pattern)",
+      "Optional dependencies isolated behind pip extras",
+      "simulations/ separated from benchmarks/",
+      "No deprecated openai.ChatCompletion API"
+    ]
+  },
+  "solutions": [
+    {
+      "id": "SOL-01",
+      "name": "KSE Memory SDK v3 — Universal Hybrid Knowledge Substrate",
+      "client": "Open-source (maintainer: Dale Parr; EY-sanctioned personal OSS project)",
+      "scope": "Remediate v2.0.0 into a credible, CPU-first, universal hybrid retrieval substrate: honest claims, RRF fusion, user-defined conceptual dimensions, real benchmarks, tiered graph backends.",
+      "accent_colour": "#0E7C7B",
+      "s1_user_goal": {
+        "trigger_sentence": "When a developer building search over attribute-rich data finds that pure vector retrieval can't answer graded, multi-attribute queries, they need a pip-installable hybrid substrate that fuses embeddings, graph and governed conceptual dimensions locally — fast, with explainable results they can trust.",
+        "job_types": {
+          "search_rag": true,
+          "generate": false,
+          "extract": true,
+          "classify_route": false,
+          "forecast": false,
+          "agent_workflow": false
+        },
+        "human_role": {
+          "assist": true,
+          "approve": false,
+          "override": false,
+          "fully_automated": true
+        },
+        "success": {
+          "time": "Quickstart-to-first-hybrid-result < 60s in a fresh venv, CPU-only, no external services or API key; incremental upserts with zero reindex downtime.",
+          "quality": "Reproducible nDCG@10 lift over BM25+dense RRF baseline on attribute-heavy slices of BEIR subsets and Amazon ESCI; losses published alongside wins.",
+          "adoption": "GitHub star and PyPI download growth post-launch; >=3 external contributors; median issue first-response < 72h sustained solo."
+        },
+        "personas": [
+          {
+            "name": "App developer",
+            "role": "Builds retrieval for attribute-rich domains (e-commerce, docs, finance)",
+            "need": "Hybrid search that beats pure vectors on graded multi-attribute queries, installable in one command on CPU"
+          },
+          {
+            "name": "Sceptical evaluator",
+            "role": "Researcher / HN reader assessing claims",
+            "need": "Every published number reproducible with one command on documented CPU hardware"
+          },
+          {
+            "name": "Platform integrator",
+            "role": "Wires KSE into an existing stack (LangChain, agent platforms, graph DBs)",
+            "need": "Stable interfaces, tiered backend conformance, connector points for Rainbird/Alphient-class platforms"
+          },
+          {
+            "name": "Solo maintainer",
+            "role": "Owns the project end-to-end",
+            "need": "Automation-heavy ops, scoped support policy, sustainable triage"
+          }
+        ],
+        "poc_metrics": [
+          {
+            "value": "~21k",
+            "label": "LOC existing scaffold (v2.0.0)"
+          },
+          {
+            "value": "11",
+            "label": "Backend integrations already scaffolded"
+          },
+          {
+            "value": "0",
+            "label": "Validated benchmark claims today — by design; Phase 2 generates the real ones"
+          }
+        ]
+      },
+      "s2_constraints": {
+        "slo_sla": {
+          "p95_latency": "< 150ms in-process hybrid query, 100k-item corpus, CPU-only, local backends (⚠ inferred — confirm during build)",
+          "throughput": "CPU embedding >= 500 items/min single-core via ONNX int8",
+          "uptime": null,
+          "ingestion_rate": "Real-time per-item incremental upsert; batch rebuild only on schema/model semver bump"
+        },
+        "budget": {
+          "fixed_fee": null,
+          "per_task": "$0 infra on default path (CPU-only, local)",
+          "monthly_cap": null,
+          "notes": "Optional LLM dimension-scoring spend user-borne and opt-in. CI benchmarks CPU-only on GitHub-hosted runners (reduced BEIR subsets); no GPU budget."
+        },
+        "risk": {
+          "privacy_pii": false,
+          "safety": false,
+          "ip": true,
+          "regulatory": false,
+          "brand": true,
+          "notes": "IP: EY sanction granted for OSS operation — obtain written record before launch push. Brand: prior simulated benchmark claims (+27%, p<0.001 from time.sleep() harness) must be retracted before any release; credibility is the scarcest asset. MIT licence. Telemetry opt-in only; zero network calls by default."
+        },
+        "rule": "Ship the smallest honest thing: zero-dependency CPU-only local install, RRF fusion, user-defined dimension schema, benchmarked on public datasets with published losses — before any launch, paper, or promotion."
+      },
+      "s3_current_state": {
+        "last_updated": "2026-08-29",
+        "stack": "Python SDK v2.0.0 on PyPI. core/ (memory orchestrator, interfaces, config, models, domain_mapping), services/ (embedding, conceptual, search, cache), backends/ (11 stores incl. mock), adapters/, integrations/ (LangChain, LlamaIndex), temporal/, federated/, visual/. ~21k LOC.",
+        "api_routes": "Library API: KSEMemory.initialize/add_product/search; CLI: kse quickstart; LangChain KSEVectorStore; LlamaIndex retriever.",
+        "notes": [
+          "Hybrid fusion is fixed-weight linear sum over incompatible score scales — replace with RRF (FR-05)",
+          "Conceptual query extraction is keyword matching against a hardcoded 10-dim fashion vocabulary — replace with schema + anchor-embedding similarity (FR-03)",
+          "core/domain_mapping.map_dimensions is an identity stub ('For now, return the same values')",
+          "services/conceptual.py uses deprecated openai.ChatCompletion API",
+          "README v2 carries simulated benchmark figures presented as empirical — retract (US-1)",
+          "~20 generated status markdowns in repo root — consolidate into docs/ (US-1)",
+          "Tests are heavily mocked (48 mock refs) — CI currently proves the mocks work"
+        ],
+        "tbd_items": 0,
+        "phase": "Phase 0 — credibility triage (pre-build)",
+        "pending": "Written record of EY sanction before public launch push; confirm ⚠ p95 latency target during build"
+      },
+      "s3_inputs_outputs": {
+        "inputs": {
+          "docs_data": "Product catalogues, document corpora, arbitrary text records via adapters (Shopify, WooCommerce, generic)",
+          "structured": "User-defined dimension schema (YAML/JSON: named dimensions + descriptions + anchor examples); KG triples; backend config",
+          "events": "Item add/update/delete (incremental upsert); search queries via Python API, CLI, LangChain/LlamaIndex retriever"
+        },
+        "outputs": {
+          "answer_action": "Fused ranked result list with per-channel provenance (embedding, conceptual, graph ranks + scores)",
+          "format": "Typed Python objects; CLI quickstart; drop-in retriever interfaces; 3D conceptual-space explorer",
+          "explainability": "Per-channel contribution breakdown + per-dimension scores on every result — explanation by decomposition"
+        },
+        "trust_ux": {
+          "citations_evidence": true,
+          "confidence_score": true,
+          "uncertainty_path": true,
+          "escalation": false
+        },
+        "edge_cases": [
+          {
+            "id": "EC-01",
+            "text": "Score-scale mismatch across channels — must never distort fused ranking (mitigated by RRF)"
+          },
+          {
+            "id": "EC-02",
+            "text": "Missing channel: no graph configured or no dimension schema — degrade to 2-channel/1-channel mode with explanation flag"
+          },
+          {
+            "id": "EC-03",
+            "text": "Cold start: items queried before dimension scoring completes — serve available channels, flag partial coverage"
+          },
+          {
+            "id": "EC-04",
+            "text": "Conflicting channel rankings — surface disagreement in per-channel breakdown rather than hiding it"
+          },
+          {
+            "id": "EC-05",
+            "text": "Non-English corpora — embedding model default is English-biased; document limitation, allow model swap"
+          },
+          {
+            "id": "EC-06",
+            "text": "Corpus exceeds in-memory backends — document SQLite/hnswlib limits and Tier 1/2 upgrade path"
+          }
+        ]
+      },
+      "s4_system_of_record": {
+        "canonical_store": "User's own source systems (database, Shopify store, file corpus via adapters). SDK is projection-first: never canonical, never mutates source. (⚡ recommended — confirm)",
+        "raw_artifacts": "Optional local snapshot of ingested records with stable IDs + SHA-256 content hashes for deterministic replay and dedupe. (⚡ recommended)",
+        "extraction_first": true,
+        "principle": "Truth = user's source store. Projections = everything KSE derives (embeddings, dimension scores, graph edges, caches) — all rebuildable from source + versioned schema + pinned model IDs.",
+        "llm_service": "None by default. Optional dimension scoring: current OpenAI client API or local scorer (sentence-transformers cross-encoder) — no API key required for default path. (⚡ recommended)",
+        "auth_service": "None — in-process library; inherits host application identity/access model. Backend credentials via config, never stored."
+      },
+      "s5_projections": {
+        "index_types": {
+          "vector_index": true,
+          "keyword_index": false,
+          "feature_store": true,
+          "labels_set": false,
+          "cache": true
+        },
+        "granularity": "Record/item level (document level for corpora)",
+        "views": [
+          "text",
+          "metadata",
+          "dimension score vectors",
+          "graph edges"
+        ],
+        "training_data": "Gold relevance judgements from pinned public datasets (BEIR SciFact/NFCorpus/FiQA + Amazon ESCI attribute slice) under benchmarks/; optional user click feedback for learned fusion.",
+        "update_cadence": "Real-time incremental upserts; batch rebuild on schema/model semver bump.",
+        "embedding_models": "Default all-MiniLM-L6-v2 (ONNX, int8); quality bge-small-en-v1.5; scale model2vec potion-base-8M (>1M items); ANN hnswlib/usearch.",
+        "graph_backend_tiers": "T1 CI-covered: NetworkX (default), Neo4j. T2 community: ArangoDB, TypeDB. T3 connectors: Rainbird (reasoning channel), Alphient Prime (platform connector); Barnacle Alexandria adjacent/interop."
+      },
+      "s6_runtime_flow": {
+        "pattern": [
+          "Hybrid retrieval substrate (dense + conceptual + graph, RRF-fused)"
+        ],
+        "flow_steps": [
+          {
+            "id": "FR-01",
+            "text": "Ingest: adapter pulls item → normalise to universal record; SHA-256 content hash for dedupe/replay"
+          },
+          {
+            "id": "FR-02",
+            "text": "Project: embed text (ONNX MiniLM default) · score dimensions vs user schema (LLM or local scorer) · upsert graph edges — all incremental"
+          },
+          {
+            "id": "FR-03",
+            "text": "Query parse: embed query; map to dimension targets via embedding similarity against each dimension's anchor descriptions"
+          },
+          {
+            "id": "FR-04",
+            "text": "Retrieve concurrently: vector top-k · conceptual top-k over feature store · graph traversal top-k"
+          },
+          {
+            "id": "FR-05",
+            "text": "Fuse: RRF default (rank-based, scale-free); optional min-max normalised weighted fusion; learned fusion later opt-in"
+          },
+          {
+            "id": "FR-06",
+            "text": "Explain: attach per-channel ranks, scores and per-dimension breakdown to every result"
+          },
+          {
+            "id": "FR-07",
+            "text": "Fallback: failed/empty channels degrade gracefully; below-threshold fused confidence → dense-only + explicit flag"
+          }
+        ],
+        "guardrails": [
+          {
+            "id": "AR-01",
+            "text": "Default path makes zero network calls; quickstart requires no API key (verifiable: network-mocked CI test asserts no socket use)",
+            "status": "confirmed"
+          },
+          {
+            "id": "AR-02",
+            "text": "Simulation code isolated under simulations/ with warning headers; import from benchmarks/ is a CI failure",
+            "status": "confirmed"
+          },
+          {
+            "id": "AR-03",
+            "text": "README performance claims must reference a benchmark artefact regenerable by make bench (CI link-check)",
+            "status": "confirmed"
+          },
+          {
+            "id": "AR-04",
+            "text": "No CUDA/GPU package in the default dependency tree (CI asserts pip install on CPU-only image succeeds with no NVIDIA deps)",
+            "status": "confirmed"
+          },
+          {
+            "id": "AR-05",
+            "text": "Public API fully typed; mypy clean on kse_memory public surface",
+            "status": "confirmed"
+          }
+        ],
+        "caching": [
+          "embeddings",
+          "query results (5-min TTL)"
+        ],
+        "fallbacks": "Channel-level graceful degradation (EC-02); local scorer when no API key; dense-only + flag below confidence threshold (FR-07)."
+      },
+      "s7_evals_ops": {
+        "offline_evals": {
+          "gold_set": "Pinned BEIR subsets (SciFact ~5k, NFCorpus ~3.6k, FiQA sample) + Amazon ESCI attribute-heavy slice; CPU-only on GitHub-hosted runners",
+          "metrics": [
+            "nDCG@10",
+            "recall@100",
+            "vs BM25 / dense-only / BM25+dense RRF baselines",
+            "losses published alongside wins"
+          ]
+        },
+        "online_metrics": {
+          "task_success_rate": "Quickstart completion rate (opt-in telemetry)",
+          "time_saved": null,
+          "deflection_escalation_rate": null,
+          "user_feedback": "GitHub issues/discussions; star and download growth around launch moments",
+          "incident_rate": "Median issue first-response < 72h (solo-sustainable); external contributor count >= 3 in 90 days"
+        },
+        "observability": {
+          "p95_latency": "Latency regression test on 100k-item local corpus per release",
+          "errors": "CI green on every release (benchmark + integration suites)",
+          "drift": "Benchmark score drift vs pinned baseline flagged per release",
+          "evidence_coverage": "Every result carries per-channel provenance (FR-06)",
+          "cost_per_task": "Cost per 1k items on optional LLM-scoring path, tracked in bench output"
+        },
+        "versioning": [
+          "dimension schema (semver)",
+          "embedding model IDs",
+          "fusion config",
+          "scorer prompts",
+          "dataset pins"
+        ],
+        "replay": "Deterministic: content hash + schema version + model IDs reproduce any projection; fusion seedable; any ranked result reconstructable from source + pins."
+      },
+      "s8_tasks": {
+        "constitution_ref": "BD0",
+        "additional_setup_tasks": [
+          "Consolidate ~20 root status markdowns into docs/ (US-1)",
+          "Move simulated benchmark harness to simulations/ with warning headers (AR-02)",
+          "Raise requires-python to >=3.9; add ONNX Runtime + hnswlib to core deps",
+          "Record written EY sanction reference in repo NOTICE"
+        ],
+        "user_stories": [
+          {
+            "id": "US1",
+            "priority": "P1",
+            "title": "Credibility reset",
+            "persona": "Maintainer",
+            "narrative": "As the maintainer, I remove all unvalidated claims so the repo can be scrutinised safely.",
+            "acceptance": [
+              "Given the current repo, when README v3 lands, then no unvalidated numeric claim remains, the placeholder arXiv badge is removed, status markdowns are consolidated into docs/, and simulation code lives under simulations/ with explicit labelling."
+            ],
+            "flow_step_refs": [],
+            "guardrail_refs": [
+              "AR-02",
+              "AR-03"
+            ]
+          },
+          {
+            "id": "US2",
+            "priority": "P1",
+            "title": "Zero-dependency CPU quickstart",
+            "persona": "App developer",
+            "narrative": "As a new developer on CPU-only hardware, I get hybrid results with nothing but pip.",
+            "acceptance": [
+              "Given a fresh venv on CPU-only hardware, when I run pip install kse-memory-sdk && kse quickstart, then hybrid results return in <60s with no external service, no API key, no network call, and no CUDA dependency installed."
+            ],
+            "flow_step_refs": [
+              "FR-01",
+              "FR-02",
+              "FR-03",
+              "FR-04",
+              "FR-05",
+              "FR-06",
+              "FR-07"
+            ],
+            "guardrail_refs": [
+              "AR-01",
+              "AR-04"
+            ]
+          },
+          {
+            "id": "US3",
+            "priority": "P1",
+            "title": "RRF fusion",
+            "persona": "App developer",
+            "narrative": "As a developer, I get scale-free fusion by default.",
+            "acceptance": [
+              "Given results from >=2 channels with incompatible score scales, when fused, then RRF is applied by default and every result retains per-channel rank/score provenance."
+            ],
+            "flow_step_refs": [
+              "FR-04",
+              "FR-05",
+              "FR-06"
+            ],
+            "guardrail_refs": [
+              "AR-05"
+            ]
+          },
+          {
+            "id": "US4",
+            "priority": "P1",
+            "title": "Custom dimension schema",
+            "persona": "App developer",
+            "narrative": "As a developer in any domain, I define my own conceptual dimensions.",
+            "acceptance": [
+              "Given a YAML schema of named dimensions with anchors, when items are ingested, then dimensions are scored and queryable, and no hardcoded fashion vocabulary remains in the default path."
+            ],
+            "flow_step_refs": [
+              "FR-02",
+              "FR-03"
+            ],
+            "guardrail_refs": [
+              "AR-01"
+            ]
+          },
+          {
+            "id": "US5",
+            "priority": "P2",
+            "title": "Real benchmarks",
+            "persona": "Sceptical evaluator",
+            "narrative": "As a sceptical evaluator, I reproduce every published number.",
+            "acceptance": [
+              "Given pinned BEIR/ESCI datasets, when I run make bench, then the full results table including losses regenerates in one command on documented CPU hardware."
+            ],
+            "flow_step_refs": [],
+            "guardrail_refs": [
+              "AR-03",
+              "AR-04"
+            ]
+          },
+          {
+            "id": "US6",
+            "priority": "P2",
+            "title": "Domain packs",
+            "persona": "App developer",
+            "narrative": "As a developer, I start from worked examples, not blank schemas.",
+            "acceptance": [
+              "Given the examples directory, when I open the retail, finance, or documents pack, then each ships a dimension schema plus a runnable notebook demonstrating a query pure vector search handles worse."
+            ],
+            "flow_step_refs": [
+              "FR-02",
+              "FR-03",
+              "FR-04",
+              "FR-05",
+              "FR-06"
+            ],
+            "guardrail_refs": [
+              "AR-01"
+            ]
+          },
+          {
+            "id": "US7",
+            "priority": "P2",
+            "title": "Local scorer parity",
+            "persona": "App developer",
+            "narrative": "As an offline user, I score dimensions without an API key.",
+            "acceptance": [
+              "Given no API key, when dimension scoring runs, then the local scorer produces schema-conformant scores and quickstart parity is maintained."
+            ],
+            "flow_step_refs": [
+              "FR-02"
+            ],
+            "guardrail_refs": [
+              "AR-01",
+              "AR-04"
+            ]
+          },
+          {
+            "id": "US8",
+            "priority": "P2",
+            "title": "Real domain mapping",
+            "persona": "Platform integrator",
+            "narrative": "As a multi-domain user, cross-domain dimension mapping actually transforms values.",
+            "acceptance": [
+              "Given source and target domain profiles, when map_dimensions runs, then values are transformed per the mapping definition (replacing the identity stub), with tests proving non-identity behaviour."
+            ],
+            "flow_step_refs": [
+              "FR-02",
+              "FR-03"
+            ],
+            "guardrail_refs": [
+              "AR-05"
+            ]
+          },
+          {
+            "id": "US9",
+            "priority": "P2",
+            "title": "Graph backend choice",
+            "persona": "Platform integrator",
+            "narrative": "As a user with an existing graph DB, I plug in my preferred store without forking.",
+            "acceptance": [
+              "Given the tiered backend policy, when I configure Neo4j (T1) or ArangoDB/TypeDB (T2), then the same GraphStoreInterface contract passes the shared conformance suite.",
+              "Given a Rainbird connector (T3), when enabled, then it contributes a reasoning channel to fusion without acting as the graph store of record."
+            ],
+            "flow_step_refs": [
+              "FR-02",
+              "FR-04"
+            ],
+            "guardrail_refs": [
+              "AR-05"
+            ]
+          },
+          {
+            "id": "US10",
+            "priority": "P3",
+            "title": "Learned fusion",
+            "persona": "App developer",
+            "narrative": "As an advanced user, I train fusion weights on my own relevance data.",
+            "acceptance": [
+              "Given labelled query-result pairs, when learned fusion is enabled, then a logistic model over channel features is trained, evaluated against RRF, and only recommended where it wins."
+            ],
+            "flow_step_refs": [
+              "FR-05"
+            ],
+            "guardrail_refs": [
+              "AR-03"
+            ]
+          },
+          {
+            "id": "US11",
+            "priority": "P3",
+            "title": "Launch kit",
+            "persona": "Maintainer",
+            "narrative": "As the maintainer, I launch deliberately once the substance is real.",
+            "acceptance": [
+              "Given Phases 0-2 complete, when v3.0 ships, then Show HN post, technical blog, awesome-list PRs, and the arXiv preprint (real numbers only) are published in sequence."
+            ],
+            "flow_step_refs": [],
+            "guardrail_refs": [
+              "AR-03"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

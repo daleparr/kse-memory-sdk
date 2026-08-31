@@ -11,7 +11,7 @@ import logging
 from collections import defaultdict
 import math
 
-from ..core.models import ConceptualDimensions
+from ..core.models import ConceptualSpace
 from .temporal_models import (
     TemporalConceptualSpace, TemporalConcept, TemporalQuery,
     TimeInterval, TemporalPattern, TemporalEvent

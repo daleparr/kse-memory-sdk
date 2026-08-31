@@ -8,7 +8,6 @@ across different industries and domains while maintaining mathematical consisten
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
-from .models import ConceptualDimensions
 
 
 class Domain(Enum):
@@ -172,8 +171,9 @@ class ConceptualSpaceMapper:
         """List all available domains."""
         return list(self.domain_profiles.keys())
     
-    def map_dimensions(self, source_domain: Domain, target_domain: Domain, 
-                      source_dimensions: ConceptualDimensions) -> ConceptualDimensions:
+    def map_dimensions(self, source_domain: Domain, target_domain: Domain,
+                      source_dimensions: Dict[str, float],
+                      embedder: "Any" = None) -> Dict[str, float]:
         """
         Map conceptual dimensions from one domain to another.
         
@@ -187,10 +187,37 @@ class ConceptualSpaceMapper:
         """
         if source_domain == target_domain:
             return source_dimensions
-        
-        # For now, return the same values with base dimension names
-        # In a full implementation, this would apply semantic similarity weighting
-        return source_dimensions
+
+        # v3 (US8): the identity stub is gone. Profiles become ad-hoc
+        # dimension schemas — each dimension's description and examples are
+        # its anchors — and the transform runs through the same anchor-
+        # geometry engine the rest of the SDK uses (core/mapping.py).
+        from .mapping import map_dimensions as _map
+        from .schema import load_schema
+
+        def _as_schema(domain: Domain) -> "Any":
+            profile = self.domain_profiles[domain]
+            return load_schema({
+                "name": f"legacy-{domain.value}",
+                "version": "2.0.0",
+                "dimensions": [
+                    {
+                        "name": name,
+                        "description": mapping.description,
+                        "anchors": [mapping.description, *mapping.examples],
+                    }
+                    for name, mapping in profile.dimensions.items()
+                ],
+            })
+
+        if embedder is None:
+            from .projection import OnnxEmbedder
+
+            embedder = OnnxEmbedder()
+
+        mapped = _map(_as_schema(source_domain), _as_schema(target_domain),
+                      source_dimensions, embedder)
+        return dict(mapped.values)
     
     def get_dimension_description(self, domain: Domain, dimension: str) -> str:
         """Get description for a dimension in a specific domain."""
@@ -216,7 +243,7 @@ class ConceptualSpaceMapper:
         return mapping
     
     def create_domain_specific_dimensions(self, domain: Domain, 
-                                        base_dimensions: ConceptualDimensions) -> Dict[str, float]:
+                                        base_dimensions: Dict[str, float]) -> Dict[str, float]:
         """
         Create domain-specific dimension representation.
         
@@ -265,7 +292,7 @@ def get_mapper() -> ConceptualSpaceMapper:
     return _mapper_instance
 
 
-def map_to_domain(domain: Domain, base_dimensions: ConceptualDimensions) -> Dict[str, float]:
+def map_to_domain(domain: Domain, base_dimensions: Dict[str, float]) -> Dict[str, float]:
     """
     Convenience function to map base dimensions to domain-specific representation.
     

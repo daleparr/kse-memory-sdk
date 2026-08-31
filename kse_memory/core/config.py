@@ -31,7 +31,9 @@ class EmbeddingModel(Enum):
 @dataclass
 class VectorStoreConfig:
     """Vector store configuration."""
-    backend: str = "pinecone"  # pinecone, weaviate, qdrant
+    # v3 / TC-02: the default install must need no external service and
+    # no API key. Cloud backends are opt-in.
+    backend: str = "memory"  # memory, pinecone, weaviate, qdrant, chromadb, milvus
     api_key: Optional[str] = None
     environment: Optional[str] = None
     index_name: str = "kse-products"
@@ -57,7 +59,7 @@ class VectorStoreConfig:
 @dataclass
 class GraphStoreConfig:
     """Graph store configuration."""
-    backend: str = "neo4j"  # neo4j, arangodb
+    backend: str = "memory"  # memory, neo4j, arangodb  (TC-02: local default)
     uri: str = "bolt://localhost:7687"
     username: str = "neo4j"
     password: Optional[str] = None
@@ -72,7 +74,7 @@ class GraphStoreConfig:
 @dataclass
 class ConceptStoreConfig:
     """Concept store configuration."""
-    backend: str = "postgresql"  # postgresql, mongodb
+    backend: str = "memory"  # memory, postgresql, mongodb  (TC-02: local default)
     host: str = "localhost"
     port: int = 5432
     database: str = "kse_concepts"
@@ -112,7 +114,9 @@ class ConceptualConfig:
         "elegance", "comfort", "boldness", "modernity", "minimalism",
         "luxury", "functionality", "versatility", "seasonality", "innovation"
     ])
-    auto_compute: bool = True
+    # v3 / D-09: no LLM scorer by default — the service was removed;
+    # schema-driven projection (FR-02) replaced it and needs no key.
+    auto_compute: bool = False
     llm_model: str = "gpt-4"
     llm_api_key: Optional[str] = None
     
@@ -132,7 +136,11 @@ class SearchConfig:
         "conceptual": 0.3,
         "knowledge_graph": 0.3
     })
-    similarity_threshold: float = 0.7
+    # 0.7 assumed near-duplicate text; real cosine between a short query and
+    # a matching description sits ~0.4-0.6, so 0.7 silently emptied ordinary
+    # searches. v3 handles answer confidence properly (FR-07); this floor now
+    # only drops clear noise.
+    similarity_threshold: float = 0.25
     enable_reranking: bool = True
     rerank_model: Optional[str] = None
 
@@ -317,8 +325,12 @@ class KSEConfig:
             errors.append("OpenAI API key is required for OpenAI embedding models")
         
         # Validate conceptual config
-        if self.conceptual.auto_compute and not self.conceptual.llm_api_key:
-            errors.append("LLM API key is required for automatic conceptual dimension computation")
+        if self.conceptual.auto_compute:
+            errors.append(
+                "conceptual.auto_compute is no longer supported: the LLM "
+                "scoring service was removed in v3 (D-09). Use the "
+                "schema-driven projection pipeline instead."
+            )
         
         # Validate search weights
         total_weight = sum(self.search.hybrid_weights.values())

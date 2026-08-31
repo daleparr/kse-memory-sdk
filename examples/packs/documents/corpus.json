@@ -1,0 +1,57 @@
+{
+  "records": [
+    {
+      "id": "photosynthesis",
+      "title": "How plants eat sunlight",
+      "description": "Photosynthesis explained with kitchen analogies; assumes nothing but curiosity.",
+      "tags": [
+        "science"
+      ]
+    },
+    {
+      "id": "compilers",
+      "title": "A beginner's guide to compiler internals",
+      "description": "A guide for beginners who already have prior knowledge of systems programming.",
+      "tags": [
+        "cs"
+      ]
+    },
+    {
+      "id": "topology",
+      "title": "Point-set topology notes",
+      "description": "Formal definitions and proofs for graduate coursework.",
+      "tags": [
+        "maths"
+      ]
+    },
+    {
+      "id": "tax-memo",
+      "title": "Corporate tax structuring memo",
+      "description": "Cross-border arrangements under the participation exemption.",
+      "tags": [
+        "law"
+      ]
+    },
+    {
+      "id": "knitting",
+      "title": "Sock knitting walkthrough",
+      "description": "Step-by-step sock pattern with photos of every stage.",
+      "tags": [
+        "craft"
+      ]
+    },
+    {
+      "id": "api-spec",
+      "title": "Payments API reference",
+      "description": "Endpoint schemas, error codes and idempotency semantics.",
+      "tags": [
+        "reference"
+      ]
+    }
+  ],
+  "showcase": {
+    "query": "a guide a complete beginner can follow with no prior knowledge",
+    "target_id": "photosynthesis",
+    "why": "The compiler guide contains 'beginner's guide' and 'prior knowledge' verbatim \u2014 dense search takes the bait. The accessibility anchors bridge 'complete beginner, no prior knowledge' to the piece written as 'assumes nothing but curiosity, kitchen analogies'."
+  }
+}

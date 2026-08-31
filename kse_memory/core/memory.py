@@ -8,14 +8,13 @@ from typing import List, Dict, Any, Optional, Union
 from datetime import datetime
 
 from .config import KSEConfig
-from .models import Product, SearchQuery, SearchResult, ConceptualDimensions, EmbeddingVector
+from .models import Product, SearchQuery, SearchResult, EmbeddingVector
 from .interfaces import (
     AdapterInterface,
     VectorStoreInterface,
     GraphStoreInterface,
     ConceptStoreInterface,
     EmbeddingServiceInterface,
-    ConceptualServiceInterface,
     SearchServiceInterface,
     CacheInterface,
 )
@@ -24,7 +23,6 @@ from ..adapters import get_adapter
 from ..backends import get_vector_store, get_graph_store, get_concept_store
 from ..services import (
     EmbeddingService,
-    ConceptualService,
     SearchService,
     CacheService,
 )
@@ -57,7 +55,6 @@ class KSEMemory:
         self.graph_store: Optional[GraphStoreInterface] = None
         self.concept_store: Optional[ConceptStoreInterface] = None
         self.embedding_service: Optional[EmbeddingServiceInterface] = None
-        self.conceptual_service: Optional[ConceptualServiceInterface] = None
         self.search_service: Optional[SearchServiceInterface] = None
         self.cache_service: Optional[CacheInterface] = None
         
@@ -108,7 +105,6 @@ class KSEMemory:
             
             # Initialize services
             self.embedding_service = EmbeddingService(self.config.embedding)
-            self.conceptual_service = ConceptualService(self.config.conceptual)
             self.cache_service = CacheService(self.config.cache)
             
             # Initialize search service with all components
@@ -192,9 +188,9 @@ class KSEMemory:
                 if product.images and len(product.images) > 0:
                     product.image_embedding = await self.embedding_service.generate_image_embedding(product.images[0])
             
-            # Compute conceptual dimensions if requested
-            if compute_concepts and self.conceptual_service:
-                product.conceptual_dimensions = await self.conceptual_service.compute_dimensions(product)
+            # v3: no LLM scoring service on the default path (D-09). Dimension
+            # scores arrive precomputed on the product, or via IngestPipeline's
+            # schema-driven projection.
             
             # Store in vector store
             if product.text_embedding and self.vector_store:
@@ -204,7 +200,12 @@ class KSEMemory:
             
             # Store in concept store
             if product.conceptual_dimensions and self.concept_store:
-                await self.concept_store.store_conceptual_dimensions(product.id, product.conceptual_dimensions)
+                from .dimension_store import ConceptStoreAdapter
+
+                await self.concept_store.store_dimensions(
+                    product.id,
+                    ConceptStoreAdapter.to_generic(product.conceptual_dimensions),
+                )
             
             # Create knowledge graph node
             if self.graph_store:
@@ -371,10 +372,12 @@ class KSEMemory:
             
             # Use conceptual dimensions for recommendations if available
             if product.conceptual_dimensions and self.concept_store:
-                similar_products = await self.concept_store.find_similar_concepts(
-                    product.conceptual_dimensions,
+                from .dimension_store import ConceptStoreAdapter
+
+                similar_products = await self.concept_store.find_similar_dimensions(
+                    ConceptStoreAdapter.to_generic(product.conceptual_dimensions),
                     threshold=0.7,
-                    limit=limit + 1  # +1 to exclude the source product
+                    limit=limit + 1,  # +1 to exclude the source product
                 )
                 
                 # Convert to SearchResult objects
@@ -384,7 +387,7 @@ class KSEMemory:
                         similar_product = await self.get_product(similar_id)
                         if similar_product:
                             results.append(SearchResult(
-                                product=similar_product,
+                                entity=similar_product,
                                 score=similarity,
                                 conceptual_similarity=similarity,
                                 explanation=f"Similar conceptual profile to {product.title}"
@@ -404,7 +407,7 @@ class KSEMemory:
                     if vector_id != product_id:  # Exclude the source product
                         similar_product = Product.from_dict(metadata)
                         results.append(SearchResult(
-                            product=similar_product,
+                            entity=similar_product,
                             score=similarity,
                             embedding_similarity=similarity,
                             explanation=f"Similar semantic profile to {product.title}"

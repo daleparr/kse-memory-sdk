@@ -6,7 +6,7 @@ from typing import List, Dict, Any, Optional
 import asyncio
 from datetime import datetime
 from ..core.interfaces import ConceptStoreInterface
-from ..core.models import Product, ConceptualDimensions
+from ..core.models import Product
 from ..core.config import ConceptStoreConfig
 from ..exceptions import BackendError, ConceptStoreError
 
@@ -127,7 +127,7 @@ class MongoDBBackend(ConceptStoreInterface):
                 "title": product.title,
                 "category": product.category,
                 "brand": product.brand,
-                "conceptual_dimensions": product.conceptual_dimensions.to_dict(),
+                "conceptual_dimensions": dict(product.conceptual_dimensions),
                 "metadata": product.metadata or {},
                 "updated_at": datetime.utcnow()
             }
@@ -144,7 +144,7 @@ class MongoDBBackend(ConceptStoreInterface):
         except Exception as e:
             raise ConceptStoreError(f"Failed to store product concepts: {str(e)}", "store_product_concepts")
     
-    async def get_product_concepts(self, product_id: str) -> Optional[ConceptualDimensions]:
+    async def get_product_concepts(self, product_id: str) -> Optional[Dict[str, float]]:
         """Get conceptual dimensions for a product."""
         if not self._connected:
             raise ConceptStoreError("Not connected to MongoDB", "get_product_concepts")
@@ -153,20 +153,20 @@ class MongoDBBackend(ConceptStoreInterface):
             doc = await self.products_collection.find_one({"product_id": product_id})
             
             if doc and "conceptual_dimensions" in doc:
-                return ConceptualDimensions.from_dict(doc["conceptual_dimensions"])
+                return {k: float(v) for k, v in doc["conceptual_dimensions"].items()}
             
             return None
             
         except Exception as e:
             raise ConceptStoreError(f"Failed to get product concepts: {str(e)}", "get_product_concepts")
     
-    async def find_similar_products(self, target_dimensions: ConceptualDimensions, threshold: float = 0.8, limit: int = 10) -> List[Dict[str, Any]]:
+    async def find_similar_products(self, target_dimensions: Dict[str, float], threshold: float = 0.8, limit: int = 10) -> List[Dict[str, Any]]:
         """Find products with similar conceptual dimensions."""
         if not self._connected:
             raise ConceptStoreError("Not connected to MongoDB", "find_similar_products")
         
         try:
-            target_dict = target_dimensions.to_dict()
+            target_dict = (target_dimensions.to_dict() if hasattr(target_dimensions, 'to_dict') else dict(target_dimensions))
             
             # Build aggregation pipeline for similarity search
             pipeline = [
@@ -470,3 +470,130 @@ class MongoDBBackend(ConceptStoreInterface):
             
         except Exception as e:
             raise ConceptStoreError(f"Failed to get concept statistics: {str(e)}", "get_concept_statistics")
+    # ------------------------------------------------------------------ TC-04
+    # ConceptStoreInterface conformance.
+    #
+    # This class previously implemented the right behaviour under the wrong
+    # names — store_product_concepts rather than the interface's store method,
+    # and so on — leaving five abstract methods unsatisfied. The class could
+    # therefore never be instantiated: construction raised TypeError.
+    #
+    # The generic, schema-driven surface is implemented natively; MongoDB's
+    # free-form documents suit arbitrary dimension names with no schema
+    # migration. The legacy fixed-dimension methods were thin adapters
+    # over it, so there is one implementation rather than two.
+
+    _DIMENSION_FIELD = "conceptual_dimensions"
+
+    def _require_connection(self, operation: str) -> None:
+        if not self._connected:
+            raise ConceptStoreError("Not connected to MongoDB", operation)
+
+    async def store_dimensions(self, entity_id: str, scores) -> bool:
+        """Store schema-driven dimension scores."""
+        self._require_connection("store_dimensions")
+        try:
+            await self.products_collection.replace_one(
+                {"product_id": entity_id},
+                {
+                    "product_id": entity_id,
+                    self._DIMENSION_FIELD: {k: float(v) for k, v in scores.scores.items()},
+                    "schema_name": scores.schema_name,
+                    "schema_version": scores.schema_version,
+                    "updated_at": datetime.utcnow(),
+                },
+                upsert=True,
+            )
+            return True
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to store dimensions: {str(e)}", "store_dimensions")
+
+    async def get_dimensions(self, entity_id: str):
+        """Get schema-driven dimension scores, or None."""
+        self._require_connection("get_dimensions")
+        from ..core.dimension_store import DimensionScores
+
+        try:
+            doc = await self.products_collection.find_one({"product_id": entity_id})
+            if not doc or self._DIMENSION_FIELD not in doc:
+                return None
+            return DimensionScores(
+                schema_name=doc.get("schema_name", ""),
+                schema_version=doc.get("schema_version", ""),
+                scores={k: float(v) for k, v in doc[self._DIMENSION_FIELD].items()},
+            )
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to get dimensions: {str(e)}", "get_dimensions")
+
+    async def delete_dimensions(self, entity_id: str) -> bool:
+        """Delete stored scores. False if there was nothing to delete."""
+        self._require_connection("delete_dimensions")
+        try:
+            result = await self.products_collection.delete_one({"product_id": entity_id})
+            return getattr(result, "deleted_count", 0) > 0
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to delete dimensions: {str(e)}", "delete_dimensions")
+
+    async def find_similar_dimensions(self, scores, threshold: float = 0.8, limit: int = 10):
+        """Rank entities by cosine similarity, within the same schema.
+
+        Similarity is computed in Python rather than in an aggregation
+        pipeline: dimension names come from the user's schema, so the
+        arithmetic cannot be written into a fixed pipeline the way the legacy
+        ten-column version was. The query narrows to the schema first; for
+        very large collections this wants a server-side $function or a
+        materialised vector, which is a performance change, not a correctness
+        one.
+        """
+        self._require_connection("find_similar_dimensions")
+        from ..core.dimension_store import cosine_similarity
+
+        try:
+            cursor = self.products_collection.find(
+                {"schema_name": scores.schema_name, "schema_version": scores.schema_version}
+            )
+            hits = []
+            async for doc in cursor:
+                stored = doc.get(self._DIMENSION_FIELD) or {}
+                similarity = cosine_similarity(scores.scores, {k: float(v) for k, v in stored.items()})
+                if similarity >= threshold:
+                    hits.append((doc["product_id"], similarity))
+            hits.sort(key=lambda h: h[1], reverse=True)
+            return hits[:limit]
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to find similar dimensions: {str(e)}", "find_similar_dimensions")
+
+    async def get_dimension_statistics(self):
+        """Per-dimension count/mean/min/max across stored entities.
+
+        Distinct from get_concept_statistics, which reports collection-level
+        counts. The interface asks for per-dimension figures.
+        """
+        self._require_connection("get_dimension_statistics")
+        try:
+            by_dimension = {}
+            cursor = self.products_collection.find({})
+            async for doc in cursor:
+                for name, value in (doc.get(self._DIMENSION_FIELD) or {}).items():
+                    by_dimension.setdefault(name, []).append(float(value))
+            return {
+                name: {
+                    "count": float(len(values)),
+                    "mean": sum(values) / len(values),
+                    "min": min(values),
+                    "max": max(values),
+                }
+                for name, values in by_dimension.items()
+            }
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to get dimension statistics: {str(e)}", "get_dimension_statistics")

@@ -1,0 +1,18 @@
+{
+  "decision": "D-104",
+  "source_repo": "https://github.com/amazon-science/esci-data (Apache-2.0)",
+  "source_sha256": {
+    "shopping_queries_dataset_examples.parquet": "4a735b693b4a424a6fc67f5be6e4c811495c488bbf66d02a602d308b2744263a",
+    "shopping_queries_dataset_products.parquet": "25124442d064d64b26f74082d6fa09438d679efc0c183cf28d19064a2b65a265"
+  },
+  "filter": "product_locale=us, small_version=1, split=test",
+  "queries": 200,
+  "corpus_docs": 5456,
+  "judgements": 5857,
+  "label_map": {
+    "E": 3,
+    "S": 2,
+    "C": 1,
+    "I": 0
+  }
+}

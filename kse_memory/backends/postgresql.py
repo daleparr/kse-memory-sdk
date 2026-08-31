@@ -16,7 +16,6 @@ except ImportError:
 
 from ..core.interfaces import ConceptStoreInterface
 from ..core.config import ConceptStoreConfig
-from ..core.models import ConceptualDimensions
 from ..exceptions import ConceptStoreError, AuthenticationError
 
 
@@ -84,6 +83,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             async with self.pool.acquire() as conn:
                 await conn.execute("SELECT 1")
                 await self._create_tables(conn)
+                await self._create_dimension_tables(conn)
                 await self._create_indexes(conn)
             
             self._connected = True
@@ -116,7 +116,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             logger.error(f"Error during PostgreSQL disconnection: {str(e)}")
             return False
     
-    async def store_conceptual_dimensions(self, product_id: str, dimensions: ConceptualDimensions) -> bool:
+    async def store_conceptual_dimensions(self, product_id: str, dimensions) -> bool:
         """
         Store conceptual dimensions for a product.
         
@@ -133,7 +133,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
         self._ensure_connected()
         
         try:
-            dim_dict = dimensions.to_dict()
+            dim_dict = (dimensions.to_dict() if hasattr(dimensions, 'to_dict') else dict(dimensions))
             
             # Create vector representation
             vector = [dim_dict.get(dim, 0.0) for dim in self.dimensions]
@@ -185,7 +185,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             logger.error(f"Failed to store conceptual dimensions for product {product_id}: {str(e)}")
             raise ConceptStoreError(f"Storage failed: {str(e)}", operation="store")
     
-    async def get_conceptual_dimensions(self, product_id: str) -> Optional[ConceptualDimensions]:
+    async def get_conceptual_dimensions(self, product_id: str) -> Optional[Dict[str, float]]:
         """
         Get conceptual dimensions for a product.
         
@@ -193,7 +193,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
             product_id: Product identifier
             
         Returns:
-            ConceptualDimensions if found, None otherwise
+            Mapping of legacy dimension scores if found, None otherwise
             
         Raises:
             ConceptStoreError: If retrieval fails
@@ -210,18 +210,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
                 """, product_id)
                 
                 if row:
-                    return ConceptualDimensions(
-                        elegance=row["elegance"],
-                        comfort=row["comfort"],
-                        boldness=row["boldness"],
-                        modernity=row["modernity"],
-                        minimalism=row["minimalism"],
-                        luxury=row["luxury"],
-                        functionality=row["functionality"],
-                        versatility=row["versatility"],
-                        seasonality=row["seasonality"],
-                        innovation=row["innovation"]
-                    )
+                    return {d: float(row[d]) for d in self.dimensions}
                 
                 return None
                 
@@ -263,7 +252,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
     
     async def find_similar_concepts(
         self, 
-        dimensions: ConceptualDimensions, 
+        dimensions, 
         threshold: float = 0.8,
         limit: int = 10
     ) -> List[Tuple[str, float]]:
@@ -284,7 +273,7 @@ class PostgreSQLBackend(ConceptStoreInterface):
         self._ensure_connected()
         
         try:
-            dim_dict = dimensions.to_dict()
+            dim_dict = (dimensions.to_dict() if hasattr(dimensions, 'to_dict') else dict(dimensions))
             target_vector = [dim_dict.get(dim, 0.0) for dim in self.dimensions]
             
             async with self.pool.acquire() as conn:
@@ -536,3 +525,188 @@ class PostgreSQLBackend(ConceptStoreInterface):
         except Exception as e:
             logger.error(f"Failed to get PostgreSQL statistics: {str(e)}")
             return {}
+    # ------------------------------------------------------------------ TC-04
+    # Schema-driven dimensions.
+    #
+    # The legacy `conceptual_dimensions` table carries the fashion vocabulary
+    # in its DDL — elegance, comfort, luxury as literal REAL columns — so it
+    # cannot hold a user-defined schema. Deployments may also hold real rows
+    # there, and unlike the MongoDB backend nothing here is broken.
+    #
+    # This migration is therefore strictly additive. Scores live in a new
+    # `entity_dimensions` table as JSONB; the legacy table and every legacy
+    # method are left exactly as they were. Repointing the legacy methods at
+    # the new table would have been tidier and would have silently orphaned
+    # existing rows.
+    #
+    # Copying legacy rows forward is `migrate_legacy_dimensions()` — explicit,
+    # opt-in, and non-destructive.
+
+    _DIMENSION_TABLE = "entity_dimensions"
+
+    async def _create_dimension_tables(self, conn):
+        """Create the schema-driven table. Additive: nothing is dropped."""
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS entity_dimensions (
+                entity_id VARCHAR(255) PRIMARY KEY,
+                schema_name VARCHAR(255) NOT NULL,
+                schema_version VARCHAR(64) NOT NULL,
+                scores JSONB NOT NULL,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            )
+        """)
+        await conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_entity_dimensions_schema
+            ON entity_dimensions (schema_name, schema_version)
+        """)
+        # GIN over the JSONB so containment queries on dimension names are
+        # indexed; the ranking itself is still computed outside the database.
+        await conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_entity_dimensions_scores
+            ON entity_dimensions USING GIN (scores)
+        """)
+
+    @staticmethod
+    def _decode_scores(raw) -> Dict[str, float]:
+        """JSONB arrives as text or as a decoded dict depending on codec setup."""
+        if isinstance(raw, str):
+            raw = json.loads(raw)
+        return {k: float(v) for k, v in (raw or {}).items()}
+
+    async def store_dimensions(self, entity_id: str, scores) -> bool:
+        """Store schema-driven dimension scores."""
+        self._ensure_connected()
+        try:
+            async with self.pool.acquire() as conn:
+                await conn.execute("""
+                    INSERT INTO entity_dimensions (
+                        entity_id, schema_name, schema_version, scores, updated_at
+                    ) VALUES ($1, $2, $3, $4::jsonb, NOW())
+                    ON CONFLICT (entity_id) DO UPDATE SET
+                        schema_name = EXCLUDED.schema_name,
+                        schema_version = EXCLUDED.schema_version,
+                        scores = EXCLUDED.scores,
+                        updated_at = NOW()
+                """, entity_id, scores.schema_name, scores.schema_version,
+                     json.dumps({k: float(v) for k, v in scores.scores.items()}))
+            return True
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to store dimensions: {str(e)}", "store_dimensions")
+
+    async def get_dimensions(self, entity_id: str):
+        """Get schema-driven dimension scores, or None."""
+        self._ensure_connected()
+        from ..core.dimension_store import DimensionScores
+
+        try:
+            async with self.pool.acquire() as conn:
+                row = await conn.fetchrow("""
+                    SELECT schema_name, schema_version, scores
+                    FROM entity_dimensions
+                    WHERE entity_id = $1
+                """, entity_id)
+            if not row:
+                return None
+            return DimensionScores(
+                schema_name=row["schema_name"],
+                schema_version=row["schema_version"],
+                scores=self._decode_scores(row["scores"]),
+            )
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to get dimensions: {str(e)}", "get_dimensions")
+
+    async def delete_dimensions(self, entity_id: str) -> bool:
+        """Delete stored scores. False if there was nothing to delete."""
+        self._ensure_connected()
+        try:
+            async with self.pool.acquire() as conn:
+                result = await conn.execute("""
+                    DELETE FROM entity_dimensions WHERE entity_id = $1
+                """, entity_id)
+            return int(str(result).split()[-1]) > 0
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to delete dimensions: {str(e)}", "delete_dimensions")
+
+    async def find_similar_dimensions(self, scores, threshold: float = 0.8, limit: int = 10):
+        """Rank entities by cosine similarity, within the same schema.
+
+        The schema filter runs in SQL and uses the schema index; the cosine
+        itself is computed in Python. Dimension names come from the user's
+        schema, so the arithmetic cannot be written into fixed SQL the way the
+        legacy ten-column version was. For large schemas this wants a
+        materialised vector column — a performance change, not a correctness
+        one.
+        """
+        self._ensure_connected()
+        from ..core.dimension_store import cosine_similarity
+
+        try:
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch("""
+                    SELECT entity_id, scores
+                    FROM entity_dimensions
+                    WHERE schema_name = $1 AND schema_version = $2
+                """, scores.schema_name, scores.schema_version)
+
+            hits = []
+            for row in rows or []:
+                similarity = cosine_similarity(scores.scores, self._decode_scores(row["scores"]))
+                if similarity >= threshold:
+                    hits.append((row["entity_id"], similarity))
+            hits.sort(key=lambda h: h[1], reverse=True)
+            return hits[:limit]
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to find similar dimensions: {str(e)}", "find_similar_dimensions")
+
+    async def migrate_legacy_dimensions(self, batch_size: int = 500) -> int:
+        """Copy legacy fashion-column rows into the schema-driven table.
+
+        Non-destructive and idempotent: rows are upserted, and the legacy table
+        is only ever read. Nothing calls this automatically — moving a
+        deployment's data is an operator's decision, not a side effect of an
+        upgrade.
+
+        Returns:
+            The number of rows copied.
+        """
+        self._ensure_connected()
+        from ..core.dimension_store import ConceptStoreAdapter
+
+        schema_name, schema_version = ConceptStoreAdapter.LEGACY_SCHEMA
+        columns = ", ".join(self.dimensions)
+        copied = 0
+
+        try:
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch(f"""
+                    SELECT product_id, {columns}
+                    FROM conceptual_dimensions
+                    ORDER BY product_id
+                    LIMIT {int(batch_size)}
+                """)
+
+                for row in rows or []:
+                    payload = {d: float(row[d]) for d in self.dimensions if row.get(d) is not None}
+                    await conn.execute("""
+                        INSERT INTO entity_dimensions (
+                            entity_id, schema_name, schema_version, scores, updated_at
+                        ) VALUES ($1, $2, $3, $4::jsonb, NOW())
+                        ON CONFLICT (entity_id) DO UPDATE SET
+                            scores = EXCLUDED.scores,
+                            updated_at = NOW()
+                    """, row["product_id"], schema_name, schema_version, json.dumps(payload))
+                    copied += 1
+            return copied
+        except ConceptStoreError:
+            raise
+        except Exception as e:
+            raise ConceptStoreError(f"Failed to migrate legacy dimensions: {str(e)}", "migrate_legacy_dimensions")

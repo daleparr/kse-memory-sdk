@@ -164,7 +164,7 @@ class SearchResultsExplainer:
         
         # Map query to conceptual dimensions
         query_concepts = self._map_query_to_concepts(query)
-        product_concepts = product.conceptual_dimensions.to_dict()
+        product_concepts = dict(product.conceptual_dimensions)
         
         # Calculate conceptual similarity
         similarities = []
@@ -292,7 +292,7 @@ class SearchResultsExplainer:
             return {}
         
         query_concepts = self._map_query_to_concepts(query)
-        product_concepts = product.conceptual_dimensions.to_dict()
+        product_concepts = dict(product.conceptual_dimensions)
         
         contributions = {}
         for concept in query_concepts:
