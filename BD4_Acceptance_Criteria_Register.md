@@ -147,3 +147,14 @@ memory, networkx, neo4j, arangodb — through behavioural conformance live in
 one invocation: 45 passed. Fixture: KSE_ARANGO_PASSWORD convention, skips
 cleanly where no server exists.
 
+**TC-05 addendum (2026-08-31, Session 36-CC):** the ESCI clause D-103
+deferred is now MET ON EVIDENCE, not ruling. A pinned slice (D-104:
+us/small_version/test, first 200 query_ids, E3/S2/C1/I0, 5456 docs, 5857
+judgements) is COMMITTED in BEIR format at benchmarks/esci_slice/ — 6.6MB
+in-tree, so `make bench` needs no ESCI download; provenance sha256s in its
+MANIFEST; regenerable via derive_esci_slice.py. The same one command now
+regenerates all three datasets, and the rerun reproduced scifact/nfcorpus
+BIT-IDENTICALLY (determinism across runs, witnessed). ESCI's rows publish
+the same honest pattern: dense 0.415 nDCG@10, hybrid -0.191 — a third loss,
+at full prominence.
+

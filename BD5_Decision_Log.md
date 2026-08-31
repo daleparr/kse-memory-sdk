@@ -33,6 +33,8 @@ Append new decisions below. Never delete — supersede with a new D-XX entry ref
 
 | D-103 | TC-05 dataset-scope ruling | The pinned BEIR pair (scifact + nfcorpus, checksum-enforced) satisfies TC-05 for now; the ESCI slice is deferred to its own task when a pinned slice of the multi-GB corpus is chosen. Any future ESCI work extends the same make bench command and RESULTS.md table. Ruled by the maintainer, 2026-08-30; unblocks T-033/T-034. | Confirmed 2026-08-30 |
 
+| D-104 | ESCI slice pinning (closes D-103's deferral) | Committed BEIR-format slice at benchmarks/esci_slice/esci-slice (6.6MB, in-tree — users never download ESCI): product_locale=us · small_version=1 · split=test, FIRST 200 query_ids ascending (deterministic rule, not a sample), corpus = exactly the judged products (5456 docs, 5857 judgements), labels E→3 S→2 C→1 I→0. Source parquets sha256-pinned in the slice's MANIFEST.json; regenerable via benchmarks/derive_esci_slice.py (pyarrow/pandas are maintainer tooling, deliberately absent from pyproject). Apache-2.0 source, attributed. Extends the same make bench command and RESULTS.md table per D-103's binding. | Confirmed 2026-08-31 |
+
 **Numbering:** the BD sessions own the sequential range (D-01…). Decisions originated on the Claude Code parallel track use **D-101+** so the two tracks cannot collide — D-11 and D-14 both collided before this was adopted.
 
 <!-- Append new entries below this line -->

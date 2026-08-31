@@ -28,6 +28,12 @@ DATASETS = {
     "nfcorpus": "https://public.ukp.informatik.tu-darmstadt.de/thakur/BEIR/datasets/nfcorpus.zip",
 }
 
+#: Committed slices (BEIR format, in-tree): no fetch step at all. The ESCI
+#: slice is pinned by D-104 and regenerable via derive_esci_slice.py.
+LOCAL_DATASETS = {
+    "esci-slice": Path(__file__).parent / "esci_slice" / "esci-slice",
+}
+
 
 # ------------------------------------------------------------------ metrics
 # Single implementation lives in the package (US10 layering: benchmarks
@@ -65,8 +71,7 @@ def format_results_table(rows: List[Dict[str, Any]], baseline: str) -> str:
 
 
 # ------------------------------------------------------------------ loading
-def load_beir(dataset: str) -> Dict[str, Any]:
-    root = DATA_DIR / dataset
+def load_beir_dir(root: Path) -> Dict[str, Any]:
     corpus = {}
     with (root / "corpus.jsonl").open(encoding="utf-8") as handle:
         for line in handle:
@@ -86,6 +91,12 @@ def load_beir(dataset: str) -> Dict[str, Any]:
     # only queries with test judgements participate
     queries = {qid: text for qid, text in queries.items() if qid in qrels}
     return {"corpus": corpus, "queries": queries, "qrels": qrels}
+
+
+def load_beir(dataset: str) -> Dict[str, Any]:
+    if dataset in LOCAL_DATASETS:
+        return load_beir_dir(LOCAL_DATASETS[dataset])
+    return load_beir_dir(DATA_DIR / dataset)
 
 
 # ------------------------------------------------------------------ systems
@@ -177,7 +188,7 @@ def main() -> None:
     embedder = OnnxEmbedder()
     all_rows: List[Dict[str, Any]] = []
     timings = {}
-    for dataset in DATASETS:
+    for dataset in list(DATASETS) + list(LOCAL_DATASETS):
         started = time.perf_counter()
         all_rows.extend(run_dataset(dataset, embedder))
         timings[dataset] = time.perf_counter() - started
