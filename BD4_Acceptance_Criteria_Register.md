@@ -135,3 +135,15 @@ Replay: Deterministic: content hash + schema version + model IDs reproduce any p
 - TC-12's clause is *published in sequence* — publishing is the
   maintainer's act. The box closes when the maintainer ships.
 
+**TC-09 addendum (2026-08-31, Session 35-CC):** the disjunction is now
+satisfied on BOTH sides. A live ArangoDB 3.12.4 (official container via
+Colima) passed the behavioural conformance suite 6/6 — on the FIRST run:
+the generic surface written blind in Session 31-CC held against the real
+server, a green first contact being a finding in its own right. The
+suite-uncovered methods were smoke-verified live as well: bounded find_path,
+no-path None, incident-edge cleanup on delete_node, execute_query
+passthrough. A combined run then put ALL FOUR registered graph backends —
+memory, networkx, neo4j, arangodb — through behavioural conformance live in
+one invocation: 45 passed. Fixture: KSE_ARANGO_PASSWORD convention, skips
+cleanly where no server exists.
+

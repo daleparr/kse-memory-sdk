@@ -410,3 +410,10 @@ Template:
 **Ceremony:** TC-09 closed — the clause is a disjunction and Neo4j (T1) passed it live. T-048 closed; US9 complete. TC-10 (Rainbird) remains open on a proprietary service, tracked outside the gate.
 **The tally of the wrong-names/live-only defect family now stands at five backends** (Mongo, Arango uninstantiable; mock fake scores; neo4j flat shape + dead traversal) — every one found by a conformance layer, none by the legacy mocked suite.
 
+## 2026-08-31 — Session 35-CC (Claude Code, parallel track) — ArangoDB live: green on first contact
+**Setup:** no brew formula exists for ArangoDB, so the supported path was stood up whole: Colima VM + docker CLI, official arangodb/arangodb:3.12 container (3.12.4-3), python-arango driver (AR-04 re-verified: no torch). Fixture mirrors the Neo4j one — KSE_ARANGO_PASSWORD, _system db, per-test truncation, clean skip without a server.
+**The run:** 6/6 behavioural conformance on the FIRST live attempt. I predicted RED and got GREEN — the generic surface written blind against the driver API in Session 31-CC simply held. A green first contact is a finding too: it is what the faked-driver tests were for.
+**Extended beyond the suite:** the behaviourally-uncovered methods smoke-verified live — find_path bounded by max_depth and None on no-path, delete_node's AQL removing incident edges (neighbors emptied), execute_query passthrough. All correct.
+**The combined moment:** with Neo4j restarted alongside, ALL FOUR registered graph backends ran behavioural conformance live in one invocation — 45 conformance tests passed; whole suite 333 green, 6 skips (torch-gated only). Both servers stopped after; both stay installed.
+**Standing after this session: every conformance skip that a machine can eliminate has been eliminated.** Remaining open across the whole board: TC-10 (Rainbird — proprietary), TC-12/T-052 (the maintainer publishing), ESCI (D-103).
+

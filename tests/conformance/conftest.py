@@ -38,7 +38,38 @@ async def _networkx_graph():
 
 
 async def _arangodb_graph():
-    pytest.skip("no live ArangoDB configured (requires_backend: arangodb)")
+    """Connects to a live ArangoDB when one is reachable; skips otherwise.
+    Password from KSE_ARANGO_PASSWORD (defaults to the conformance
+    convention); uses the _system database with the root user."""
+    import os
+
+    try:
+        import arango  # noqa: F401
+    except ImportError:
+        pytest.skip("python-arango not installed (requires_backend: arangodb)")
+
+    from kse_memory.backends.arangodb import ArangoDBBackend
+    from kse_memory.core.config import GraphStoreConfig
+
+    config = GraphStoreConfig(
+        backend="arangodb",
+        uri=os.environ.get("KSE_ARANGO_URI", "http://localhost:8529"),
+        username=os.environ.get("KSE_ARANGO_USER", "root"),
+        password=os.environ.get("KSE_ARANGO_PASSWORD", "conformance"),
+        database=os.environ.get("KSE_ARANGO_DB", "_system"),
+    )
+    store = ArangoDBBackend(config)
+    try:
+        await store.connect()
+    except Exception as exc:
+        pytest.skip(f"no live ArangoDB reachable (requires_backend: arangodb): {exc}")
+    # isolate: truncate the generic collections between parametrised tests
+    import asyncio as _asyncio
+
+    for name in (store._NODES, store._EDGES):
+        if await _asyncio.to_thread(store.db.has_collection, name):
+            await _asyncio.to_thread(store.db.collection(name).truncate)
+    return store
 
 
 async def _neo4j_graph():
